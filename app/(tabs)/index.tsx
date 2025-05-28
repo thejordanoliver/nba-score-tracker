@@ -2,7 +2,13 @@ import { Ionicons } from "@expo/vector-icons";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useFocusEffect, useNavigation } from "@react-navigation/native";
 import { useRouter } from "expo-router";
-import React, { useCallback, useEffect, useRef, useState, useLayoutEffect } from "react";
+import React, {
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+  useRef,
+  useState,
+} from "react";
 import {
   Animated,
   FlatList,
@@ -14,14 +20,14 @@ import {
   View,
   useColorScheme,
 } from "react-native";
-import { CustomHeaderTitle } from "../../components/CustomHeaderTitle"
+import { CustomHeaderTitle } from "../../components/CustomHeaderTitle";
 import GameCard from "../../components/GameCard";
 import TabBar from "../../components/TabBar";
 
 import { teams } from "../../constants/teams";
 
 export default function HomeScreen() {
-   const navigation = useNavigation();
+  const navigation = useNavigation();
   const colorScheme = useColorScheme();
   const isDark = colorScheme === "dark";
   // Tabs and selected tab state
@@ -61,7 +67,6 @@ export default function HomeScreen() {
       loadFavorites();
     }, [])
   );
-
 
   // Load dummy games & news once
   useEffect(() => {
@@ -125,10 +130,9 @@ export default function HomeScreen() {
     ]);
   }, []);
 
-
-   useLayoutEffect(() => {
+  useLayoutEffect(() => {
     navigation.setOptions({
-      headerTitle: () => <CustomHeaderTitle title={`Home`}/>, // Use your custom header here
+      headerTitle: () => <CustomHeaderTitle title={`Home`} />, // Use your custom header here
     });
   }, [navigation, isDark]);
 

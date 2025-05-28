@@ -92,13 +92,13 @@ export default function EditProfileScreen() {
       behavior={Platform.OS === "ios" ? "padding" : undefined}
       style={{ flex: 1 }}
     >
-      <ScrollView contentContainerStyle={{ paddingBottom: 40,  backgroundColor: isDark ? "#121212" : "#fff", }}>
-
-        <View
-          style={[
-            styles.container
-          ]}
-        >
+      <ScrollView
+        contentContainerStyle={{
+          paddingBottom: 40,
+          backgroundColor: isDark ? "#121212" : "#fff",
+        }}
+      >
+        <View style={[styles.container]}>
           <Pressable onPress={() => pickImage(setBannerImage)}>
             {bannerImage ? (
               <Image source={{ uri: bannerImage }} style={styles.banner} />
@@ -199,7 +199,6 @@ const getStyles = (isDark: boolean) =>
     container: {
       backgroundColor: isDark ? "#121212" : "#fff",
       flex: 1,
-      
     },
     banner: {
       height: BANNER_HEIGHT,
@@ -226,7 +225,6 @@ const getStyles = (isDark: boolean) =>
 
     formContainer: {
       paddingTop: 60,
-
     },
     label: {
       marginTop: 40,
@@ -250,7 +248,7 @@ const getStyles = (isDark: boolean) =>
     },
     saveButton: {
       marginVertical: 24,
-     backgroundColor: isDark ? "#fff" : "#000",
+      backgroundColor: isDark ? "#fff" : "#000",
       padding: 14,
       borderRadius: 8,
       alignItems: "center",
