@@ -1,3 +1,4 @@
+// TabBar.tsx
 import React, { useRef, useEffect } from "react";
 import {
   Animated,
@@ -6,95 +7,132 @@ import {
   StyleSheet,
   Text,
   View,
-  useColorScheme, TextStyle
+  useColorScheme,
+  TextStyle,
+  ViewStyle, StyleProp
 } from "react-native";
 
 export interface TabBarProps<T extends string> {
   tabs: readonly T[];
   selected: T;
   onTabPress: (tab: T) => void;
-}
+  renderLabel?: (tab: T, isSelected: boolean) => React.ReactNode;
+    style?: StyleProp<ViewStyle>; // ✅ add this line
 
+}
 
 export default function TabBar<T extends string>({
   tabs,
   selected,
   onTabPress,
+  renderLabel,
+
 }: TabBarProps<T>) {
   const colorScheme = useColorScheme();
   const isDark = colorScheme === "dark";
 
   const underlineX = useRef(new Animated.Value(0)).current;
   const underlineWidth = useRef(new Animated.Value(0)).current;
-  const tabMeasurements = useRef<{ x: number; width: number }[]>([]);
+
+  const textMeasurements = useRef<{ width: number }[]>([]);
+  const pressableMeasurements = useRef<{ x: number; width: number }[]>([]);
   const isInitialized = useRef(false);
 
-  const onTabLayout = (index: number) => (event: LayoutChangeEvent) => {
-    const { x, width } = event.nativeEvent.layout;
-    tabMeasurements.current[index] = { x, width };
+  const onTextLayout = (index: number) => (event: LayoutChangeEvent) => {
+    const { width } = event.nativeEvent.layout;
+    textMeasurements.current[index] = { width };
+    maybeInitializeUnderline();
+  };
 
+  const onPressableLayout = (index: number) => (event: LayoutChangeEvent) => {
+    const { x, width } = event.nativeEvent.layout;
+    pressableMeasurements.current[index] = { x, width };
+    maybeInitializeUnderline();
+  };
+
+  const maybeInitializeUnderline = () => {
     if (
-      tabMeasurements.current.length === tabs.length &&
-      tabMeasurements.current.every((m) => m !== undefined) &&
+      textMeasurements.current.length === tabs.length &&
+      pressableMeasurements.current.length === tabs.length &&
+      textMeasurements.current.every((m) => m !== undefined) &&
+      pressableMeasurements.current.every((m) => m !== undefined) &&
       !isInitialized.current
     ) {
-      underlineX.setValue(tabMeasurements.current[0].x);
-      underlineWidth.setValue(tabMeasurements.current[0].width);
+      const index = tabs.indexOf(selected);
+      const initialX = calculateUnderlineX(index);
+      underlineX.setValue(initialX);
+      underlineWidth.setValue(textMeasurements.current[index].width);
       isInitialized.current = true;
     }
   };
 
+  const calculateUnderlineX = (index: number) => {
+    const textWidth = textMeasurements.current[index].width;
+    const pressable = pressableMeasurements.current[index];
+    return pressable.x + (pressable.width - textWidth) / 2;
+  };
+
   useEffect(() => {
     const index = tabs.indexOf(selected);
-    if (tabMeasurements.current[index]) {
+    const textMeasurement = textMeasurements.current[index];
+    const pressableMeasurement = pressableMeasurements.current[index];
+
+    if (textMeasurement && pressableMeasurement) {
+      const x = calculateUnderlineX(index);
       Animated.parallel([
         Animated.timing(underlineX, {
-          toValue: tabMeasurements.current[index].x,
+          toValue: x,
           duration: 200,
           useNativeDriver: false,
         }),
         Animated.timing(underlineWidth, {
-          toValue: tabMeasurements.current[index].width,
+          toValue: textMeasurement.width,
           duration: 200,
           useNativeDriver: false,
         }),
       ]).start();
     }
-  }, [selected, tabs, underlineX, underlineWidth]);
+  }, [selected, tabs]);
 
-const getTabStyle = (isSelected: boolean): TextStyle => ({
-  fontSize: 20,
-  fontWeight: isSelected ? "700" : "400",
-  color: isSelected ? (isDark ? "#fff" : "#1d1d1d") : isDark ? "#888" : "#aaa",
-  fontFamily: "Oswald_400Regular",
-});
+  const defaultLabelStyle = (isSelected: boolean): TextStyle => ({
+    fontSize: 20,
+    color: isSelected ? (isDark ? "#fff" : "#1d1d1d") : isDark ? "#888" : "rgba(0, 0, 0, 0.5)",
+    fontFamily: "Oswald_400Regular",
+  });
 
-
-  const underlineStyle = {
+  const underlineStyle: ViewStyle = {
     width: underlineWidth,
     transform: [{ translateX: underlineX }],
     height: 2,
+    borderRadius: 100,
     backgroundColor: isDark ? "#fff" : "#1d1d1d",
-    position: "absolute" as const,
+    position: "absolute",
     bottom: 0,
     left: 0,
   };
 
   return (
     <View style={styles.tabs}>
-      {tabs.map((tab, i) => (
-        <Pressable
-          key={tab}
-          onPress={() => onTabPress(tab)}
-          onLayout={onTabLayout(i)}
-          style={styles.tabPressable}
-          accessibilityRole="tab"
-          accessibilityState={{ selected: selected === tab }}
-          accessibilityLabel={`Switch to ${tab} tab`}
-        >
-          <Text style={getTabStyle(selected === tab)}>{tab.toUpperCase()}</Text>
-        </Pressable>
-      ))}
+      {tabs.map((tab, i) => {
+        const isSelected = selected === tab;
+        return (
+          <Pressable
+            key={tab}
+            onPress={() => onTabPress(tab)}
+            onLayout={onPressableLayout(i)}
+            style={styles.tabPressable}
+            accessibilityRole="tab"
+            accessibilityState={{ selected: isSelected }}
+            accessibilityLabel={`Switch to ${tab} tab`}
+          >
+            <View onLayout={onTextLayout(i)}>
+              {renderLabel ? renderLabel(tab, isSelected) : (
+                <Text style={defaultLabelStyle(isSelected)}>{tab.toUpperCase()}</Text>
+              )}
+            </View>
+          </Pressable>
+        );
+      })}
       <Animated.View style={underlineStyle} />
     </View>
   );
@@ -103,13 +141,14 @@ const getTabStyle = (isSelected: boolean): TextStyle => ({
 const styles = StyleSheet.create({
   tabs: {
     flexDirection: "row",
-    justifyContent: "center",
+    justifyContent: "space-between",
     marginBottom: 10,
     position: "relative",
   },
   tabPressable: {
-    marginHorizontal: 40,
-    paddingHorizontal: 20,
-    paddingVertical: 10,
+    flex: 1,
+    paddingTop: 10,
+    paddingBottom: 4,
+    alignItems: "center",
   },
 });
