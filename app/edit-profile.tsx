@@ -1,7 +1,9 @@
+import { CustomHeaderTitle } from "@/components/CustomHeaderTitle";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import * as ImagePicker from "expo-image-picker";
-import { useRouter } from "expo-router";
-import React, { useEffect, useState } from "react";
+import { useNavigation, useRouter } from "expo-router";
+import { goBack } from "expo-router/build/global-state/routing";
+import { useEffect, useLayoutEffect, useState } from "react";
 import {
   Alert,
   Image,
@@ -15,8 +17,11 @@ import {
   useColorScheme,
   View,
 } from "react-native";
-const BANNER_HEIGHT = 180;
+
+const BANNER_HEIGHT = 120;
 const PROFILE_PIC_SIZE = 120;
+const BASE_URL =
+  "https://022d-2600-1006-b173-fec0-9d1d-aa0e-45fc-e30f.ngrok-free.app";
 
 export default function EditProfileScreen() {
   const [username, setUsername] = useState("");
@@ -27,6 +32,7 @@ export default function EditProfileScreen() {
   const [bannerImage, setBannerImage] = useState<string | null>(null);
   const isDark = useColorScheme() === "dark";
   const router = useRouter();
+  const navigation = useNavigation();
 
   useEffect(() => {
     const loadData = async () => {
@@ -45,6 +51,14 @@ export default function EditProfileScreen() {
     };
     loadData();
   }, []);
+
+  useLayoutEffect(() => {
+    navigation.setOptions({
+      header: () => (
+        <CustomHeaderTitle title="Edit Favorites" onBack={goBack} />
+      ),
+    });
+  }, [navigation, isDark]);
 
   const pickImage = async (setImage: (uri: string) => void) => {
     const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
@@ -68,22 +82,79 @@ export default function EditProfileScreen() {
     }
   };
 
-  const handleSave = async () => {
-    try {
-      await AsyncStorage.setItem("username", username);
-      await AsyncStorage.setItem("fullName", fullName);
-      await AsyncStorage.setItem("email", email);
-      await AsyncStorage.setItem("bio", bio);
-      if (profileImage)
-        await AsyncStorage.setItem("profileImage", profileImage);
-      if (bannerImage) await AsyncStorage.setItem("bannerImage", bannerImage);
-      Alert.alert("Saved", "Profile updated.");
-      router.back();
-    } catch (err) {
-      console.error(err);
-      Alert.alert("Error", "Failed to save profile info.");
+const handleSave = async () => {
+  try {
+    const formData = new FormData();
+
+    formData.append("fullName", fullName);
+    formData.append("email", email);
+    formData.append("bio", bio || "");
+
+    // Append bannerImage - if local file, append file, else send URL string or omit if null
+    if (bannerImage?.startsWith("file://")) {
+      const filename = bannerImage.split("/").pop()!;
+      const match = /\.(\w+)$/.exec(filename);
+      const type = match ? `image/${match[1]}` : "image";
+
+      formData.append("bannerImage", {
+        uri: bannerImage,
+        name: filename,
+        type,
+      } as any);
+    } else if (bannerImage) {
+      formData.append("bannerImage", bannerImage);
     }
-  };
+
+    // Append profileImage - same logic as before
+    if (profileImage?.startsWith("file://")) {
+      const filename = profileImage.split("/").pop()!;
+      const match = /\.(\w+)$/.exec(filename);
+      const type = match ? `image/${match[1]}` : "image";
+
+      formData.append("profileImage", {
+        uri: profileImage,
+        name: filename,
+        type,
+      } as any);
+    } else if (profileImage) {
+      formData.append("profileImage", profileImage);
+    }
+
+    const res = await fetch(`${BASE_URL}/api/users/${username}`, {
+      method: "PATCH",
+      headers: {
+        // Do NOT set Content-Type header manually when sending FormData with fetch,
+        // let fetch set the proper multipart/form-data boundary header automatically
+      },
+      body: formData,
+    });
+
+    if (!res.ok) {
+      throw new Error("Failed to update profile");
+    }
+
+    const data = await res.json();
+
+    // Save returned user data in AsyncStorage
+    await AsyncStorage.setItem("fullName", data.user.full_name);
+    await AsyncStorage.setItem("email", data.user.email);
+    await AsyncStorage.setItem("bio", data.user.bio || "");
+    if (data.user.profile_image)
+      await AsyncStorage.setItem("profileImage", data.user.profile_image);
+
+    if (data.user.banner_image) {
+      await AsyncStorage.setItem("bannerImage", data.user.banner_image);
+    } else {
+      await AsyncStorage.removeItem("bannerImage");
+    }
+
+    Alert.alert("Saved", "Profile updated.");
+    router.back();
+  } catch (err) {
+    console.error(err);
+    Alert.alert("Error", "Failed to save profile info.");
+  }
+};
 
   const styles = getStyles(isDark);
 
@@ -95,7 +166,7 @@ export default function EditProfileScreen() {
       <ScrollView
         contentContainerStyle={{
           paddingBottom: 40,
-          backgroundColor: isDark ? "#121212" : "#fff",
+          backgroundColor: isDark ? "#1d1d1d" : "#fff",
         }}
       >
         <View style={[styles.container]}>
@@ -116,8 +187,10 @@ export default function EditProfileScreen() {
             {profileImage ? (
               <Image source={{ uri: profileImage }} style={styles.profilePic} />
             ) : (
-              <View style={[styles.profilePic, { backgroundColor: "#ccc" }]}>
-                <Text style={styles.placeholderText}>Add Pic</Text>
+              <View style={[styles.profilePic, { backgroundColor: "#888" }]}>
+                <Text style={styles.profilePlaceholderText}>
+                  Tap to add pic
+                </Text>
               </View>
             )}
           </Pressable>
@@ -197,7 +270,6 @@ export default function EditProfileScreen() {
 const getStyles = (isDark: boolean) =>
   StyleSheet.create({
     container: {
-      backgroundColor: isDark ? "#121212" : "#fff",
       flex: 1,
     },
     banner: {
@@ -220,7 +292,7 @@ const getStyles = (isDark: boolean) =>
       height: PROFILE_PIC_SIZE,
       borderRadius: PROFILE_PIC_SIZE / 2,
       borderWidth: 4,
-      borderColor: isDark ? "#121212" : "#fff",
+      borderColor: isDark ? "#1d1d1d" : "#fff",
     },
 
     formContainer: {
@@ -230,7 +302,7 @@ const getStyles = (isDark: boolean) =>
       marginTop: 40,
       marginBottom: 20,
       fontSize: 16,
-      fontFamily: "Oswald_500Medium",
+      fontFamily: "Oswald_400Regular",
       marginHorizontal: 20,
     },
     input: {
@@ -249,7 +321,7 @@ const getStyles = (isDark: boolean) =>
     saveButton: {
       marginVertical: 24,
       backgroundColor: isDark ? "#fff" : "#000",
-      padding: 14,
+      padding: 16,
       borderRadius: 8,
       alignItems: "center",
       marginHorizontal: 20,
@@ -257,10 +329,21 @@ const getStyles = (isDark: boolean) =>
     saveButtonText: {
       color: isDark ? "#000" : "#fff",
       fontSize: 16,
-      fontWeight: "600",
+      fontFamily: "Oswald_500Medium",
     },
     placeholderText: {
       color: "#fff",
-      fontWeight: "500",
+      fontFamily: "Oswald_400Regular",
+      fontSize: 20,
+      marginBottom: 40,
+      textAlign: "center",
+    },
+    profilePlaceholderText: {
+      color: "#fff",
+      fontFamily: "Oswald_400Regular",
+      fontSize: 16,
+      textAlign: "center",
+      marginVertical: 40,
+      marginHorizontal: 0,
     },
   });
