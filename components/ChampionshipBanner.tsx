@@ -8,18 +8,6 @@ import {
 import { teams } from "../constants/teams";
 import { logoMap } from "../constants/teams";
 
-
-type TeamColors = {
-  id?: string;
-  fullName?: string;
-  color?: string;
-  secondaryColor?: string;
-  constantLight?: string;
-  constantTextLight?: string;
-  constantBlack?: string;
-};
-
-
 type Props = {
   years: number[];
   logo?: any;
@@ -36,9 +24,12 @@ export default function ChampionshipBanner({
   const isDark = useColorScheme() === "dark";
 
   const cleanName = teamName?.replace(/"/g, "") || "";
+if (!teamId && !teamName) {
+  console.warn("ChampionshipBanner: No teamId or teamName passed");
+}
 
   const team =
-    teams.find((t) => t.id === String(teamId)) ||
+    teams.find((t) => String(t.id) === String(teamId)) ||
     teams.find((t) => t.fullName === cleanName);
 
   if (!team) {
@@ -46,17 +37,13 @@ export default function ChampionshipBanner({
       `ChampionshipBanner: No team found for ID "${teamId}" or name "${teamName}"`
     );
   }
- const isNone = years.length === 0;
+
+  const isNone = years.length === 0;
   const isManyYears = years.length > 10;
   const banners = isNone ? [null] : isManyYears ? [years.length] : years;
-  
-  
 
+  const textColor = "#fff"; // Always white text
 
-const textColor = "#fff"; // Always white text
-
-
-      
   return (
     <View
       style={{
@@ -75,6 +62,7 @@ const textColor = "#fff"; // Always white text
           : `'${yearVal?.toString().slice(-2)}`;
 
         const bannerSource = getBannerImage(team?.id);
+
         return (
           <ImageBackground
             key={index}
@@ -98,20 +86,17 @@ const textColor = "#fff"; // Always white text
               {yearShort}
             </Text>
 
-{team && (
-<Image
-  source={getTeamLogoFromMap(team?.name, isDark) || logo}
-  style={{
-    width: 40,
-    height: 60,
-    marginTop: 4,
-    resizeMode: "contain",
-  }}
-/>
-
-
-)}
-
+            {team && (
+              <Image
+                source={getTeamLogoFromMap(team.name, isDark) || logo}
+                style={{
+                  width: 40,
+                  height: 60,
+                  marginTop: 4,
+                  resizeMode: "contain",
+                }}
+              />
+            )}
 
             <Text
               style={{
@@ -129,13 +114,25 @@ const textColor = "#fff"; // Always white text
     </View>
   );
 }
-
 function getTeamLogoFromMap(name?: string, isDark?: boolean) {
   if (!name) return null;
 
-  const cleanName = name.replace(/\s+/g, ""); // Remove spaces just in case
+  let cleanName = name.replace(/\s+/g, "");
+
+  // Fix for 76ers team name
+  if (cleanName === "76ers") cleanName = "Sixers";
+
   const logoKey = `${cleanName}Logo`;
   const logoLightKey = `${cleanName}LogoLight`;
+
+  const alwaysLightTeams = ["Jazz", "Rockets", "Sixers"];
+  const baseName = cleanName;
+
+  const isAlwaysLight = alwaysLightTeams.includes(baseName);
+
+  if (isAlwaysLight && logoMap[logoLightKey]) {
+    return logoMap[logoLightKey];
+  }
 
   if (isDark && logoMap[logoLightKey]) {
     return logoMap[logoLightKey];

@@ -7,7 +7,7 @@ import {
   useColorScheme,
   View,
 } from "react-native";
-import { teams } from "../constants/teams";
+import { teams } from "../../constants/teams";
 
 const OSEXTRALIGHT = "Oswald_200ExtraLight";
 const OSREGULAR = "Oswald_400Regular";
@@ -42,11 +42,14 @@ export default function SeasonStatCard({
     totalFGA,
   } = aggregatedStats;
 
-  const ppg = (totalPoints / gamesPlayed).toFixed(1);
-  const apg = (totalAssists / gamesPlayed).toFixed(1);
-  const rpg = (totalRebounds / gamesPlayed).toFixed(1);
+  const safeFixed = (val: number) =>
+    isNaN(val) || val == null ? "0.0" : val.toFixed(1);
+
+  const ppg = safeFixed(totalPoints / gamesPlayed);
+  const apg = safeFixed(totalAssists / gamesPlayed);
+  const rpg = safeFixed(totalRebounds / gamesPlayed);
   const fgPercent =
-    totalFGA > 0 ? ((totalFGM / totalFGA) * 100).toFixed(1) : "0.0";
+    totalFGA > 0 ? safeFixed((totalFGM / totalFGA) * 100) : "0.0";
 
   const activeColor = isDark ? teamColorDark || teamColor : teamColor;
   const { id, teamId } = useLocalSearchParams<{ id: string; teamId: string }>();
@@ -61,7 +64,7 @@ export default function SeasonStatCard({
         style={{
           fontSize: 24,
           fontFamily: OSMEDIUM,
-          marginBottom: 8,
+          marginBottom: 16,
           marginTop: 16,
           paddingBottom: 4,
           borderBottomWidth: 1,
@@ -73,47 +76,28 @@ export default function SeasonStatCard({
         2024 Season
       </Text>
       <View
-        style={[
-          styles.card,
-          { backgroundColor: isDark ? "#2e2e2e" : "#eee" },
-        ]}
+        style={[styles.card, { backgroundColor: isDark ? "#2e2e2e" : "#eee" }]}
       >
         <View style={styles.statsRow}>
           <StatItem
             label="PTS"
             value={ppg}
-            color={
-              isDark
-                ?  "#fff"
-                :  teamObj?.color
-            }
+            color={isDark ? "#fff" : teamObj?.color}
           />
           <StatItem
             label="AST"
             value={apg}
-            color={
-              isDark
-                ? "#fff"
-                : teamObj?.color
-            }
+            color={isDark ? "#fff" : teamObj?.color}
           />
           <StatItem
             label="REB"
             value={rpg}
-            color={
-              isDark
-                ?  "#fff"
-                : teamObj?.color
-            }
+            color={isDark ? "#fff" : teamObj?.color}
           />
           <StatItem
             label="FG%"
             value={fgPercent}
-            color={
-              isDark
-                ? "#fff"
-                : teamObj?.color
-            }
+            color={isDark ? "#fff" : teamObj?.color}
           />
         </View>
       </View>

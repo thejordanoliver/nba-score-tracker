@@ -1,4 +1,6 @@
 // components/game-details/GameInfo.tsx
+import { useESPNBroadcasts } from "@/hooks/useESPNBroadcasts";
+import { matchBroadcastToGame } from "@/utils/matchBroadcast";
 import { StyleSheet, Text, View } from "react-native";
 
 const OSEXTRALIGHT = "Oswald_200ExtraLight";
@@ -15,6 +17,8 @@ type GameInfoProps = {
   colors: Record<string, string>;
   isDark: boolean;
   playoffInfo?: string | string[];
+  homeTeam: string;
+  awayTeam: string;
 };
 
 export function GameInfo({
@@ -26,6 +30,8 @@ export function GameInfo({
   colors,
   isDark,
   playoffInfo,
+  homeTeam,
+  awayTeam,
 }: GameInfoProps) {
   const renderPlayoffInfo = () => {
     if (!playoffInfo) return null;
@@ -44,6 +50,25 @@ export function GameInfo({
       </Text>
     );
   };
+
+  const { broadcasts } = useESPNBroadcasts();
+
+  // Match broadcast info for this game using utility function
+  const matched = matchBroadcastToGame(
+    {
+      date,
+      home: { name: homeTeam },
+      away: { name: awayTeam },
+    },
+    broadcasts
+  );
+
+  const networkString = matched?.broadcasts
+    ?.map((b) => b.network)
+    .filter(Boolean)
+    .join(", ");
+
+  // Optional: Debug log to confirm broadcast networks found
 
   return (
     <View style={styles.container}>
@@ -79,7 +104,30 @@ export function GameInfo({
       )}
 
       {status === "Final" && (
-        <Text style={[styles.final, { color: colors.finalText }]}>Final</Text>
+        <>
+          <Text style={[styles.final, { color: colors.finalText }]}>Final</Text>
+          <Text style={[styles.date, { color: colors.secondaryText }]}>
+            {new Date(date).toLocaleDateString("en-US", {
+              month: "numeric",
+              day: "numeric",
+            })}
+          </Text>
+
+          {networkString && (
+            <Text
+              style={{
+                fontSize: 10,
+                fontFamily: OSREGULAR,
+
+                color: colors.secondaryText,
+                textAlign: "center",
+              }}
+              accessibilityLabel="Broadcast Networks"
+            >
+              {networkString}
+            </Text>
+          )}
+        </>
       )}
 
       {renderPlayoffInfo()}

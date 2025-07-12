@@ -1,14 +1,12 @@
-import React, { useEffect, useRef } from "react";
+import { getStyles } from "@/styles/ProfileScreen.styles";
+import { useEffect, useRef } from "react";
 import {
   Animated,
-  ScrollView,
-  StyleSheet,
-  useColorScheme,
-  View,
   Dimensions,
-  Text, ViewProps
+  ScrollView,
+  View,
+  ViewProps,
 } from "react-native";
-import { getStyles } from "@/styles/ProfileScreen.styles";
 
 const { width: SCREEN_WIDTH } = Dimensions.get("window");
 
@@ -59,23 +57,30 @@ export const SkeletonProfileScreen = ({ isDark }: { isDark: boolean }) => {
   };
 
   // Helper component to wrap shimmer inside a block
- const ShimmerBlock = (props: ViewProps & { style: any }) => {
-  return (
-    <View {...props} style={[props.style, skeletonBlock]}>
-      <Animated.View
-        style={[
-          shimmerStyle,
-          {
-            transform: [
-              { translateX: shimmerTranslate },
-              { rotate: "0deg" },
-            ],
-          },
-        ]}
-      />
-    </View>
-  );
-};
+  const ShimmerBlock = (props: ViewProps & { style: any }) => {
+    return (
+      <View {...props} style={[props.style, skeletonBlock]}>
+        <Animated.View
+          style={[
+            shimmerStyle,
+            {
+              transform: [{ translateX: shimmerTranslate }, { rotate: "0deg" }],
+            },
+          ]}
+        />
+      </View>
+    );
+  };
+
+  // Mimicking grid layout from FavoriteTeamsList
+  const isGridView = true;
+  const numColumns = 3;
+  const horizontalPadding = 40; // match your ProfileScreen padding
+  const columnGap = 6;
+  const rowGap = 8;
+  const totalGap = columnGap * (numColumns - 1);
+  const availableWidth = SCREEN_WIDTH - horizontalPadding - totalGap;
+  const itemWidth = "30%";
 
   return (
     <ScrollView
@@ -86,7 +91,10 @@ export const SkeletonProfileScreen = ({ isDark }: { isDark: boolean }) => {
       <View style={styles.bannerContainer}>
         <ShimmerBlock style={styles.banner} testID="skeleton-banner" />
         <View style={styles.profilePicWrapper}>
-          <ShimmerBlock style={styles.profilePic} testID="skeleton-profile-pic" />
+          <ShimmerBlock
+            style={styles.profilePic}
+            testID="skeleton-profile-pic"
+          />
         </View>
       </View>
 
@@ -108,27 +116,76 @@ export const SkeletonProfileScreen = ({ isDark }: { isDark: boolean }) => {
       <View style={styles.bioContainer}>
         <View style={styles.wrapper}>
           <View style={styles.nameContainer}>
-            <ShimmerBlock style={{ height: 20, width: 120 }} testID="skeleton-name-line1" />
-            <ShimmerBlock style={{ height: 16, width: 100 }} testID="skeleton-name-line2" />
+            <ShimmerBlock
+              style={{ height: 20, width: 120 }}
+              testID="skeleton-name-line1"
+            />
+            <ShimmerBlock
+              style={{ height: 16, width: 100 }}
+              testID="skeleton-name-line2"
+            />
           </View>
-          <ShimmerBlock style={styles.editProfileBtn} testID="skeleton-edit-profile-btn" />
+          <ShimmerBlock
+            style={styles.editProfileBtn}
+            testID="skeleton-edit-profile-btn"
+          />
         </View>
-        <ShimmerBlock style={{ height: 40, width: "100%" }} testID="skeleton-bio" />
+        <ShimmerBlock
+          style={{ height: 40, width: "100%" }}
+          testID="skeleton-bio"
+        />
       </View>
 
-      <View style={styles.favoritesContainer}>
+      <View style={[styles.favoritesContainer, { marginTop: 80 }]}>
         <View style={styles.favoritesHeader}>
-          <ShimmerBlock style={{ height: 20, width: 150 }} testID="skeleton-favorites-header" />
-          <ShimmerBlock style={{ height: 20, width: 20 }} testID="skeleton-favorites-icon" />
+          <ShimmerBlock
+            style={{ height: 20, width: 150 }}
+            testID="skeleton-favorites-header"
+          />
+          <ShimmerBlock
+            style={{ height: 20, width: 20 }}
+            testID="skeleton-favorites-icon"
+          />
         </View>
-        <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 12 }}>
+
+        <View
+          style={{
+            flexDirection: "row",
+            flexWrap: "wrap",
+            columnGap,
+            rowGap,
+            justifyContent: "space-between",
+            marginTop: 10,
+          }}
+        >
           {[...Array(6)].map((_, i) => (
             <ShimmerBlock
               key={i}
-              style={{ width: 100, height: 100, borderRadius: 8 }}
+              style={{
+                width: itemWidth,
+                height: 130,
+                borderRadius: 8,
+                marginBottom: 4,
+                paddingHorizontal: 2,
+                paddingVertical: 20,
+              }}
               testID={`skeleton-favorite-item-${i}`}
             />
           ))}
+        </View>
+
+        {/* Skeleton Edit Teams button */}
+        <View style={{ width: "100%", marginTop: 10 }}>
+          <ShimmerBlock
+            style={{
+              height: 60,
+              width: "100%",
+              alignSelf: "center",
+              borderRadius: 20,
+              // Center content style mimicking button
+            }}
+            testID="skeleton-edit-teams-button"
+          />
         </View>
       </View>
     </ScrollView>

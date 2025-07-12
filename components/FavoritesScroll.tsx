@@ -39,7 +39,13 @@ export default function FavoritesScroll({ favoriteTeamIds }: Props) {
               styles.teamIcon,
               pressed && { opacity: 0.6 },
             ]}
-            onPress={() => router.push(`/team/${team.id}`)}
+            onPress={() =>
+  router.push({
+    pathname: "/team/[teamId]",
+    params: { teamId: team.id.toString() }, // convert id to string
+  })
+}
+
           >
             <View
               style={[

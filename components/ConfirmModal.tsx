@@ -6,7 +6,8 @@ import {
   useColorScheme,
   View,
 } from "react-native";
-import Modal from "react-native-modal"; // ⬅️ Use this instead of React Native's Modal
+import Modal from "react-native-modal";
+import { useState, useEffect } from "react";
 
 const OSEXTRALIGHT = "Oswald_200ExtraLight";
 const OSLIGHT = "Oswald_300Light";
@@ -36,23 +37,34 @@ export default function ConfirmModal({
 }: ConfirmModalProps) {
   const isDark = useColorScheme() === "dark";
 
+  // Internal state to delay unmount after animation out
+  const [showModal, setShowModal] = useState(visible);
+
+  useEffect(() => {
+    if (visible) {
+      setShowModal(true);
+    } else {
+      const timeout = setTimeout(() => setShowModal(false), 300); // match animationOut duration
+      return () => clearTimeout(timeout);
+    }
+  }, [visible]);
+
+  if (!showModal) return null;
+
   const styles = StyleSheet.create({
     container: {
       backgroundColor: isDark
         ? "rgba(100, 100, 100, 0.5)"
         : "rgba(255, 255, 255, 0.5)",
-      borderTopLeftRadius: 20,
-      borderTopRightRadius: 20,
-      borderBottomRightRadius: 20,
-      borderBottomLeftRadius: 20,
-      justifyContent: "center", // ✅ add this
+      borderRadius: 20,
+      justifyContent: "center",
       padding: 20,
       paddingBottom: 30,
       width: "100%",
       alignItems: "center",
       overflow: "hidden",
       marginBottom: 10,
-      minHeight: 400, // ⬅️ makes it slightly taller
+      minHeight: 400,
     },
     dragIndicator: {
       width: 40,
@@ -139,10 +151,10 @@ export default function ConfirmModal({
             style={StyleSheet.absoluteFill}
           />
 
-          {/* Drag Indicator always at top */}
+          {/* Drag Indicator */}
           <View style={styles.dragIndicator} />
 
-          {/* Content container with vertical centering */}
+          {/* Content */}
           <View style={styles.content}>
             <Text style={styles.title}>{title}</Text>
             <Text style={styles.message}>{message}</Text>

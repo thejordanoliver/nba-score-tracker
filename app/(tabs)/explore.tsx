@@ -21,6 +21,9 @@ import {
 } from "react-native";
 import { CustomHeaderTitle } from "../../components/CustomHeaderTitle";
 import TabBar from "../../components/TabBar"; // Adjust path if needed
+
+
+
 const API_URL = process.env.EXPO_PUBLIC_API_URL;
 
 const OSEXTRALIGHT = "Oswald_200ExtraLight";
@@ -131,14 +134,17 @@ export default function ExplorePage() {
           );
         }
 
-        if (data.players?.length) {
-          combinedResults.push(
-            ...data.players.map((p) => ({
-              ...p,
-              type: "player" as const,
-            }))
-          );
-        }
+      if (data.players?.length) {
+  combinedResults.push(
+    ...data.players
+      .filter((p) => p.team_id !== null && p.team_id !== undefined)
+      .map((p) => ({
+        ...p,
+        type: "player" as const,
+      }))
+  );
+}
+
 
         if (data.users?.length) {
           combinedResults.push(
@@ -209,10 +215,7 @@ export default function ExplorePage() {
       return (
         <Pressable
           onPress={() => {
-            router.push({
-              pathname: "/team/[teamId]",
-              params: { teamId: item.id.toString() },
-            });
+            router.push(`/team/${item.id}`);
           }}
           style={[styles.itemContainer, isDark && styles.itemContainerDark]}
         >
@@ -331,7 +334,7 @@ export default function ExplorePage() {
         ]}
       >
         <TextInput
-          placeholder="Explore"
+          placeholder="Search..."
           placeholderTextColor={isDark ? "#888" : "#aaa"}
           style={[styles.searchInput, isDark && styles.searchInputDark]}
           value={query}
@@ -349,7 +352,7 @@ export default function ExplorePage() {
           tabs={tabs}
           selected={selectedTab}
           onTabPress={setSelectedTab}
-          style={{ marginBottom: 12 }}
+          style={{ marginBottom: 12}}
         />
       )}
 

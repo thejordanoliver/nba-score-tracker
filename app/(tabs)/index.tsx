@@ -1,3 +1,6 @@
+import GamesList from "@/components/GamesList";
+import Heading from "@/components/Heading";
+import NewsHighlightsList from "@/components/NewsHighlightsList";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useFocusEffect, useNavigation } from "@react-navigation/native";
 import { useRouter } from "expo-router";
@@ -9,14 +12,10 @@ import {
   useRef,
   useState,
 } from "react";
-import { Animated, FlatList, Text, View, useColorScheme } from "react-native";
+import { Animated, Text, View, useColorScheme } from "react-native";
 import { CustomHeaderTitle } from "../../components/CustomHeaderTitle";
 import FavoritesScroll from "../../components/FavoritesScroll";
 import FavoritesScrollSkeleton from "../../components/FavoritesScrollSkeleton";
-import GameCard from "../../components/GameCard";
-import GameCardSkeleton from "../../components/GameCardSkeleton";
-import HighlightCard from "../../components/HighlightCard";
-import NewsCard from "../../components/NewsCard";
 import NewsCardSkeleton from "../../components/NewsCardSkeleton";
 import TabBar from "../../components/TabBar";
 import { useNewsStore } from "../../hooks/newsStore";
@@ -25,8 +24,7 @@ import type { TransformedGame } from "../../hooks/useLiveGames";
 import { useLiveGames } from "../../hooks/useLiveGames";
 import { useNews } from "../../hooks/useNews";
 import { useWeeklyGames } from "../../hooks/useWeeklyGames";
-import { getStyles } from "../../styles/HomeScreen.styles";
-
+import { getStyles } from "../../styles/indexStyles";
 type Tab = "scores" | "news";
 
 type NewsItem = {
@@ -196,47 +194,41 @@ export default function HomeScreen() {
 
   return (
     <View style={styles.container}>
-      <TabBar tabs={tabs} selected={selectedTab} onTabPress={handleTabPress} />
-      {(weeklyGamesLoading || liveGamesLoading) && !favorites.length ? (
-        <FavoritesScrollSkeleton />
-      ) : (
-        <FavoritesScroll favoriteTeamIds={favorites} />
-      )}
+      <View style={styles.tabBarWrapper}>
+        <TabBar
+          tabs={tabs}
+          selected={selectedTab}
+          onTabPress={handleTabPress}
+        />
+      </View>
+
+      {selectedTab !== "news" &&
+        ((weeklyGamesLoading || liveGamesLoading) && !favorites.length ? (
+          <FavoritesScrollSkeleton />
+        ) : (
+          <FavoritesScroll favoriteTeamIds={favorites} />
+        ))}
 
       <View style={styles.contentArea}>
         {selectedTab === "scores" ? (
           <>
-            <Text style={styles.heading}>Latest Games</Text>
+            <Heading>Latest Games</Heading>
 
-            {(weeklyGamesLoading || liveGamesLoading) &&
-            combinedGames.length === 0 &&
-            !refreshing ? (
-              <>
-                <GameCardSkeleton />
-                <GameCardSkeleton />
-                <GameCardSkeleton />
-              </>
-            ) : combinedGames.length === 0 &&
-              !weeklyGamesLoading &&
-              !liveGamesLoading ? (
+            {combinedGames.length === 0 &&
+            !weeklyGamesLoading &&
+            !liveGamesLoading ? (
               <Text style={styles.emptyText}>No games today.</Text>
             ) : (
-              <FlatList
-                data={combinedGames}
-                keyExtractor={(item) => item.id.toString()}
-                renderItem={({ item }) => <GameCard game={item} />}
+              <GamesList
+                games={combinedGames}
+                loading={liveGamesLoading || weeklyGamesLoading}
                 refreshing={refreshing}
                 onRefresh={handleRefresh}
-                showsVerticalScrollIndicator={false}
-                contentContainerStyle={{ paddingBottom: 20 }}
-                style={{ flex: 1 }}
               />
             )}
           </>
         ) : (
           <>
-            <Text style={styles.heading}>Latest News & Highlights</Text>
-
             {(newsLoading || (highlightsLoading && !newsLoading)) &&
             !refreshing ? (
               <>
@@ -251,32 +243,11 @@ export default function HomeScreen() {
                 No news or highlights available.
               </Text>
             ) : (
-              <FlatList
-                data={combinedNewsAndHighlights}
-                keyExtractor={(item) =>
-                  item.itemType === "news" ? item.id : item.videoId
-                }
+              <NewsHighlightsList
+                items={combinedNewsAndHighlights}
+                loading={newsLoading}
                 refreshing={refreshing}
                 onRefresh={handleRefresh}
-                contentContainerStyle={{ paddingBottom: 100 }}
-                renderItem={({ item }) =>
-                  item.itemType === "news" ? (
-                    <NewsCard
-                      id={item.id}
-                      title={item.title}
-                      source={item.source}
-                      url={item.url}
-                      thumbnail={item.thumbnail}
-                    />
-                  ) : (
-                    <HighlightCard
-                      videoId={item.videoId}
-                      title={item.title}
-                      publishedAt={item.publishedAt}
-                      thumbnail={item.thumbnail}
-                    />
-                  )
-                }
               />
             )}
           </>

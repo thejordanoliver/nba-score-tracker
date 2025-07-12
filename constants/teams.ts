@@ -101,6 +101,39 @@ import TrailBlazersCoach from "../assets/Coaches/TrailBlazersCoach.png";
 import WarriorsCoach from "../assets/Coaches/WarriorsCoach.png";
 import WizardsCoach from "../assets/Coaches/WizardsCoach.png";
 
+//Faded Logos
+
+import FadedSixersLogo from "../assets/Faded/76ers.png";
+import FadedBucksLogo from "../assets/Faded/Bucks.png";
+import FadedBullsLogo from "../assets/Faded/Bulls.png";
+import FadedCavaliersLogo from "../assets/Faded/Cavaliers.png";
+import FadedCelticsLogo from "../assets/Faded/Celtics.png";
+import FadedClippersLogo from "../assets/Faded/Clippers.png";
+import FadedGrizzliesLogo from "../assets/Faded/Grizzlies.png";
+import FadedHawksLogo from "../assets/Faded/Hawks.png";
+import FadedHeatLogo from "../assets/Faded/Heat.png";
+import FadedHornetsLogo from "../assets/Faded/Hornets.png";
+import FadedJazzLogo from "../assets/Faded/Jazz.png";
+import FadedKingsLogo from "../assets/Faded/Kings.png";
+import FadedKnicksLogo from "../assets/Faded/Knicks.png";
+import FadedLakersLogo from "../assets/Faded/Lakers.png";
+import FadedMagicLogo from "../assets/Faded/Magic.png";
+import FadedMavericksLogo from "../assets/Faded/Mavericks.png";
+import FadedNetsLogo from "../assets/Faded/Nets.png";
+import FadedNuggetsLogo from "../assets/Faded/Nuggets.png";
+import FadedPacersLogo from "../assets/Faded/Pacers.png";
+import FadedPelicansLogo from "../assets/Faded/Pelicans.png";
+import FadedPistonsLogo from "../assets/Faded/Pistons.png";
+import FadedRaptorsLogo from "../assets/Faded/Raptors.png";
+import FadedRocketsLogo from "../assets/Faded/Rockets.png";
+import FadedSpursLogo from "../assets/Faded/Spurs.png";
+import FadedSunsLogo from "../assets/Faded/Suns.png";
+import FadedThunderLogo from "../assets/Faded/Thunder.png";
+import FadedTimberwolvesLogo from "../assets/Faded/Timberwolves.png";
+import FadedTrailBlazersLogo from "../assets/Faded/TrailBlazers.png";
+import FadedWarriorsLogo from "../assets/Faded/Warriors.png";
+import FadedWizardsLogo from "../assets/Faded/Wizards.png";
+
 export type Team = {
   id: string;
   fullName: string;
@@ -124,6 +157,7 @@ export type Team = {
   longitude?: number;
   address?: string;
   arenaCapacity?: string;
+  fadedLogo?: string;
 };
 
 export const teams = [
@@ -134,6 +168,7 @@ export const teams = [
     code: "ATL",
     location: "Atlanta, GA",
     logo: HawksLogo,
+    fadedLogo: FadedHawksLogo,
     color: "rgba(224, 58, 62, 1)",
     transparentColor: "rgba(224, 58, 61, .8)",
     secondaryColor: "rgba(193, 211, 47, 1)",
@@ -159,6 +194,8 @@ export const teams = [
     code: "BOS",
     location: "Boston, MA",
     logo: CelticsLogo,
+    fadedLogo: FadedCelticsLogo,
+
     color: "rgba(0, 122, 51, 1)",
     transparentColor: "rgba(0, 122, 51, .8)",
     secondaryColor: "rgba(255, 255, 255, 1)",
@@ -191,6 +228,8 @@ export const teams = [
     code: "BKN",
     location: "Brooklyn, NY",
     logo: NetsLogo,
+    fadedLogo: FadedNetsLogo,
+
     color: "rgba(0, 0, 0, 1)",
     transparentColor: "rgba(0, 0, 0, .8)",
     secondaryColor: "rgba(255, 255, 255, 1)",
@@ -216,6 +255,8 @@ export const teams = [
     code: "CHA",
     location: "Charlotte, NC",
     logo: HornetsLogo,
+    fadedLogo: FadedHornetsLogo,
+
     color: "rgb(0, 120, 140)",
     transparentColor: "rgba(29, 17, 96, .8)",
     secondaryColor: "rgba(29, 17, 96, 1)",
@@ -241,6 +282,8 @@ export const teams = [
     code: "CHI",
     location: "Chicago, IL",
     logo: BullsLogo,
+    fadedLogo: FadedBullsLogo,
+
     color: "rgba(206, 17, 65, 1)",
     transparentColor: "rgba(206, 17, 65, .8)",
     secondaryColor: "rgba(0, 0, 0, 1)",
@@ -266,7 +309,9 @@ export const teams = [
     code: "CLE",
     location: "Cleveland, OH",
     logo: CavaliersLogo,
-    color: "rgba(134, 0, 56, 1)",
+    fadedLogo: FadedCavaliersLogo,
+
+    color: "#860038",
     transparentColor: "rgba(134, 0, 56, .8)",
     secondaryColor: "rgba(253, 187, 48, 1)",
     arenaImage: CavaliersArena,
@@ -291,9 +336,11 @@ export const teams = [
     code: "DAL",
     location: "Dallas, TX",
     logo: MavericksLogo,
+    fadedLogo: FadedMavericksLogo,
+
     color: "rgb(0, 83, 188)",
     transparentColor: "rgba(0, 83, 188, .8)",
-    secondaryColor: "rgba(0, 0, 0, 1)",
+    secondaryColor: "rgb(255, 255, 255)",
     arenaImage: MavericksArena,
     arenaName: "American Airlines Center",
     coach: "Jason Kidd",
@@ -316,6 +363,8 @@ export const teams = [
     code: "DEN",
     location: "Denver, CO",
     logo: NuggetsLogo,
+    fadedLogo: FadedNuggetsLogo,
+
     color: "rgba(13, 34, 64, 1)",
     transparentColor: "rgba(13, 34, 64, .8)",
     secondaryColor: "rgba(255, 198, 39, 1)",
@@ -341,6 +390,8 @@ export const teams = [
     code: "DET",
     location: "Detroit, MI",
     logo: PistonsLogo,
+    fadedLogo: FadedPistonsLogo,
+
     color: "rgba(200, 16, 46, 1)",
     transparentColor: "rgba(29, 66, 138, .8)",
     secondaryColor: "rgba(29, 66, 138, 1)",
@@ -368,6 +419,8 @@ export const teams = [
     code: "GSW",
     location: "San Francisco, CA",
     logo: WarriorsLogo,
+    fadedLogo: FadedWarriorsLogo,
+
     color: "rgba(29, 66, 138, 1)",
     transparentColor: "rgba(29, 66, 138, .8)",
     secondaryColor: "rgba(255, 199, 44, 1)",
@@ -397,6 +450,8 @@ export const teams = [
     code: "HOU",
     location: "Houston, TX",
     logo: RocketsLogo,
+    fadedLogo: FadedRocketsLogo,
+
     logoLight: RocketsLogoLight,
     color: "rgba(206, 17, 65, 1)",
     transparentColor: "rgba(206, 17, 65, .8)",
@@ -423,6 +478,8 @@ export const teams = [
     code: "IND",
     location: "Indianapolis, IN",
     logo: PacersLogo,
+    fadedLogo: FadedPacersLogo,
+
     color: "rgba(0, 45, 98, 1)",
     transparentColor: "rgba(0, 45, 98, .8)",
     secondaryColor: "rgba(255, 198, 39, 1)",
@@ -448,6 +505,8 @@ export const teams = [
     code: "LAC",
     location: "Los Angeles, CA",
     logo: ClippersLogo,
+    fadedLogo: FadedClippersLogo,
+
     color: "rgba(200, 16, 46, 1)",
     transparentColor: "rgba(200, 16, 46, .8)",
     secondaryColor: "rgba(29, 66, 148, 1)",
@@ -473,7 +532,9 @@ export const teams = [
     code: "LAL",
     location: "Los Angeles, CA",
     logo: LakersLogo,
-    color: "rgba(85, 37, 130, 1)",
+    fadedLogo: FadedLakersLogo,
+
+    color: "#552582",
     transparentColor: "rgba(85, 37, 130, .8)",
     secondaryColor: "rgba(253, 185, 39, 1)",
     arenaImage: LakersArena,
@@ -507,9 +568,11 @@ export const teams = [
     code: "MEM",
     location: "Memphis, TN",
     logo: GrizzliesLogo,
-    color: "rgba(93, 118, 169, 1)",
+    fadedLogo: FadedGrizzliesLogo,
+
+    color: "rgba(18, 23, 63, 1)",
     transparentColor: "rgba(93, 118, 169, .8)",
-    secondaryColor: "rgba(18, 23, 63, 1)",
+    secondaryColor: "#5d76a9",
     arenaImage: GrizzliesArena,
     arenaName: "FedExForum",
     coach: "Tuomas Iisalo",
@@ -532,7 +595,9 @@ export const teams = [
     code: "MIA",
     location: "Miami, FL",
     logo: HeatLogo,
-    color: "rgba(152, 0, 46, 1)",
+    fadedLogo: FadedHeatLogo,
+
+    color: "#98002e",
     transparentColor: "rgba(152, 0, 46, .8)",
     secondaryColor: "rgba(0, 0, 0, 1)",
     arenaImage: HeatArena,
@@ -559,7 +624,9 @@ export const teams = [
     code: "MIL",
     location: "Milwaukee, WI",
     logo: BucksLogo,
-    color: "rgba(0, 71, 27, 1)",
+    fadedLogo: FadedBucksLogo,
+
+    color: "#00471b",
     transparentColor: "rgba(0, 71, 27, .8)",
     secondaryColor: "rgba(240, 235, 210, 1)",
     arenaImage: BucksArena,
@@ -584,7 +651,9 @@ export const teams = [
     code: "MIN",
     location: "Minneapolis, MN",
     logo: TimberwolvesLogo,
-    color: "rgba(12, 35, 64, 1)",
+    fadedLogo: FadedTimberwolvesLogo,
+
+    color: "#0c2340",
     transparentColor: "rgba(12, 35, 64, .8)",
     secondaryColor: "rgba(35, 97, 146, 1)",
     arenaImage: TimberwolvesArena,
@@ -610,7 +679,9 @@ export const teams = [
     code: "NOP",
     location: "New Orleans, LA",
     logo: PelicansLogo,
-    color: "rgba(0, 22, 65, 1)",
+    fadedLogo: FadedPelicansLogo,
+
+    color: "#001641",
     transparentColor: "rgba(0, 22, 65, .8)",
     secondaryColor: "rgba(227, 24, 55, 1)",
     arenaImage: PelicansArena,
@@ -635,7 +706,9 @@ export const teams = [
     code: "NYK",
     location: "New York, NY",
     logo: KnicksLogo,
-    color: "rgba(0, 107, 182, 1)",
+    fadedLogo: FadedKnicksLogo,
+
+    color: "#006bb6",
     transparentColor: "rgba(0, 107, 182, .8)",
     secondaryColor: "rgba(245, 132, 38, 1)",
     arenaImage: KnicksArena,
@@ -661,7 +734,9 @@ export const teams = [
     code: "OKC",
     location: "Oklahoma City, OK",
     logo: ThunderLogo,
-    color: "rgba(0, 125, 195, 1)",
+    fadedLogo: FadedThunderLogo,
+
+    color: "#007dc3",
     transparentColor: "rgba(0, 125, 195, .8)",
     secondaryColor: "rgba(239, 59, 36, 1)",
     arenaImage: ThunderArena,
@@ -687,7 +762,9 @@ export const teams = [
     code: "ORL",
     location: "Orlando, FL",
     logo: MagicLogo,
-    color: "rgb(32, 80, 175)",
+    fadedLogo: FadedMagicLogo,
+
+    color: "#2050af",
     transparentColor: "rgba(32, 79, 175, 0.8)",
     secondaryColor: "rgb(255, 255, 255)",
     arenaImage: MagicArena,
@@ -713,8 +790,9 @@ export const teams = [
     location: "Philadelphia, PA",
     logo: SixersLogo,
     logoLight: SixersLogoLight,
-    sixersLogoLight: SixersLogoLight,
-    color: "rgba(0, 43, 92, 1)",
+    fadedLogo: FadedSixersLogo,
+
+    color: "#002b5c",
     transparentColor: "rgba(0, 107, 182, .8)",
     secondaryColor: "rgb(255, 255, 255)",
     arenaImage: SixersArena,
@@ -741,8 +819,10 @@ export const teams = [
     code: "PHX",
     location: "Phoenix, AZ",
     logo: SunsLogo,
-    color: "rgba(229, 96, 32, 1)",
-    transparentColor: "rgba(29, 17, 96, .8)",
+    fadedLogo: FadedSunsLogo,
+
+    color: "rgba(29, 17, 96, 1)",
+    transparentColor: "rgba(29, 17, 96, 0.8)",
     secondaryColor: "rgba(229, 96, 32, 1)",
     arenaImage: SunsArena,
     arenaName: "Footprint Center",
@@ -766,7 +846,9 @@ export const teams = [
     code: "POR",
     location: "Portland, OR",
     logo: TrailBlazersLogo,
-    color: "rgba(224, 58, 62, 1)",
+    fadedLogo: FadedTrailBlazersLogo,
+
+    color: "#e03a3e",
     transparentColor: "rgba(224, 58, 62, .8)",
     secondaryColor: "rgba(0, 0, 0, 1)",
     arenaImage: TrailBlazersArena,
@@ -791,9 +873,11 @@ export const teams = [
     code: "SAC",
     location: "Sacramento, CA",
     logo: KingsLogo,
-    color: "rgba(91, 43, 130, 1)",
+    fadedLogo: FadedKingsLogo,
+
+    color: "#5b2b82",
     transparentColor: "rgba(99, 113, 122, .8)",
-    secondaryColor: "rgba(99, 113, 122, 1)",
+    secondaryColor: "#63717a",
     arenaImage: KingsArena,
     arenaName: "Golden 1 Center",
     coach: "Doug Christie",
@@ -816,9 +900,11 @@ export const teams = [
     code: "SAS",
     location: "San Antonio, TX",
     logo: SpursLogo,
-    color: "rgb(0, 0, 0)",
+    fadedLogo: FadedSpursLogo,
+
+    color: "rgba(0, 0, 0, 1)",
     transparentColor: "rgba(0, 0, 0, 0.8)",
-    secondaryColor: "rgb(0, 0, 0)",
+    secondaryColor: "rgba(196,206,211, 1)",
     arenaImage: SpursArena,
     arenaName: "Frost Bank Arena",
     coach: "Mitch Johnson",
@@ -842,8 +928,10 @@ export const teams = [
     location: "Toronto, ON",
     logo: RaptorsLogo,
     logoLight: RaptorsLogoLight,
-    color: "rgb(0, 0, 0)",
-    transparentColor: "rgba(206, 17, 65, .8)",
+    fadedLogo: FadedRaptorsLogo,
+
+    color: "rgba(206, 17, 64, 1)",
+    transparentColor: "rgba(206, 17, 64, 0.8)",
     secondaryColor: "rgb(255, 255, 255)",
     arenaImage: RaptorsArena,
     arenaName: "Scotiabank Arena",
@@ -868,9 +956,11 @@ export const teams = [
     location: "Salt Lake City, UT",
     logo: JazzLogo,
     logoLight: JazzLogoLight,
-    color: "rgb(62, 38, 128)",
+    fadedLogo: FadedJazzLogo,
+
+    color: "#3e2680",
     transparentColor: "rgba(0, 0, 0, .8)",
-    secondaryColor: "rgb(62, 38, 128)",
+    secondaryColor: "rgb(255, 255, 255)",
     arenaImage: JazzArena,
     arenaName: "Delta Center",
     coach: "Will Hardy",
@@ -893,7 +983,9 @@ export const teams = [
     code: "WAS",
     location: "Washington, DC",
     logo: WizardsLogo,
-    color: "rgba(0, 43, 92, 1)",
+    fadedLogo: FadedWizardsLogo,
+
+    color: "rgb(0, 43, 92)",
     transparentColor: "rgba(0, 43, 92, .8)",
     secondaryColor: "rgba(227, 24, 55, 1)",
     arenaImage: WizardsArena,
@@ -985,7 +1077,10 @@ export const logoMap: Record<string, any> = {
   WizardsLogo,
 };
 
-export const teamsById: Record<string, Team> = teams.reduce((map, team) => {
-  map[team.id] = team;
-  return map;
-}, {} as Record<string, Team>);
+export const teamsById: Record<string, Team> = teams.reduce(
+  (map, team) => {
+    map[team.id] = team;
+    return map;
+  },
+  {} as Record<string, Team>
+);

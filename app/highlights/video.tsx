@@ -111,7 +111,7 @@ export default function HighlightVideoScreen() {
     `,
   }}
   initialPlayerParams={{
-    controls: 0,      // hide player controls
+    controls: 1,      // hide player controls
     modestbranding: 1, // minimal YouTube branding
     rel: 0,           // don't show related videos
     fs: 1,            // disable fullscreen button
@@ -172,6 +172,8 @@ const getStyles = (isDark: boolean) =>
     videoContainer: {
       borderRadius: 12,
       overflow: "hidden",
+        backgroundColor: isDark ? "#000" : "#fff", // ✅ prevent WebView bleed-through
+
     },
     centered: {
       flex: 1,

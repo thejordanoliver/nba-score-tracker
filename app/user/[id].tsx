@@ -26,6 +26,7 @@ import {
 } from "react-native";
 import { CustomHeaderTitle } from "../../components/CustomHeaderTitle";
 import { getStyles } from "../../styles/ProfileScreen.styles";
+const API_URL = process.env.EXPO_PUBLIC_API_URL
 
 const bannerDefault = { uri: "https://via.placeholder.com/800x200.png" };
 const profileDefault = { uri: "https://via.placeholder.com/120.png" };
@@ -47,7 +48,6 @@ export default function UserProfileScreen() {
   const totalGap = columnGap * (numColumns - 1);
   const availableWidth = screenWidth - horizontalPadding - totalGap;
   const itemWidth = availableWidth / numColumns;
-
   const [user, setUser] = useState<{
     username: string;
     fullName: string;
@@ -177,35 +177,40 @@ export default function UserProfileScreen() {
   }, [userId, currentUserId]); // <-- Depend on both
 
   // Callback to refresh profile data after follow/unfollow
-  const handleToggleFollow = async () => {
-    if (followLoading) return;
-    setFollowLoading(true);
-    const endpoint = isFollowing ? "unfollow" : "follow";
+ const handleToggleFollow = async () => {
+  if (followLoading) return;
+  if (currentUserId === null || !userId) return;
 
-    try {
-      const res = await fetch(
-        `${process.env.EXPO_PUBLIC_API_URL}/api/${endpoint}`,
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            followerId: currentUserId,
-            followeeId: userId,
-          }),
-        }
-      );
+  setFollowLoading(true);
 
-      if (!res.ok) throw new Error("Failed to toggle follow");
-      setIsFollowing((prev) => !prev);
+  try {
+    const url = `${API_URL}/api/follows/toggle`;
 
-      // Refetch the user profile to get updated counts
-      await fetchUserData();
-    } catch (err) {
-      console.error("Toggle follow error:", err);
-    } finally {
-      setFollowLoading(false);
+    const res = await fetch(url, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        followerId: currentUserId,
+        followeeId: userId,
+      }),
+    });
+
+    if (!res.ok) {
+      const errorText = await res.text();
+      throw new Error(`Failed to toggle follow: ${res.status} ${errorText}`);
     }
-  };
+
+    const data = await res.json();
+    setIsFollowing(data.isFollowing);
+
+    await fetchUserData(); // update counts and user info
+  } catch (err) {
+    console.error("Toggle follow error:", err);
+  } finally {
+    setFollowLoading(false);
+  }
+};
+
 
   if (profileLoading) {
     return (
@@ -227,6 +232,7 @@ export default function UserProfileScreen() {
     .filter(Boolean) as Team[]; // type assertion
 
   const styles = getStyles(isDark);
+console.log("Checking follow status:", `${process.env.EXPO_PUBLIC_API_URL}/api/follows/check?followerId=${currentUserId}&followeeId=${userId}`);
 
   console.log("Rendering profile for user:", user.username);
   console.log("currentUserId:", currentUserId, "viewedUserId:", viewedUserId);

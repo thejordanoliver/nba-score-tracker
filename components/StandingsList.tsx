@@ -9,8 +9,9 @@ import {
   View,
   useColorScheme,
 } from "react-native";
+import EastLogo from "../assets/Conferences/EasternConference.png";
+import WestLogo from "../assets/Conferences/WesternConference.png";
 import { TeamStanding, useStandings } from "../hooks/useStandings";
-
 export function StandingsList() {
   const { standings, loading, error } = useStandings(2024);
   const colorScheme = useColorScheme();
@@ -96,7 +97,6 @@ export function StandingsList() {
         {
           borderBottomWidth: 1,
           borderBottomColor: isDark ? "#444" : "#ccc",
-          backgroundColor: isDark ? "#2a2a2a" : "#f2f2f2",
         },
       ]}
     >
@@ -141,41 +141,61 @@ export function StandingsList() {
   return (
     <ScrollView
       style={{ backgroundColor: isDark ? "#1d1d1d" : "#fff" }}
-      contentContainerStyle={{ paddingBottom: 100 }}
+  contentContainerStyle={{ paddingBottom: 100, paddingHorizontal: 16, paddingTop: 10 }}
+      
     >
       {/* Eastern Conference */}
-      <Text
+      <View
         style={[
-          styles.heading,
+          styles.header,
           {
-            color: isDark ? "#fff" : "#1d1d1d",
             borderBottomColor: isDark ? "#444" : "#ccc",
           },
         ]}
       >
-        Eastern Conference
-      </Text>
+        <Text
+          style={[
+            styles.heading,
+            {
+              color: isDark ? "#fff" : "#1d1d1d",
+            },
+          ]}
+        >
+          Eastern Conference
+        </Text>
+        
+      </View>
       {renderHeaderRow()}
       <FlatList
         data={eastStandings}
         keyExtractor={(item) => item.team.id.toString()}
         renderItem={renderStandingItem}
         scrollEnabled={false}
+        
       />
 
       {/* Western Conference */}
-      <Text
+      <View
         style={[
-          styles.heading,
+          styles.header,
           {
-            color: isDark ? "#fff" : "#1d1d1d",
             borderBottomColor: isDark ? "#444" : "#ccc",
             marginTop: 24,
           },
         ]}
       >
-        Western Conference
-      </Text>
+        <Text
+          style={[
+            styles.heading,
+            {
+              color: isDark ? "#fff" : "#1d1d1d",
+            },
+          ]}
+        >
+          Western Conference
+        </Text>
+      
+      </View>
       {renderHeaderRow()}
       <FlatList
         data={westStandings}
@@ -193,15 +213,20 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
   },
+
+  header: {
+    marginTop: 20,
+    flexDirection: "row",
+    justifyContent: "flex-start",
+    alignItems: "center",
+    paddingBottom: 6,
+    borderBottomWidth: 1,
+  },
+
   heading: {
     fontSize: 22,
     fontWeight: "600",
-    marginBottom: 0,
-    paddingBottom: 6,
-    borderBottomWidth: 1,
     fontFamily: "Oswald_500Medium",
-    marginTop: 12,
-    paddingHorizontal: 16,
   },
   row: {
     flexDirection: "row",

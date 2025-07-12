@@ -37,11 +37,14 @@ type CustomHeaderTitleProps = {
   teamCoach?: string;
   teamHistory?: string;
   isPlayerScreen?: boolean;
+  showBackButton?: boolean;
 
-
-  // ⭐ NEW PROPS for favorite teams
+  // Favorite
   isFavorite?: boolean;
   onToggleFavorite?: () => void;
+  // Notifications
+  notificationsEnabled?: boolean;
+  onToggleNotifications?: () => void;
 };
 
 export function CustomHeaderTitle({
@@ -65,7 +68,10 @@ export function CustomHeaderTitle({
   teamHistory,
   isFavorite,
   onToggleFavorite,
+  notificationsEnabled,
+  onToggleNotifications,
   isPlayerScreen,
+  showBackButton = true, // default to true
 }: CustomHeaderTitleProps) {
   const colorScheme = useColorScheme();
   const isDark = colorScheme === "dark";
@@ -75,6 +81,8 @@ export function CustomHeaderTitle({
   const selectedTeam = teams.find((t) => t.code === teamCode);
   const coach = selectedTeam?.coach || teamCoach || "N/A";
   const coachImage = selectedTeam?.coachImage;
+  const selectedLogo = logoLight ?? logo;
+  const defaultBgColor = isDark ? "#1d1d1d" : "#fff";
 
   const textStyle: TextStyle = {
     fontFamily: "Oswald_400Regular",
@@ -92,9 +100,6 @@ export function CustomHeaderTitle({
     height: 56,
   };
 
-  const defaultBgColor = isDark ? "#1d1d1d" : "#fff";
-  const selectedLogo = logoLight ?? logo;
-
   return (
     <View style={{ paddingTop: insets.top, height: 56 + insets.top }}>
       {/* Status Bar Background */}
@@ -110,48 +115,48 @@ export function CustomHeaderTitle({
       />
 
       {/* Team Header Background */}
-{isTeamScreen || isPlayerScreen ? (
-  <View
-    style={{
-      position: "absolute",
-      top: insets.top,
-      height: 56,
-      width: "100%",
-      overflow: "hidden",
-      zIndex: 0,
-    }}
-  >
-    <View
-      style={{
-        ...StyleSheet.absoluteFillObject,
-        backgroundColor: teamColor || defaultBgColor,
-        zIndex: -1,
-      }}
-    />
-    {selectedLogo && (
-      <Image
-        source={selectedLogo}
-        style={{
-          height: 200,
-          width: "100%",
-          resizeMode: "contain",
-          opacity: 0.25,
-          position: "absolute",
-          top: -70,
-          zIndex: 0,
-        }}
-      />
-    )}
-  </View>
-) : (
-  <View
-    style={{
-      ...StyleSheet.absoluteFillObject,
-      backgroundColor: defaultBgColor,
-      zIndex: -1,
-    }}
-  />
-)}
+      {isTeamScreen || isPlayerScreen ? (
+        <View
+          style={{
+            position: "absolute",
+            top: insets.top,
+            height: 56,
+            width: "100%",
+            overflow: "hidden",
+            zIndex: 0,
+          }}
+        >
+          <View
+            style={{
+              ...StyleSheet.absoluteFillObject,
+              backgroundColor: teamColor || defaultBgColor,
+              zIndex: -1,
+            }}
+          />
+          {selectedLogo && (
+            <Image
+              source={selectedLogo}
+              style={{
+                height: 200,
+                width: "100%",
+                resizeMode: "contain",
+                opacity: 0.25,
+                position: "absolute",
+                top: -70,
+                zIndex: 0,
+              }}
+            />
+          )}
+        </View>
+      ) : (
+        <View
+          style={{
+            ...StyleSheet.absoluteFillObject,
+            backgroundColor: defaultBgColor,
+            zIndex: -1,
+          }}
+        />
+      )}
 
       {/* Foreground Header Content */}
       <View style={[containerStyle, { zIndex: 2 }]}>
@@ -164,7 +169,7 @@ export function CustomHeaderTitle({
               color={isDark ? "#fff" : "#1d1d1d"}
             />
           </Pressable>
-        ) : onBack ? (
+        ) : showBackButton && onBack ? (
           <Pressable onPress={onBack}>
             <Ionicons
               name="arrow-back"
@@ -186,40 +191,57 @@ export function CustomHeaderTitle({
         )}
 
         {/* Right Icons */}
-{isTeamScreen ? (
-  <View style={{ flexDirection: "row", alignItems: "center" }}>
-    {onToggleFavorite && (
-      <Pressable
-        onPress={onToggleFavorite}
-        style={{ padding: 8, marginRight: 8 }}
-      >
-        <Ionicons
-          name={isFavorite ? "star" : "star-outline"}
-          size={24}
-          color={isFavorite ? "#fff" : "#fff"}
-        />
-      </Pressable>
-    )}
+        {isTeamScreen ? (
+          <View style={{ flexDirection: "row", alignItems: "center" }}>
+            {onToggleNotifications && (
+              <Pressable
+                onPress={onToggleNotifications}
+                style={{ padding: 8, marginRight: 8 }}
+              >
+                <Ionicons
+                  name={
+                    notificationsEnabled
+                      ? "notifications"
+                      : "notifications-outline"
+                  }
+                  size={24}
+                  color="#fff"
+                />
+              </Pressable>
+            )}
 
-    {!isPlayerScreen && ( // 👈 Only show info icon if NOT a player screen
-      <Pressable
-        onPress={() => setModalVisible(true)}
-        style={{ padding: 8 }}
-      >
-        <Ionicons name="information-circle" size={24} color="#fff" />
-      </Pressable>
-    )}
+            {onToggleFavorite && (
+              <Pressable
+                onPress={onToggleFavorite}
+                style={{ padding: 8, marginRight: 8 }}
+              >
+                <Ionicons
+                  name={isFavorite ? "star" : "star-outline"}
+                  size={24}
+                  color="#fff"
+                />
+              </Pressable>
+            )}
 
-    <TeamInfoModal
-      visible={modalVisible}
-      onClose={() => setModalVisible(false)}
-      coachName={coach}
-      coachImage={coachImage}
-      teamHistory={teamHistory ?? "This is some team history..."}
-      teamId={selectedTeam?.id}
-    />
-  </View>
-) : tabName === "Profile" && onSettings ? (
+            {!isPlayerScreen && (
+              <Pressable
+                onPress={() => setModalVisible(true)}
+                style={{ padding: 8 }}
+              >
+                <Ionicons name="information-circle" size={24} color="#fff" />
+              </Pressable>
+            )}
+
+            <TeamInfoModal
+              visible={modalVisible}
+              onClose={() => setModalVisible(false)}
+              coachName={coach}
+              coachImage={coachImage}
+              teamHistory={teamHistory ?? "This is some team history..."}
+              teamId={selectedTeam?.id}
+            />
+          </View>
+        ) : tabName === "Profile" && onSettings ? (
           <Pressable onPress={onSettings}>
             <Ionicons
               name="settings"

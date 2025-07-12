@@ -9,7 +9,8 @@ import {
   View,
   useColorScheme,
   TextStyle,
-  ViewStyle, StyleProp
+  ViewStyle,
+  StyleProp,
 } from "react-native";
 
 export interface TabBarProps<T extends string> {
@@ -17,8 +18,7 @@ export interface TabBarProps<T extends string> {
   selected: T;
   onTabPress: (tab: T) => void;
   renderLabel?: (tab: T, isSelected: boolean) => React.ReactNode;
-    style?: StyleProp<ViewStyle>; // ✅ add this line
-
+  style?: StyleProp<ViewStyle>; // ✅ ensure this prop is used
 }
 
 export default function TabBar<T extends string>({
@@ -26,7 +26,7 @@ export default function TabBar<T extends string>({
   selected,
   onTabPress,
   renderLabel,
-
+  style,
 }: TabBarProps<T>) {
   const colorScheme = useColorScheme();
   const isDark = colorScheme === "dark";
@@ -96,7 +96,13 @@ export default function TabBar<T extends string>({
 
   const defaultLabelStyle = (isSelected: boolean): TextStyle => ({
     fontSize: 20,
-    color: isSelected ? (isDark ? "#fff" : "#1d1d1d") : isDark ? "#888" : "rgba(0, 0, 0, 0.5)",
+    color: isSelected
+      ? isDark
+        ? "#fff"
+        : "#1d1d1d"
+      : isDark
+        ? "#888"
+        : "rgba(0, 0, 0, 0.5)",
     fontFamily: "Oswald_400Regular",
   });
 
@@ -112,7 +118,7 @@ export default function TabBar<T extends string>({
   };
 
   return (
-    <View style={styles.tabs}>
+    <View style={[styles.tabs, style]}>
       {tabs.map((tab, i) => {
         const isSelected = selected === tab;
         return (
@@ -126,8 +132,12 @@ export default function TabBar<T extends string>({
             accessibilityLabel={`Switch to ${tab} tab`}
           >
             <View onLayout={onTextLayout(i)}>
-              {renderLabel ? renderLabel(tab, isSelected) : (
-                <Text style={defaultLabelStyle(isSelected)}>{tab.toUpperCase()}</Text>
+              {renderLabel ? (
+                renderLabel(tab, isSelected)
+              ) : (
+                <Text style={defaultLabelStyle(isSelected)}>
+                  {tab.toUpperCase()}
+                </Text>
               )}
             </View>
           </Pressable>
@@ -141,14 +151,14 @@ export default function TabBar<T extends string>({
 const styles = StyleSheet.create({
   tabs: {
     flexDirection: "row",
-    justifyContent: "space-between",
+    justifyContent: "space-between", // ✅ center all tabs
     marginBottom: 10,
     position: "relative",
   },
   tabPressable: {
-    flex: 1,
     paddingTop: 10,
     paddingBottom: 4,
+    paddingHorizontal: 16, // ✅ add spacing for touch area
     alignItems: "center",
   },
 });

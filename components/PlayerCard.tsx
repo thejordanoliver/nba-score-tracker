@@ -70,7 +70,7 @@ const getStyles = (isDark: boolean) =>
       alignItems: "center",
     },
     name: {
-      fontSize: 18,
+      fontSize: 16,
       fontFamily: OSBOLD,
     },
     jerseyNumber: {
