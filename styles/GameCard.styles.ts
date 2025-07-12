@@ -79,6 +79,15 @@ export const getStyles = (isDark: boolean) =>
       marginTop: 4,
       textAlign: "center",
     },
+
+    broadcast: {
+      position: "absolute",
+      bottom: -16,
+      fontFamily: "Oswald_400Regular",
+      color: isDark ? "rgba(255, 255, 255, 0.5)" : "rgba(0, 0, 0, .5)",
+      fontSize: 10,
+    },
+
     seriesStatus: {
       fontSize: 12,
       color: "gray",

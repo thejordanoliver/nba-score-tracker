@@ -3,15 +3,15 @@ import { useEffect, useState, useLayoutEffect } from "react";
 import {
   Image,
   ScrollView,
-  StyleSheet,
   Text,
   View,
   useColorScheme,
-  ActivityIndicator,
 } from "react-native";
 import { getStyles } from "../../styles/NewsArticle.style";
 import { CustomHeaderTitle } from "@/components/CustomHeaderTitle";
 import NewsArticleSkeleton from "@/components/NewsArticleSkeleton";
+
+const API_URL = process.env.EXPO_PUBLIC_API_URL;
 
 export default function NewsArticleScreen() {
   const navigation = useNavigation();
@@ -20,8 +20,6 @@ export default function NewsArticleScreen() {
     title?: string;
     thumbnail?: string;
   }>();
-
-
 
   const [scrapedContent, setScrapedContent] = useState<string>("");
   const [loadingContent, setLoadingContent] = useState(false);
@@ -38,9 +36,7 @@ export default function NewsArticleScreen() {
       try {
         setLoadingContent(true);
         const res = await fetch(
-          `https://4e51-132-170-9-79.ngrok-free.app/api/scrape?url=${encodeURIComponent(
-            url
-          )}`
+          `${API_URL}/api/scrape?url=${encodeURIComponent(url)}`
         );
         if (!res.ok) {
           throw new Error(`Failed to scrape content: ${res.status}`);
@@ -67,17 +63,13 @@ export default function NewsArticleScreen() {
   }, [navigation]);
 
   return (
-<ScrollView contentContainerStyle={styles.container}>
+    <ScrollView contentContainerStyle={styles.container}>
       {loadingContent ? (
         <NewsArticleSkeleton />
       ) : (
         <>
           {title && <Text style={styles.title}>{title}</Text>}
-
-          {thumbnail && (
-            <Image source={{ uri: thumbnail }} style={styles.image} />
-          )}
-
+          {thumbnail && <Image source={{ uri: thumbnail }} style={styles.image} />}
           <Text style={styles.content}>{scrapedContent}</Text>
         </>
       )}

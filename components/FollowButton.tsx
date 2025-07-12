@@ -1,5 +1,13 @@
-import { Animated, Pressable, Text, ActivityIndicator, useColorScheme, GestureResponderEvent, StyleSheet, Easing } from "react-native";
 import { useEffect, useRef } from "react";
+import {
+  ActivityIndicator,
+  Animated,
+  Easing,
+  GestureResponderEvent,
+  Pressable,
+  Text,
+  useColorScheme,
+} from "react-native";
 
 type FollowButtonProps = {
   isFollowing: boolean;
@@ -52,8 +60,8 @@ export default function FollowButton({
       ? "#1d1d1d"
       : "#fff"
     : isDark
-    ? "#fff"
-    : "#1d1d1d";
+      ? "#fff"
+      : "#1d1d1d";
 
   return (
     <Animated.View

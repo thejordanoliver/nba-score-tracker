@@ -13,58 +13,94 @@ export default function GameCardSkeleton() {
   const isDark = useColorScheme() === "dark";
   const styles = getStyles(isDark);
 
-  // Animated value for shimmer translation
-  const shimmerTranslate = useRef(new Animated.Value(-SCREEN_WIDTH)).current;
+  // Shared animation values for shimmer movement and opacity
+  const shimmerTranslate = useRef(new Animated.Value(-100)).current;
+  const shimmerOpacity = useRef(new Animated.Value(0.5)).current;
 
+  // Animate shimmer back and forth and opacity pulse
   useEffect(() => {
-    // Loop shimmer animation from left to right
     Animated.loop(
       Animated.sequence([
         Animated.timing(shimmerTranslate, {
-          toValue: SCREEN_WIDTH,
-          duration: 1000,
+          toValue: 100,
+          duration: 1200,
           useNativeDriver: true,
         }),
         Animated.timing(shimmerTranslate, {
-          toValue: -SCREEN_WIDTH,
-          duration: 1000,
+          toValue: -100,
+          duration: 1200,
           useNativeDriver: true,
         }),
       ])
     ).start();
-  }, [shimmerTranslate]);
+
+    Animated.loop(
+      Animated.sequence([
+        Animated.timing(shimmerOpacity, {
+          toValue: 1,
+          duration: 700,
+          useNativeDriver: true,
+        }),
+        Animated.timing(shimmerOpacity, {
+          toValue: 0.5,
+          duration: 700,
+          useNativeDriver: true,
+        }),
+      ])
+    ).start();
+  }, []);
+
+  // Helper to render skeleton + clipped shimmer
+  function SkeletonWithShimmer({
+    style,
+    shimmerWidth,
+  }: {
+    style: any;
+    shimmerWidth: number;
+  }) {
+    return (
+      <View style={[style, styles.shimmerClipper]}>
+        <View style={style} />
+        <Animated.View
+          style={[
+            styles.shimmer,
+            {
+              width: shimmerWidth,
+              opacity: shimmerOpacity,
+              transform: [{ translateX: shimmerTranslate }],
+              
+            },
+          ]}
+        />
+      </View>
+    );
+  }
 
   return (
     <View style={styles.card}>
-      {/* Skeleton shapes */}
+      {/* Top Team */}
       <View style={styles.teamSection}>
-        <View style={styles.logoSkeleton} />
-        <View style={styles.nameSkeleton} />
+        <SkeletonWithShimmer style={styles.logoSkeleton} shimmerWidth={40} />
+        <SkeletonWithShimmer style={styles.nameSkeleton} shimmerWidth={40} />
       </View>
 
-      <View style={styles.scoreSkeleton} />
+      {/* Top Score */}
+      <SkeletonWithShimmer style={styles.scoreSkeleton} shimmerWidth={40} />
 
+      {/* Game Info */}
       <View style={styles.info}>
-        <View style={styles.dateSkeleton} />
-        <View style={styles.timeSkeleton} />
+        <SkeletonWithShimmer style={styles.dateSkeleton} shimmerWidth={50} />
+        <SkeletonWithShimmer style={styles.timeSkeleton} shimmerWidth={80} />
       </View>
 
-      <View style={styles.scoreSkeleton} />
+      {/* Bottom Score */}
+      <SkeletonWithShimmer style={styles.scoreSkeleton} shimmerWidth={40} />
 
+      {/* Bottom Team */}
       <View style={styles.teamSection}>
-        <View style={styles.logoSkeleton} />
-        <View style={styles.nameSkeleton} />
+        <SkeletonWithShimmer style={styles.logoSkeleton} shimmerWidth={40} />
+        <SkeletonWithShimmer style={styles.nameSkeleton} shimmerWidth={40} />
       </View>
-
-      {/* Shimmer overlay */}
-      <Animated.View
-        style={[
-          styles.shimmer,
-          {
-            transform: [{ translateX: shimmerTranslate }],
-          },
-        ]}
-      />
     </View>
   );
 }
@@ -80,7 +116,6 @@ const getStyles = (isDark: boolean) =>
       marginVertical: 8,
       alignItems: "center",
       justifyContent: "space-between",
-      overflow: "hidden", // important for shimmer clipping
     },
     teamSection: {
       alignItems: "center",
@@ -89,7 +124,7 @@ const getStyles = (isDark: boolean) =>
     logoSkeleton: {
       width: 40,
       height: 40,
-      borderRadius: 20,
+      borderRadius: 100,
       backgroundColor: isDark ? "#666" : "#bbb",
       marginBottom: 6,
     },
@@ -100,8 +135,8 @@ const getStyles = (isDark: boolean) =>
       backgroundColor: isDark ? "#666" : "#bbb",
     },
     scoreSkeleton: {
-      width: 40,
-      height: 24,
+      width: 50,
+      height: 20,
       borderRadius: 6,
       backgroundColor: isDark ? "#666" : "#bbb",
     },
@@ -123,17 +158,19 @@ const getStyles = (isDark: boolean) =>
       borderRadius: 6,
       backgroundColor: isDark ? "#666" : "#bbb",
     },
+    shimmerClipper: {
+      position: "relative",
+      overflow: "hidden",
+      // Ensure height & width are inherited from the skeleton style
+      // So shimmer is clipped properly.
+      // We rely on the style prop's width/height.
+    },
     shimmer: {
       position: "absolute",
       top: 0,
       bottom: 0,
-      width: 80, // width of the shimmer highlight
       backgroundColor: isDark
         ? "rgba(255,255,255,0.15)"
-        : "rgba(255,255,255,0.4)", // light translucent white
-      opacity: 0.7,
-      borderRadius: 10,
-      // Adding some rotation to the shimmer for a nice angle effect
-      transform: [{ rotate: "45deg" }],
+        : "rgba(255,255,255,0.4)",
     },
   });

@@ -101,7 +101,6 @@ export default function GameDetailsScreen() {
     2024
   );
 
-  // Weather hook call with arena location or city
   const {
     weather,
     loading: weatherLoading,
@@ -109,17 +108,11 @@ export default function GameDetailsScreen() {
   } = useWeatherForecast(
     homeTeamData.latitude ?? null,
     homeTeamData.longitude ?? null,
-    `${date}T${time}` // game date and time in ISO format
+    `${date}T${time}`
   );
 
   const currentPlayoffGame = playoffGames.find((g) => g.id === parsedGame.id);
-  const seriesRecord = currentPlayoffGame?.seriesRecord;
   const seriesSummary = currentPlayoffGame?.seriesSummary;
-
-  const displayDate = new Date(date).toLocaleDateString("en-US", {
-    month: "numeric",
-    day: "numeric",
-  });
 
   const awayIsWinner =
     status === "Final" && (awayScore ?? 0) > (homeScore ?? 0);
@@ -156,7 +149,7 @@ export default function GameDetailsScreen() {
 
   return (
     <ScrollView
-      contentContainerStyle={styles.container}
+      contentContainerStyle={[styles.container, { paddingBottom: 100 }]}
       style={{ backgroundColor: colors.background }}
     >
       <View style={[styles.teamsContainer, { borderColor: colors.border }]}>
@@ -165,7 +158,6 @@ export default function GameDetailsScreen() {
           team={{
             id: awayTeamData.id,
             code: awayTeamData.code,
-
             name: away.name,
             record: away.record,
             logo:
@@ -181,12 +173,14 @@ export default function GameDetailsScreen() {
 
         <GameInfo
           status={status}
-          date={displayDate}
+          date={date} // Pass raw ISO date for broadcast matching
           time={time}
           clock={clock}
           period={period}
           colors={colors}
           isDark={isDark}
+          homeTeam={home.name} // Pass home team name
+          awayTeam={away.name} // Pass away team name
         />
 
         {/* Game Number and Series Summary */}
@@ -247,9 +241,8 @@ export default function GameDetailsScreen() {
         {/* Home Team */}
         <TeamRow
           team={{
-                id: homeTeamData.id,
-    code: homeTeamData.code,
-
+            id: homeTeamData.id,
+            code: homeTeamData.code,
             name: home.name,
             record: home.record,
             logo:

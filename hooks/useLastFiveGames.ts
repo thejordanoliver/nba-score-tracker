@@ -33,6 +33,7 @@ type GameResult = {
   opponentId: number;
   opponent: string;
   opponentLogo: any;
+  opponentLogoLight?: any; // added light logo here
 };
 
 export const useLastFiveGames = (teamId: number) => {
@@ -50,8 +51,17 @@ export const useLastFiveGames = (teamId: number) => {
     });
 
   const teamsMap = useMemo(() => {
-    const map = new Map<number, { logo: any; code: string }>();
-    teams.forEach((t) => map.set(Number(t.id), { logo: t.logo, code: t.code }));
+    const map = new Map<
+      number,
+      { logo: any; logoLight?: any; code: string }
+    >();
+    teams.forEach((t) =>
+      map.set(Number(t.id), {
+        logo: t.logo,
+        logoLight: t.logoLight,
+        code: t.code,
+      })
+    );
     return map;
   }, []);
 
@@ -106,6 +116,7 @@ export const useLastFiveGames = (teamId: number) => {
               opponentId,
               opponent: opponentData?.code || "UNK",
               opponentLogo: opponentData?.logo || fallbackLogo,
+              opponentLogoLight: opponentData?.logoLight, // <-- added here
             };
           });
 

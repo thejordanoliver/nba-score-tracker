@@ -4,7 +4,7 @@ import InfoCard from "./InfoCard";
 import { coachImages } from "@/constants/teams";
 
 type Props = {
-  teamId?: string;
+  teamId?: number | string;
 };
 
 function calculateWinPercentage(record?: string): string {
@@ -23,7 +23,9 @@ export default function TeamInfoCard({ teamId }: Props) {
   const colorScheme = useColorScheme();
   const isDark = colorScheme === "dark";
 
-  const { team, loading, error } = useTeamInfo(teamId);
+  const { team, loading, error } = useTeamInfo(
+    teamId !== undefined ? String(teamId) : undefined
+  );
 
   if (loading) {
     return null; // or loading spinner

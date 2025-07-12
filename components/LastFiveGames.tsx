@@ -1,6 +1,8 @@
+// ---- LastFiveGamesSwitcher.tsx ----
 import { useState } from "react";
 import { FlatList, Image, StyleSheet, Text, View } from "react-native";
 import FixedWidthTabBar from "./FixexWidthTabBar";
+import { teams } from "../constants/teams"; // Adjust relative path as needed
 
 type Props = {
   isDark: boolean;
@@ -18,17 +20,38 @@ type Props = {
   };
 };
 
+function getOpponentCodeFromName(opponentName: string): string | undefined {
+  const team = teams.find(
+    (t) =>
+      t.name === opponentName ||
+      t.code === opponentName ||
+      t.fullName === opponentName
+  );
+  return team?.code;
+}
+
+
 export default function LastFiveGamesSwitcher({ isDark, home, away }: Props) {
   const [selected, setSelected] = useState<"home" | "away">("home");
   const team = selected === "home" ? home : away;
 
+  const teamsUsingLogoLightInDark = new Set(["PHI", "TOR", "HOU", "UTA"]);
+
+  
   const renderRow = ({ item, index }: { item: any; index: number }) => {
     const matchupSymbol = item.isHome ? "vs" : "@";
     const resultSymbol = item.won ? "W" : "L";
     const resultColor = item.won ? "#4caf50" : "#f44336";
-    const opponentLogoSource = isDark
-      ? item.opponentLogoLight || item.opponentLogo
-      : item.opponentLogo;
+
+const opponentCode = item.opponentCode || getOpponentCodeFromName(item.opponent);
+
+   
+
+    const opponentLogoSource =
+      isDark && teamsUsingLogoLightInDark.has(opponentCode)
+        ? item.opponentLogoLight || item.opponentLogo
+        : item.opponentLogo;
+
     const rowBackground =
       index % 2 === 0 ? "transparent" : isDark ? "#2a2a2a" : "#f2f2f2";
 
@@ -82,7 +105,6 @@ export default function LastFiveGamesSwitcher({ isDark, home, away }: Props) {
           style={{
             fontSize: 24,
             fontFamily: "Oswald_500Medium",
-         
             paddingBottom: 4,
             borderBottomWidth: 1,
             borderBottomColor: isDark ? "#444" : "#ccc",
@@ -100,7 +122,9 @@ export default function LastFiveGamesSwitcher({ isDark, home, away }: Props) {
             tabWidth={200}
             renderLabel={(tab, isSelected) => {
               const teamData = tab === "home" ? home : away;
-              const logoSource = isDark
+              const useLogoLight =
+                isDark && teamsUsingLogoLightInDark.has(teamData.teamCode);
+              const logoSource = useLogoLight
                 ? teamData.teamLogoLight || teamData.teamLogo
                 : teamData.teamLogo;
 
@@ -184,15 +208,11 @@ export default function LastFiveGamesSwitcher({ isDark, home, away }: Props) {
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    overflow: "hidden",
-  },
+  container: { flex: 1, overflow: "hidden" },
   row: {
     flexDirection: "row",
     justifyContent: "space-between",
     paddingVertical: 6,
-  
   },
   headerRow: {
     flexDirection: "row",

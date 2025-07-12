@@ -8,9 +8,13 @@ export const getStyles = (isDark: boolean) =>
       backgroundColor: isDark ? "#1d1d1d" : "#fff",
       paddingTop: 16,
     },
+
+    tabBarWrapper: {
+      paddingHorizontal: 80,
+    },
+
     contentArea: {
       flex: 1,
-      paddingHorizontal: 16,
     },
     favorites: {
       flexDirection: "row",
@@ -66,6 +70,7 @@ export const getStyles = (isDark: boolean) =>
       textAlign: "center",
       color: isDark ? "#aaa" : "#999",
       marginTop: 20,
-      fontSize: 14,
+      fontSize: 20,
+      fontFamily: "Oswald_300Light",
     },
   });

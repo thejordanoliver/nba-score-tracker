@@ -76,12 +76,12 @@ export default function NewsArticleSkeleton() {
       {/* Image placeholder */}
       <ShimmerBlock style={styles.image} />
       {/* Content lines placeholders */}
-      {[...Array(6)].map((_, i) => (
+      {[...Array(12)].map((_, i) => (
         <ShimmerBlock
           key={i}
           style={[
             styles.contentLine,
-            { width: i === 5 ? "70%" : "100%" }, // last line shorter
+            { width: i === 11 ? "70%" : "100%" }, // last line shorter
           ]}
         />
       ))}

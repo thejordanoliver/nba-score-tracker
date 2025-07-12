@@ -68,13 +68,14 @@ export const getStyles = (isDark: boolean) => {
     },
     bioContainer: {
       marginTop: 20,
-      paddingHorizontal: 20,
+      paddingHorizontal: 16,
     },
     wrapper: {
       flexDirection: "row",
       justifyContent: "space-between",
       alignItems: "center",
       marginBottom: 16,
+      paddingHorizontal: 16,
     },
     nameContainer: {
       flexDirection: "column",
@@ -170,7 +171,7 @@ export const getStyles = (isDark: boolean) => {
       flexDirection: "row",
       flex: 1,
       alignItems: "center",
-      margin: 4,
+      margin: 2,
       backgroundColor: isDark ? "#222" : "#f5f5f5",
       borderRadius: 8,
     },
@@ -214,5 +215,7 @@ export const getStyles = (isDark: boolean) => {
       marginRight: 16,
       width: 80,
     },
+    
   });
+  
 };

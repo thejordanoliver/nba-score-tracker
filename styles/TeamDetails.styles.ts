@@ -23,6 +23,17 @@ export const style = (isDark: boolean) =>
       height: 80,
     },
 
+     heading: {
+      fontSize: 24,
+      fontFamily: "Oswald_500Medium",
+      marginBottom: 8,
+      marginTop: 8,
+      paddingBottom: 4,
+      borderBottomWidth: 1,
+      borderBottomColor: isDark ? "#444" : "#ccc",
+      color: isDark ? "#fff" : "#1d1d1d",
+    },
+
     tabBarContainer: {
       position: "absolute",
       top: 10,
@@ -78,7 +89,7 @@ export const style = (isDark: boolean) =>
       color: isDark ? "#fff" : "#000",
     },
     gamesContainer: {
-      marginHorizontal: 16,
+      paddingHorizontal: 16,
       marginVertical: 8,
     },
     newsContainer: {

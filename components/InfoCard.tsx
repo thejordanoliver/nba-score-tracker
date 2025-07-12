@@ -69,7 +69,7 @@ export default function InfoCard({
         style={{
           fontSize: 20,
           fontFamily: OSMEDIUM,
-          marginBottom: 8,
+          marginBottom: 16,
           marginTop: 16,
           paddingBottom: 4,
           borderBottomWidth: 1,
@@ -97,7 +97,6 @@ export default function InfoCard({
         {image && (
           <View
             style={{
-              backgroundColor: isDark ? "#fff" : "#000", // fallback background color or pass a prop
               borderRadius: 100,
               justifyContent: "center",
               alignItems: "center",
@@ -111,6 +110,8 @@ export default function InfoCard({
                 width: 50,
                 height: 50,
                 resizeMode: "contain",
+                              backgroundColor: isDark ? "#fff" : "#fff", // fallback background color or pass a prop
+
               }}
             />
           </View>

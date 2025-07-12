@@ -1,12 +1,16 @@
 import { useEffect, useState } from "react";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 export type WeatherData = {
-  tempFahrenheit: number;  // changed
+  tempFahrenheit: number;
   description: string;
   icon: string;
   cityName: string;
   datetime: string; // forecast datetime
 };
+
+const getWeatherCacheKey = (lat: number, lon: number, dateStr: string) =>
+  `weather_${lat}_${lon}_${dateStr}`;
 
 export function useWeatherForecast(
   lat: number | null,
@@ -20,13 +24,16 @@ export function useWeatherForecast(
   useEffect(() => {
     if (!lat || !lon || !gameDateStr) return;
 
-    const fetchForecast = async () => {
+    const cacheKey = getWeatherCacheKey(lat, lon, gameDateStr);
+
+    let isActive = true;
+
+    const fetchAndCacheWeather = async () => {
       setLoading(true);
       setError(null);
 
       try {
         const apiKey = "09f079f11f3ea22e5846e249da888468";
-        // Keep units metric to get Celsius, then convert manually
         const url = `https://api.openweathermap.org/data/2.5/forecast?lat=${lat}&lon=${lon}&units=metric&appid=${apiKey}`;
 
         const response = await fetch(url);
@@ -49,25 +56,55 @@ export function useWeatherForecast(
           }
         }
 
-        // Convert Celsius to Fahrenheit
-        const tempFahrenheit = closestForecast.main.temp * 9/5 + 32;
+        const tempFahrenheit = closestForecast.main.temp * (9 / 5) + 32;
 
-        setWeather({
+        const freshWeather: WeatherData = {
           tempFahrenheit,
           description: closestForecast.weather[0].description,
           icon: `https://openweathermap.org/img/wn/${closestForecast.weather[0].icon}@2x.png`,
           cityName: data.city.name,
           datetime: closestForecast.dt_txt,
-        });
+        };
+
+        await AsyncStorage.setItem(cacheKey, JSON.stringify(freshWeather));
+
+        if (isActive) {
+          setWeather(freshWeather);
+          setLoading(false);
+        }
       } catch (err: any) {
-        setError(err.message);
-        setWeather(null);
-      } finally {
-        setLoading(false);
+        if (isActive) {
+          setError(err.message);
+          setLoading(false);
+        }
       }
     };
 
-    fetchForecast();
+    const loadCachedThenFetch = async () => {
+      try {
+        const cached = await AsyncStorage.getItem(cacheKey);
+        if (cached) {
+          const cachedData: WeatherData = JSON.parse(cached);
+          if (isActive) {
+            setWeather(cachedData);
+            setLoading(false);
+          }
+        } else {
+          setLoading(true);
+        }
+      } catch {
+        // ignore cache read errors
+      }
+
+      // Fetch fresh in background regardless
+      fetchAndCacheWeather();
+    };
+
+    loadCachedThenFetch();
+
+    return () => {
+      isActive = false;
+    };
   }, [lat, lon, gameDateStr]);
 
   return { weather, loading, error };

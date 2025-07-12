@@ -1,10 +1,5 @@
-import React, { useEffect, useRef } from "react";
-import {
-  Animated,
-  StyleSheet,
-  View,
-  useColorScheme,
-} from "react-native";
+import { useEffect, useRef } from "react";
+import { Animated, StyleSheet, View, useColorScheme } from "react-native";
 
 export default function FavoritesScrollSkeleton() {
   const isDark = useColorScheme() === "dark";
@@ -95,7 +90,7 @@ const getStyles = (isDark: boolean) =>
       width: 80,
       height: 80,
       borderRadius: 40,
-        backgroundColor: isDark ? "#444" : "#ddd",
+      backgroundColor: isDark ? "#444" : "#ddd",
     },
     labelWrapper: {
       width: 50,

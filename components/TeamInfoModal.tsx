@@ -123,15 +123,17 @@ export default function TeamInfoModal({
               Championships
             </Text>
 
-            <ChampionshipBanner
-              years={fetchedTeam?.championships || []}
-              logo={
-                fetchedTeam?.logo_filename
-                  ? logoMap[fetchedTeam.logo_filename]
-                  : undefined
-              }
-              teamName={fetchedTeam?.name}
-            />
+           <ChampionshipBanner
+  years={fetchedTeam?.championships || []}
+  logo={
+    fetchedTeam?.logo_filename
+      ? logoMap[fetchedTeam.logo_filename]
+      : undefined
+  }
+  teamName={fetchedTeam?.name}
+  teamId={fetchedTeam?.id}
+/>
+
 
             <TeamInfoCard teamId={teamId} />
           </ScrollView>

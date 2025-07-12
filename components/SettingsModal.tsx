@@ -77,7 +77,7 @@ export default function SettingsModal({
             styles.glassOverlay,
             {
               backgroundColor: isDark
-                ? "rgba(0,0,0,0.4)"
+                ? "rgba(29, 29, 29, 0.4)"
                 : "rgba(255,255,255,0.4)",
             },
           ]}
@@ -95,7 +95,7 @@ export default function SettingsModal({
           <Pressable
             style={[
               styles.optionButton,
-              { borderBottomColor: isDark ? "rgba(255,255,255,0.2)" : "#ccc" },
+              { borderBottomColor: isDark ? "rgba(255,255,255,0.2)" : "rgba(120, 120, 120, 0.5)" },
             ]}
             onPress={() => onNavigate("accountdetails")}
           >
@@ -117,7 +117,7 @@ export default function SettingsModal({
           <Pressable
             style={[
               styles.optionButton,
-              { borderBottomColor: isDark ? "rgba(255,255,255,0.2)" : "#ccc" },
+              { borderBottomColor: isDark ? "rgba(255,255,255,0.2)" : "rgba(120, 120, 120, 0.5)" },
             ]}
             onPress={() => onNavigate("appearance")}
           >
@@ -138,7 +138,7 @@ export default function SettingsModal({
           <Pressable
             style={[
               styles.optionButton,
-              { borderBottomColor: isDark ? "rgba(255,255,255,0.2)" : "#ccc" },
+              { borderBottomColor: isDark ? "rgba(255,255,255,0.2)" : "rgba(120, 120, 120, 0.5)" },
             ]}
             onPress={() => onNavigate("preferences")}
           >

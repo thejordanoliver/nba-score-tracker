@@ -1,3 +1,5 @@
+import { useESPNBroadcasts } from "@/hooks/useESPNBroadcasts";
+import { matchBroadcastToGame } from "@/utils/matchBroadcast";
 import { useRouter } from "expo-router";
 import { useMemo } from "react";
 import {
@@ -19,7 +21,6 @@ const OSREGULAR = "Oswald_400Regular";
 const OSMEDIUM = "Oswald_500Medium";
 const OSBOLD = "Oswald_700Bold";
 const OSSEMIBOLD = "Oswald_600SemiBold";
-
 
 type Team = {
   name: string;
@@ -109,6 +110,15 @@ export default function GameCard({
     return teamData.logo;
   };
 
+  const { broadcasts } = useESPNBroadcasts();
+
+  const matchedBroadcast = matchBroadcastToGame(game, broadcasts);
+
+  const broadcastNetworks = matchedBroadcast?.broadcasts
+    .map((b) => b.network)
+    .filter(Boolean)
+    .join(", ");
+
   const renderPlayoffLogo = () =>
     isPlayoff ? (
       <Image
@@ -139,8 +149,6 @@ export default function GameCard({
   const seriesSummary = currentPlayoffGame?.seriesSummary;
 
   const gameNumberLabel = gameNumber ? `Game ${gameNumber}` : null;
-
-  // 🧠 Replace the contents of return (…):
   return (
     <TouchableOpacity
       activeOpacity={0.85}
@@ -171,7 +179,7 @@ export default function GameCard({
         >
           {game.status === "Scheduled"
             ? awayTeam.record || "-"
-            : game.awayScore ?? "-"}
+            : (game.awayScore ?? "-")}
         </Text>
 
         {/* Game info */}
@@ -187,7 +195,6 @@ export default function GameCard({
                 width: "100%",
                 position: "absolute",
                 top: -20,
-           
               }}
             >
               <View
@@ -268,7 +275,7 @@ export default function GameCard({
           ) : inProgress ? (
             <>
               <Text style={styles.date}>
-                {game.isHalftime ? "Halftime" : game.period ?? "Live"}
+                {game.isHalftime ? "Halftime" : (game.period ?? "Live")}
               </Text>
               {game.isHalftime ? (
                 <Text style={[styles.clock, { fontWeight: "600" }]}>
@@ -277,8 +284,12 @@ export default function GameCard({
               ) : game.clock ? (
                 <Text style={styles.clock}>{game.clock}</Text>
               ) : null}
+              {broadcastNetworks && (
+                <Text style={styles.broadcast}>{broadcastNetworks}</Text>
+              )}
             </>
           ) : null}
+
         </View>
 
         {/* Home score or record */}
@@ -290,7 +301,7 @@ export default function GameCard({
         >
           {game.status === "Scheduled"
             ? homeTeam.record || "-"
-            : game.homeScore ?? "-"}
+            : (game.homeScore ?? "-")}
         </Text>
 
         {/* Home team */}
