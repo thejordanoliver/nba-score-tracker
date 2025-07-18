@@ -11,7 +11,7 @@ const OSSEMIBOLD = "Oswald_600SemiBold";
 type GameInfoProps = {
   status: "Scheduled" | "In Progress" | "Final";
   date: string;
-  time: string;
+  time?: string;
   period?: string;
   clock?: string;
   colors: Record<string, string>;

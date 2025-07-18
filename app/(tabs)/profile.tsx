@@ -1,11 +1,16 @@
 // profile.tsx
 import ConfirmModal from "@/components/ConfirmModal";
+import { CustomHeaderTitle } from "@/components/CustomHeaderTitle";
 import BioSection from "@/components/profile/BioSection";
 import FavoriteTeamsSection from "@/components/profile/FavoriteTeamsSection";
 import FollowStats from "@/components/profile/FollowStats";
 import ProfileBanner from "@/components/profile/ProfileBanner";
 import ProfileHeader from "@/components/profile/ProfileHeader";
-import FollowersModal from "@/components/profile/FollowersModal"; // ✅ NEW
+import SettingsModal from "@/components/SettingsModal";
+import { SkeletonProfileScreen } from "@/components/SkeletonProfileScreen";
+import { teams } from "@/constants/teams";
+import { useFollowersModalStore } from "@/store/followersModalStore";
+import { getStyles } from "@/styles/ProfileScreen.styles";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useFocusEffect } from "@react-navigation/native";
 import { useLocalSearchParams, useNavigation, useRouter } from "expo-router";
@@ -17,12 +22,6 @@ import {
   useColorScheme,
   useWindowDimensions,
 } from "react-native";
-import { CustomHeaderTitle } from "../../components/CustomHeaderTitle";
-import SettingsModal from "../../components/SettingsModal";
-import { SkeletonProfileScreen } from "../../components/SkeletonProfileScreen";
-import { teams } from "../../constants/teams";
-import { getStyles } from "../../styles/ProfileScreen.styles";
-import { useFollowersModalStore } from "@/store/followersModalStore";
 
 const BASE_URL = process.env.EXPO_PUBLIC_API_URL?.replace(/\/$/, "") ?? "";
 
@@ -64,7 +63,6 @@ export default function ProfileScreen() {
   const isDark = colorScheme === "dark";
   const viewedUserId = currentUserId;
 
-  // Followers Modal Store
   const {
     isVisible,
     type,
@@ -142,19 +140,10 @@ export default function ProfileScreen() {
     }
   };
 
-  const loadCurrentUserId = async () => {
-    try {
-      const storedId = await AsyncStorage.getItem("userId");
-      if (storedId) setCurrentUserId(Number(storedId));
-    } catch (error) {
-      console.warn("Failed to load current user ID:", error);
-    }
-  };
-
   const loadProfileData = async () => {
     try {
       const keys = [
-        "userId", // add this to fetch user ID from async storage
+        "userId",
         "username",
         "fullName",
         "bio",
@@ -172,10 +161,9 @@ export default function ProfileScreen() {
       setBannerImage(parseImageUrl(data.bannerImage));
       setFavorites(data.favorites ? JSON.parse(data.favorites) : []);
 
-      const userId = data.userId;
-      if (userId) {
-        setCurrentUserId(Number(userId));
-        await loadFollowCounts(userId); // pass the numeric ID here
+      if (data.userId) {
+        setCurrentUserId(Number(data.userId));
+        await loadFollowCounts(data.userId);
       }
     } catch (error) {
       console.warn("Failed to load profile data:", error);
@@ -184,18 +172,29 @@ export default function ProfileScreen() {
     }
   };
 
-  // On screen focus, restore modal if needed and load profile data if modal hidden
+  const signOut = async () => {
+    try {
+      await AsyncStorage.clear();
+      router.replace("/login");
+    } catch (error) {
+      console.warn("Failed to sign out:", error);
+    }
+  };
+
   useFocusEffect(
     useCallback(() => {
       if (shouldRestore && targetUserId) {
-        openModal(type, targetUserId, currentUserId ? String(currentUserId) : undefined);
+        openModal(
+          type,
+          targetUserId,
+          currentUserId ? String(currentUserId) : undefined
+        );
         clearRestore();
       }
 
       if (!isVisible) {
         setIsLoading(true);
         loadProfileData();
-        loadCurrentUserId();
       }
     }, [
       shouldRestore,
@@ -225,15 +224,6 @@ export default function ProfileScreen() {
   const styles = getStyles(isDark);
 
   if (isLoading) return <SkeletonProfileScreen isDark={isDark} />;
-
-  const signOut = async () => {
-    try {
-      await AsyncStorage.clear();
-      router.replace("/login");
-    } catch (error) {
-      console.warn("Failed to sign out:", error);
-    }
-  };
 
   const onFollowersPress = () => {
     if (currentUserId) {
@@ -274,6 +264,7 @@ export default function ProfileScreen() {
           fullName={fullName}
           username={username}
           isDark={isDark}
+          isCurrentUser={true}
           onEditPress={() => router.push("/edit-profile")}
         />
 
@@ -323,18 +314,6 @@ export default function ProfileScreen() {
         onConfirm={confirmDeleteAccount}
         onCancel={() => setShowDeleteModal(false)}
       />
-
-      {/* FollowersModal: make sure to pass needed props if any */}
-{targetUserId && currentUserId && (
-  <FollowersModal
-    visible={isVisible}
-    onClose={closeModal}
-    type={type}
-    targetUserId={String(targetUserId)}
-    currentUserId={String(currentUserId)}
-  />
-)}
-
     </>
   );
 }

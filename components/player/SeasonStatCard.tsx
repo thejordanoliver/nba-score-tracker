@@ -57,6 +57,17 @@ export default function SeasonStatCard({
   const sanitizedTeamId = String(teamId).replace(/"/g, "").trim();
 
   const teamObj = teams.find((t) => String(t.id) === sanitizedTeamId);
+const forceWhiteTextTeams = [
+  "Timberwolves",
+  "Heat",
+  "Clippers",
+  "Rockets",
+  "Pistons",
+  "Bulls",
+  "Hornets",
+  "Trail Blazers",
+  "Kings",
+];
 
   return (
     <>
@@ -82,22 +93,46 @@ export default function SeasonStatCard({
           <StatItem
             label="PTS"
             value={ppg}
-            color={isDark ? "#fff" : teamObj?.color}
+color={
+  isDark && teamObj && forceWhiteTextTeams.includes(teamObj.name)
+    ? "#fff"
+    : isDark
+    ? teamObj?.secondaryColor
+    : teamObj?.color
+}
           />
           <StatItem
             label="AST"
             value={apg}
-            color={isDark ? "#fff" : teamObj?.color}
+color={
+  isDark && teamObj && forceWhiteTextTeams.includes(teamObj.name)
+    ? "#fff"
+    : isDark
+    ? teamObj?.secondaryColor
+    : teamObj?.color
+}
           />
           <StatItem
             label="REB"
             value={rpg}
-            color={isDark ? "#fff" : teamObj?.color}
+color={
+  isDark && teamObj && forceWhiteTextTeams.includes(teamObj.name)
+    ? "#fff"
+    : isDark
+    ? teamObj?.secondaryColor
+    : teamObj?.color
+}
           />
           <StatItem
             label="FG%"
             value={fgPercent}
-            color={isDark ? "#fff" : teamObj?.color}
+color={
+  isDark && teamObj && forceWhiteTextTeams.includes(teamObj.name)
+    ? "#fff"
+    : isDark
+    ? teamObj?.secondaryColor
+    : teamObj?.color
+}
           />
         </View>
       </View>

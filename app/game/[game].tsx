@@ -1,8 +1,13 @@
-import LastFiveGamesSwitcher from "@/components/LastFiveGames";
+import GameLeaders from "@/components/game-details/GameLeaders";
+import GameTeamStats from "@/components/game-details/GameTeamStats";
+import LastFiveGamesSwitcher from "@/components/game-details/LastFiveGames";
+import LineScore from "@/components/game-details/LineScore";
 import TeamLocationSection from "@/components/TeamLocationSection";
 import TeamLocationSkeleton from "@/components/TeamLocationSkeleton";
+import { useGameStatistics } from "@/hooks/useGameStatistics";
 import { useLastFiveGames } from "@/hooks/useLastFiveGames";
 import { useFetchPlayoffGames } from "@/hooks/usePlayoffSeries";
+import { Game } from "@/types/types";
 import { useLocalSearchParams, useNavigation } from "expo-router";
 import { goBack } from "expo-router/build/global-state/routing";
 import { useEffect, useLayoutEffect, useMemo, useState } from "react";
@@ -21,8 +26,6 @@ import { useWeatherForecast } from "../../hooks/useWeather";
 const OSEXTRALIGHT = "Oswald_200ExtraLight";
 const OSREGULAR = "Oswald_400Regular";
 const OSMEDIUM = "Oswald_500Medium";
-const OSBOLD = "Oswald_700Bold";
-const OSSEMIBOLD = "Oswald_600SemiBold";
 
 type Team = {
   name: string;
@@ -35,25 +38,37 @@ type Team = {
   arenaName?: string;
 };
 
-type Game = {
-  id: number;
-  home: Team;
-  away: Team;
-  date: string;
-  time: string;
-  status: "Scheduled" | "In Progress" | "Final";
-  clock?: string;
-  period?: string;
-  homeScore?: number;
-  awayScore?: number;
-};
-
 export default function GameDetailsScreen() {
   const [isLoading, setIsLoading] = useState(true);
   const { game } = useLocalSearchParams();
-  const parsedGame: Game = JSON.parse(game as string);
   const isDark = useColorScheme() === "dark";
   const navigation = useNavigation();
+
+  if (typeof game !== "string") return null;
+  const parsedGame: Game = JSON.parse(game);
+
+  const {
+    home,
+    away,
+    date,
+    time,
+    status,
+    homeScore,
+    awayScore,
+    period,
+    clock,
+    linescore,
+  } = parsedGame;
+
+  const homeTeamData = teams.find(
+    (t) =>
+      t.name === home.name || t.code === home.name || t.fullName === home.name
+  );
+  const awayTeamData = teams.find(
+    (t) =>
+      t.name === away.name || t.code === away.name || t.fullName === away.name
+  );
+  if (!homeTeamData || !awayTeamData) return null;
 
   const colors = useMemo(
     () => ({
@@ -70,30 +85,12 @@ export default function GameDetailsScreen() {
     [isDark]
   );
 
-  const {
-    home,
-    away,
-    date,
-    time,
-    status,
-    homeScore,
-    awayScore,
-    period,
-    clock,
-  } = parsedGame;
-
-  const homeTeamData = teams.find(
-    (t) =>
-      t.name === home.name || t.code === home.name || t.fullName === home.name
-  );
-  const awayTeamData = teams.find(
-    (t) =>
-      t.name === away.name || t.code === away.name || t.fullName === away.name
-  );
-  if (!homeTeamData || !awayTeamData) return null;
-
   const homeLastGames = useLastFiveGames(Number(homeTeamData.id));
   const awayLastGames = useLastFiveGames(Number(awayTeamData.id));
+
+  const { data: gameStats, loading: statsLoading } = useGameStatistics(
+    parsedGame.id
+  );
 
   const { games: playoffGames } = useFetchPlayoffGames(
     Number(homeTeamData.id),
@@ -120,23 +117,19 @@ export default function GameDetailsScreen() {
     status === "Final" && (homeScore ?? 0) > (awayScore ?? 0);
 
   useLayoutEffect(() => {
-    if (homeTeamData && awayTeamData) {
-      navigation.setOptions({
-        header: () => (
-          <CustomHeaderTitle
-            title={`${awayTeamData.code} @ ${homeTeamData.code}`}
-            tabName="Game"
-            onBack={goBack}
-          />
-        ),
-      });
-    }
+    navigation.setOptions({
+      header: () => (
+        <CustomHeaderTitle
+          title={`${awayTeamData.code} @ ${homeTeamData.code}`}
+          tabName="Game"
+          onBack={goBack}
+        />
+      ),
+    });
   }, [navigation, homeTeamData, awayTeamData, isDark]);
 
   useEffect(() => {
-    const timeout = setTimeout(() => {
-      setIsLoading(false);
-    }, 400);
+    const timeout = setTimeout(() => setIsLoading(false), 400);
     return () => clearTimeout(timeout);
   }, []);
 
@@ -161,9 +154,9 @@ export default function GameDetailsScreen() {
             name: away.name,
             record: away.record,
             logo:
-              isDark && awayTeamData?.logoLight
+              isDark && awayTeamData.logoLight
                 ? awayTeamData.logoLight
-                : awayTeamData?.logo || require("../../assets/Logos/NBA.png"),
+                : awayTeamData.logo || require("../../assets/Logos/NBA.png"),
           }}
           isDark={isDark}
           score={awayScore}
@@ -171,19 +164,20 @@ export default function GameDetailsScreen() {
           colors={colors}
         />
 
+        {/* Game Info */}
         <GameInfo
           status={status}
-          date={date} // Pass raw ISO date for broadcast matching
+          date={date}
           time={time}
           clock={clock}
           period={period}
           colors={colors}
           isDark={isDark}
-          homeTeam={home.name} // Pass home team name
-          awayTeam={away.name} // Pass away team name
+          homeTeam={home.name}
+          awayTeam={away.name}
         />
 
-        {/* Game Number and Series Summary */}
+        {/* Playoff Summary */}
         {playoffGames.length > 0 && (getGameNumberLabel() || seriesSummary) && (
           <View
             style={{
@@ -246,9 +240,9 @@ export default function GameDetailsScreen() {
             name: home.name,
             record: home.record,
             logo:
-              isDark && homeTeamData?.logoLight
+              isDark && homeTeamData.logoLight
                 ? homeTeamData.logoLight
-                : homeTeamData?.logo || require("../../assets/Logos/NBA.png"),
+                : homeTeamData.logo || require("../../assets/Logos/NBA.png"),
           }}
           isDark={isDark}
           isHome
@@ -258,7 +252,18 @@ export default function GameDetailsScreen() {
         />
       </View>
 
-      <View style={{ flexDirection: "row", marginTop: 20 }}>
+      <View style={{ gap: 8, marginTop: 16 }}>
+        {parsedGame.linescore && (
+          <LineScore
+            linescore={parsedGame.linescore}
+            homeCode={homeTeamData.code}
+            awayCode={awayTeamData.code}
+          />
+        )}
+
+        <GameLeaders gameId={parsedGame.id.toString()} />
+        {!statsLoading && gameStats && <GameTeamStats stats={gameStats} />}
+
         <LastFiveGamesSwitcher
           isDark={isDark}
           home={{
@@ -269,17 +274,15 @@ export default function GameDetailsScreen() {
           }}
           away={{
             teamCode: awayTeamData.code,
-            teamLogoLight: awayTeamData.logoLight,
             teamLogo: awayTeamData.logo,
+            teamLogoLight: awayTeamData.logoLight,
             games: awayLastGames.games,
           }}
         />
-      </View>
 
-      {isLoading ? (
-        <TeamLocationSkeleton />
-      ) : (
-        homeTeamData && (
+        {isLoading ? (
+          <TeamLocationSkeleton />
+        ) : (
           <TeamLocationSection
             arenaImage={homeTeamData.arenaImage}
             arenaName={homeTeamData.arenaName}
@@ -290,8 +293,8 @@ export default function GameDetailsScreen() {
             loading={weatherLoading}
             error={weatherError}
           />
-        )
-      )}
+        )}
+      </View>
     </ScrollView>
   );
 }
@@ -307,31 +310,6 @@ const styles = StyleSheet.create({
     justifyContent: "space-around",
     borderBottomWidth: 1,
     paddingBottom: 12,
-    position: "relative", // to allow absolute children positioning
-  },
-  teamName: {
-    fontFamily: OSREGULAR,
-    fontSize: 14,
-    textAlign: "center",
-  },
-  score: {
-    fontFamily: OSMEDIUM,
-    fontSize: 28,
-    textAlign: "center",
-  },
-  record: {
-    fontFamily: OSREGULAR,
-    fontSize: 12,
-    textAlign: "center",
-  },
-  statusText: {
-    fontFamily: OSMEDIUM,
-    fontSize: 16,
-    textAlign: "center",
-  },
-  timeText: {
-    fontFamily: OSREGULAR,
-    fontSize: 12,
-    textAlign: "center",
+    position: "relative",
   },
 });

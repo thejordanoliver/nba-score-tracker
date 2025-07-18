@@ -1,7 +1,8 @@
+import { Game } from "@/types/types";
 import axios from "axios";
 import rateLimit from "axios-rate-limit";
 import { useEffect, useState } from "react";
-import { transformGameData, RawNBAGame, Game } from "../utils/transformGameData";
+import { RawNBAGame, transformGameData } from "../utils/transformGameData";
 
 const RAPIDAPI_KEY = process.env.EXPO_PUBLIC_RAPIDAPI_KEY || "";
 const RAPIDAPI_HOST = process.env.EXPO_PUBLIC_RAPIDAPI_HOST || "";
@@ -47,7 +48,8 @@ const fetchTeamStandings = async (): Promise<
   Record<string, { wins: number; losses: number }>
 > => {
   const today = new Date();
-  const seasonYear = today.getMonth() < 7 ? today.getFullYear() - 1 : today.getFullYear();
+  const seasonYear =
+    today.getMonth() < 7 ? today.getFullYear() - 1 : today.getFullYear();
 
   const res = await http.get<{ response: StandingTeam[] }>(
     `https://${RAPIDAPI_HOST}/standings`,

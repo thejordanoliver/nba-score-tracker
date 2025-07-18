@@ -1,7 +1,6 @@
 import { ReactNode } from "react";
 import { Image, Text, View } from "react-native";
 import { teams, teamsById } from "../constants/teams";
-
 const OSMEDIUM = "Oswald_500Medium";
 const OSREGULAR = "Oswald_400Regular";
 
@@ -67,14 +66,15 @@ export default function InfoCard({
     <>
       <Text
         style={{
-          fontSize: 20,
+          color: isDark ? "#fff" : "#1d1d1d",
           fontFamily: OSMEDIUM,
-          marginBottom: 16,
-          marginTop: 16,
+          fontSize: 20,
           paddingBottom: 4,
-          borderBottomWidth: 1,
-          borderBottomColor: "#999",
-          color: isDark ? "#fff" : "#000",
+          marginBottom: 8,
+          borderBottomWidth: 0.5,
+          borderBottomColor: isDark
+            ? "#ccc"
+            : "#444",
         }}
       >
         {label}
@@ -110,8 +110,7 @@ export default function InfoCard({
                 width: 50,
                 height: 50,
                 resizeMode: "contain",
-                              backgroundColor: isDark ? "#fff" : "#fff", // fallback background color or pass a prop
-
+                backgroundColor: isDark ? "#fff" : "#fff", // fallback background color or pass a prop
               }}
             />
           </View>

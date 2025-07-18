@@ -984,7 +984,6 @@ export const teams = [
     location: "Washington, DC",
     logo: WizardsLogo,
     fadedLogo: FadedWizardsLogo,
-
     color: "rgb(0, 43, 92)",
     transparentColor: "rgba(0, 43, 92, .8)",
     secondaryColor: "rgba(227, 24, 55, 1)",

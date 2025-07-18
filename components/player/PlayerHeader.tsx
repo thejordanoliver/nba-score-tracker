@@ -1,6 +1,5 @@
 import { Image, StyleSheet, Text, View } from "react-native";
 
-
 const OSEXTRALIGHT = "Oswald_200ExtraLight";
 const OSLIGHT = "Oswald_300Light";
 const OSREGULAR = "Oswald_400Regular";
@@ -22,6 +21,10 @@ type Props = {
   avatarUrl?: string;
   isDark: boolean;
   teamColor?: string;
+  teamSecondaryColor?: string; // new optional prop for secondary color
+
+  team_name?: string;
+
   calculateAge: (birthDateString?: string) => number | null;
 };
 
@@ -30,17 +33,75 @@ export default function PlayerHeader({
   avatarUrl,
   isDark,
   teamColor,
+  teamSecondaryColor,
   calculateAge,
+  team_name,
 }: Props) {
   const initial = player?.first_name?.[0]?.toUpperCase() || "?";
 
+  const useWhiteTextTeams = [
+    "timberwolves",
+    "heat",
+    "clippers",
+    "rockets",
+    "pistons",
+    "bulls",
+    "hornets",
+    "trail blazers",
+    "kings",
+  ];
+
+  const getPrimaryTextColor = (
+    isDark: boolean,
+    teamName?: string,
+    teamColor?: string
+  ): string => {
+    const normalizedTeamName = teamName?.trim().toLowerCase() ?? "";
+
+    if (isDark && useWhiteTextTeams.includes(normalizedTeamName)) {
+      return "#fff";
+    }
+
+    return teamColor ?? (isDark ? "#fff" : "#000");
+  };
+
+  const primaryTextColor = getPrimaryTextColor(isDark, team_name, teamColor);
+
+  // Use secondary color only in dark mode, fallback white; else black in light mode
+  const getSecondaryTextColor = (
+    isDark: boolean,
+    teamName?: string,
+    teamSecondaryColor?: string
+  ): string => {
+    const normalizedTeamName = teamName?.trim().toLowerCase() ?? "";
+
+    if (isDark) {
+      if (useWhiteTextTeams.includes(normalizedTeamName)) {
+        return "#fff";
+      }
+      return teamSecondaryColor ?? "#fff";
+    }
+
+    return "#000"; // light mode
+  };
+
+  const secondaryTextColor = getSecondaryTextColor(isDark, team_name, teamSecondaryColor);
+
+
+
+
+  const dividerColor = isDark ? "#444" : "#ddd";
+  const avatarBg = isDark ? "#444" : "#ddd";
+
   return (
     <View style={styles.playerHeader}>
-      <View style={[styles.avatarContainer, { borderRightColor: isDark ? "#444" : "#ddd" }]}>
+      <View
+        style={[styles.avatarContainer, { borderRightColor: dividerColor }]}
+      >
         {avatarUrl ? (
           <Image
             source={{ uri: avatarUrl }}
-            style={[styles.avatar, { backgroundColor: isDark ? "#444" : "#ddd" }]}
+            style={[styles.avatar, { backgroundColor: avatarBg }]}
             accessibilityLabel={`${player.first_name} ${player.last_name} photo`}
           />
         ) : (
@@ -49,37 +110,37 @@ export default function PlayerHeader({
           </View>
         )}
         <View style={styles.jerseyNumber}>
-          <Text style={[styles.jersey, { color: isDark ? "#fff" : teamColor }]}>
+          <Text style={[styles.jersey, { color: isDark?  secondaryTextColor : primaryTextColor }]}>
             {player.position?.charAt(0) ?? "N"} #{player.jersey_number ?? "?"}
           </Text>
         </View>
       </View>
 
       <View style={styles.infoContainer}>
-        <Text style={[styles.name, { color: isDark ? "#fff" : teamColor }]}>
+        <Text style={[styles.name,{ color: isDark?  secondaryTextColor : primaryTextColor }]}>
           {player.first_name}
         </Text>
-        <Text style={[styles.name, { color: isDark ? "#fff" : teamColor }]}>
+        <Text style={[styles.name, { color: isDark?  secondaryTextColor : primaryTextColor }]}>
           {player.last_name}
         </Text>
 
-        <Text style={[styles.playerInfo, { color: isDark ? "#fff" : "#000" }]}>
-          <Text style={{ fontFamily: OSMEDIUM, color: isDark ? "#fff" :  teamColor }}>School: </Text>
+        <Text style={[styles.playerInfo, {color: isDark?  "#fff" : "#1d1d1d"} ]}>
+          <Text style={{ fontFamily: OSMEDIUM,  color: isDark?  secondaryTextColor : primaryTextColor }}>School: </Text>
           {player.college || "Unknown"}
         </Text>
 
-        <Text style={[styles.playerInfo, { color: isDark ? "#fff" : "#000" }]}>
-          <Text style={{ fontFamily: OSMEDIUM, color: isDark ? "#fff" :  teamColor }}>Height: </Text>
+        <Text style={[styles.playerInfo, {color: isDark?  "#fff" : "#1d1d1d"} ]}>
+             <Text style={{ fontFamily: OSMEDIUM,  color: isDark?  secondaryTextColor : primaryTextColor }}>Height: </Text>
           {player.height ?? "?"}
         </Text>
 
-        <Text style={[styles.playerInfo, { color: isDark ? "#fff" : "#000" }]}>
-          <Text style={{ fontFamily: OSMEDIUM, color: isDark ? "#fff" :  teamColor }}>Weight: </Text>
+        <Text style={[styles.playerInfo, {color: isDark?  "#fff" : "#1d1d1d"} ]}>
+                <Text style={{ fontFamily: OSMEDIUM,  color: isDark?  secondaryTextColor : primaryTextColor }}>Weight: </Text>
           {player.weight ?? "?"} lbs
         </Text>
 
-        <Text style={[styles.playerInfo, { color: isDark ? "#fff" : "#000" }]}>
-          <Text style={{ fontFamily: OSMEDIUM, color: isDark ? "#fff" :  teamColor }}>Birth: </Text>
+        <Text style={[styles.playerInfo, {color: isDark?  "#fff" : "#1d1d1d"} ]}>
+                   <Text style={{ fontFamily: OSMEDIUM,  color: isDark?  secondaryTextColor : primaryTextColor }}>Birth: </Text>
           {player.birth_date
             ? `${new Date(player.birth_date).toLocaleDateString("en-US", {
                 year: "numeric",

@@ -4,6 +4,7 @@ import { useMemo } from "react";
 import { Animated, FlatList } from "react-native";
 import FavoriteTeamsSelectorSkeleton from "./FavoriteTeamsSelectorSkeleton";
 import TeamCard from "./TeamCard";
+import { teamsById } from "@/constants/teams";
 
 type Props = {
   teams: Team[];
@@ -29,7 +30,7 @@ const FavoriteTeamsSelector = ({
   const filteredTeams = useMemo(
     () =>
       teams.filter((team) =>
-        team.fullName.toLowerCase().includes(search.toLowerCase())
+        team.fullName?.toLowerCase().includes(search.toLowerCase())
       ),
     [teams, search]
   );

@@ -1,9 +1,9 @@
 // ---- LastFiveGamesSwitcher.tsx ----
 import { useState } from "react";
 import { FlatList, Image, StyleSheet, Text, View } from "react-native";
-import FixedWidthTabBar from "./FixexWidthTabBar";
-import { teams } from "../constants/teams"; // Adjust relative path as needed
-
+import FixedWidthTabBar from "@/components/FixedWidthTabBar";
+import { teams } from "../../constants/teams"; // Adjust relative path as needed
+import HeadingTwo from "@/components/HeadingTwo";
 type Props = {
   isDark: boolean;
   home: {
@@ -101,18 +101,9 @@ const opponentCode = item.opponentCode || getOpponentCodeFromName(item.opponent)
   return (
     <View style={styles.container}>
       <View style={{ marginTop: 20, width: "100%" }}>
-        <Text
-          style={{
-            fontSize: 24,
-            fontFamily: "Oswald_500Medium",
-            paddingBottom: 4,
-            borderBottomWidth: 1,
-            borderBottomColor: isDark ? "#444" : "#ccc",
-            color: isDark ? "#fff" : "#1d1d1d",
-          }}
-        >
+        <HeadingTwo>
           Last Five Games
-        </Text>
+        </HeadingTwo>
 
         <View style={{ alignSelf: "center", marginVertical: 10 }}>
           <FixedWidthTabBar

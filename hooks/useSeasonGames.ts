@@ -16,6 +16,7 @@ type APIGame = {
   periods: {
     current: number;
     total: number;
+    endOfPeriod: boolean;
   };
   teams: {
     home: {
@@ -32,10 +33,23 @@ type APIGame = {
     };
   };
   scores: {
-    home: { points: number | null };
-    visitors: { points: number | null };
+    home: {
+      points: number | null;
+      win?: number;
+      loss?: number;
+      series?: { win: number; loss: number };
+      linescore?: string[];
+    };
+    visitors: {
+      points: number | null;
+      win?: number;
+      loss?: number;
+      series?: { win: number; loss: number };
+      linescore?: string[];
+    };
   };
 };
+
 
 type TeamRecord = {
   wins: number;
@@ -194,29 +208,35 @@ export function useSeasonGames(season: string) {
             new Date(game.date.start) >= playoffStartDate &&
             new Date(game.date.start) <= playoffEndDate;
 
-          const enrichedGame = {
-            ...game,
-            isPlayoff,
-            date: {
-              ...game.date,
-              stage: isPlayoff ? 2 : 1,
-            },
-            teams: {
-              home: {
-                ...game.teams.home,
-                name:
-                  teamMap[game.teams.home.id] ?? game.teams.home.name,
-                ...homeRecord,
-              },
-              visitors: {
-                ...game.teams.visitors,
-                name:
-                  teamMap[game.teams.visitors.id] ??
-                  game.teams.visitors.name,
-                ...visitorRecord,
-              },
-            },
-          };
+        const enrichedGame = {
+  ...game,
+  isPlayoff,
+  date: {
+    ...game.date,
+    stage: isPlayoff ? 2 : 1,
+  },
+  teams: {
+    home: {
+      ...game.teams.home,
+      name: teamMap[game.teams.home.id] ?? game.teams.home.name,
+      ...homeRecord,
+    },
+    visitors: {
+      ...game.teams.visitors,
+      name: teamMap[game.teams.visitors.id] ?? game.teams.visitors.name,
+      ...visitorRecord,
+    },
+  },
+  scores: {
+    home: {
+      ...game.scores.home,
+    },
+    visitors: {
+      ...game.scores.visitors,
+    },
+  },
+};
+
 
           return transformGameData(enrichedGame, standingsMap);
         })

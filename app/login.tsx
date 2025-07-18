@@ -104,11 +104,17 @@ export default function LoginScreen() {
       return;
     }
     try {
-      const res = await axios.post<User>(`${BASE_URL}/api/login`, {
-        username: trimmedUsername,
-        password,
-      });
-      const user = res.data;
+      const res = await axios.post<{ user: User; token: string }>(
+        `${BASE_URL}/api/login`,
+        {
+          username: trimmedUsername,
+          password,
+        }
+      );
+      const { user, token } = res.data;
+
+      // Save the token for authenticated requests
+      await safeSetItem("token", token);
       await safeSetItem("userId", user.id?.toString() || null);
       await safeSetItem("username", user.username);
       await safeSetItem("fullName", user.full_name);
@@ -126,7 +132,7 @@ export default function LoginScreen() {
 
       router.replace({
         pathname: "/(tabs)/profile",
-        params: { id: res.data.id }, // or `res.data.user.id` if that's your structure
+        params: { id: user.id },
       });
     } catch (err: any) {
       Alert.alert("Login failed", err.response?.data?.error || err.message);

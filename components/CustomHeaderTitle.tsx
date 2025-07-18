@@ -1,4 +1,4 @@
-import TeamInfoModal from "@/components/TeamInfoModal";
+import TeamInfoBottomSheet from "@/components/TeamInfoModal";
 import { teams } from "@/constants/teams";
 import { Ionicons } from "@expo/vector-icons";
 import { HeaderTitle } from "@react-navigation/elements";
@@ -6,7 +6,7 @@ import { useState } from "react";
 import {
   Dimensions,
   Image,
-  Pressable,
+  TouchableOpacity,
   StyleSheet,
   TextStyle,
   useColorScheme,
@@ -14,7 +14,6 @@ import {
   ViewStyle,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-
 const { width } = Dimensions.get("window");
 
 type CustomHeaderTitleProps = {
@@ -162,21 +161,21 @@ export function CustomHeaderTitle({
       <View style={[containerStyle, { zIndex: 2 }]}>
         {/* Left Icon */}
         {tabName === "Profile" ? (
-          <Pressable onPress={onLogout}>
+          <TouchableOpacity onPress={onLogout}>
             <Ionicons
               name="log-out"
               size={24}
               color={isDark ? "#fff" : "#1d1d1d"}
             />
-          </Pressable>
+          </TouchableOpacity>
         ) : showBackButton && onBack ? (
-          <Pressable onPress={onBack}>
+          <TouchableOpacity onPress={onBack}>
             <Ionicons
               name="arrow-back"
               size={24}
               color={isTeamScreen ? "#fff" : isDark ? "#fff" : "#1d1d1d"}
             />
-          </Pressable>
+          </TouchableOpacity>
         ) : (
           <View style={{ width: 24 }} />
         )}
@@ -194,7 +193,7 @@ export function CustomHeaderTitle({
         {isTeamScreen ? (
           <View style={{ flexDirection: "row", alignItems: "center" }}>
             {onToggleNotifications && (
-              <Pressable
+              <TouchableOpacity
                 onPress={onToggleNotifications}
                 style={{ padding: 8, marginRight: 8 }}
               >
@@ -207,11 +206,11 @@ export function CustomHeaderTitle({
                   size={24}
                   color="#fff"
                 />
-              </Pressable>
+              </TouchableOpacity>
             )}
 
             {onToggleFavorite && (
-              <Pressable
+              <TouchableOpacity
                 onPress={onToggleFavorite}
                 style={{ padding: 8, marginRight: 8 }}
               >
@@ -220,59 +219,60 @@ export function CustomHeaderTitle({
                   size={24}
                   color="#fff"
                 />
-              </Pressable>
+              </TouchableOpacity>
             )}
 
             {!isPlayerScreen && (
-              <Pressable
+              <TouchableOpacity
                 onPress={() => setModalVisible(true)}
                 style={{ padding: 8 }}
               >
                 <Ionicons name="information-circle" size={24} color="#fff" />
-              </Pressable>
+              </TouchableOpacity>
             )}
 
-            <TeamInfoModal
-              visible={modalVisible}
-              onClose={() => setModalVisible(false)}
-              coachName={coach}
-              coachImage={coachImage}
-              teamHistory={teamHistory ?? "This is some team history..."}
-              teamId={selectedTeam?.id}
-            />
+            <TeamInfoBottomSheet
+  visible={modalVisible}
+  onClose={() => setModalVisible(false)}
+  coachName={coach}
+  coachImage={coachImage}
+  teamHistory={teamHistory ?? "This is some team history..."}
+  teamId={selectedTeam?.id}
+/>
+
           </View>
         ) : tabName === "Profile" && onSettings ? (
-          <Pressable onPress={onSettings}>
+          <TouchableOpacity onPress={onSettings}>
             <Ionicons
               name="settings"
               size={24}
               color={isDark ? "#fff" : "#1d1d1d"}
             />
-          </Pressable>
+          </TouchableOpacity>
         ) : tabName === "League" && onCalendarPress ? (
-          <Pressable onPress={onCalendarPress}>
+<TouchableOpacity onPress={onCalendarPress}>
             <Ionicons
               name="calendar"
               size={24}
               color={isDark ? "#fff" : "#1d1d1d"}
             />
-          </Pressable>
+          </TouchableOpacity>
         ) : tabName === "Explore" && onSearchToggle ? (
-          <Pressable onPress={onSearchToggle}>
+          <TouchableOpacity onPress={onSearchToggle}>
             <Ionicons
               name="search"
               size={24}
               color={isDark ? "#fff" : "#1d1d1d"}
             />
-          </Pressable>
+          </TouchableOpacity>
         ) : onToggleLayout !== undefined ? (
-          <Pressable onPress={onToggleLayout}>
+          <TouchableOpacity onPress={onToggleLayout}>
             <Ionicons
               name={isGrid ? "list" : "grid"}
               size={22}
               color={isDark ? "#fff" : "#000"}
             />
-          </Pressable>
+          </TouchableOpacity>
         ) : (
           <View style={{ width: 24 }} />
         )}

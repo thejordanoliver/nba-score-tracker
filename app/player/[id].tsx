@@ -1,5 +1,5 @@
 import { CustomHeaderTitle } from "@/components/CustomHeaderTitle";
-import GameCard, { Game as GameCardType } from "@/components/GameCard";
+import GameCard from "@/components/GameCard";
 import PlayerStatTable from "@/components/player/PlayerStatTable";
 import SeasonStatCard from "@/components/player/SeasonStatCard";
 import players from "@/constants/players"; // player image map
@@ -15,6 +15,7 @@ import {
   View,
 } from "react-native";
 import { teams } from "../../constants/teams";
+import type { Game } from "../../types/types";
 
 import Heading from "@/components/Heading";
 import PlayerHeader from "@/components/player/PlayerHeader";
@@ -170,28 +171,35 @@ export default function PlayerDetailScreen() {
   }, [navigation, fullName, teamObj, isDark]);
 
   const initial = player ? player.first_name[0]?.toUpperCase() : "?";
-  const teamGameTransformed: GameCardType | null = teamLastGame
-    ? {
-        id: teamLastGame.id,
-        date: teamLastGame.date.start,
-        time: new Date(teamLastGame.date.start).toLocaleTimeString("en-US", {
-          hour: "numeric",
-          minute: "2-digit",
-        }),
-        home: {
-          name: teamLastGame.teams.home.name,
-          logo: "",
-        },
-        away: {
-          name: teamLastGame.teams.visitors.name,
-          logo: "",
-        },
-        status: "Final",
-        homeScore: teamLastGame.scores.home.points,
-        awayScore: teamLastGame.scores.visitors.points,
-        isPlayoff: false,
-      }
-    : null;
+ const teamGameTransformed: Game | null = teamLastGame
+  ? {
+      id: teamLastGame.id,
+      date: teamLastGame.date.start,
+      time: new Date(teamLastGame.date.start).toLocaleTimeString("en-US", {
+        hour: "numeric",
+        minute: "2-digit",
+      }),
+      home: {
+        id: String(teamLastGame.teams.home.id), // ✅ required
+        name: teamLastGame.teams.home.name,
+        logo: "", // You can map this later with `teams` if needed
+        record: teamLastGame.teams.home.record?.summary ?? "",
+        fullName: teamLastGame.teams.home.name,
+      },
+      away: {
+        id: String(teamLastGame.teams.visitors.id), // ✅ required
+        name: teamLastGame.teams.visitors.name,
+        logo: "",
+        record: teamLastGame.teams.visitors.record?.summary ?? "",
+        fullName: teamLastGame.teams.visitors.name,
+      },
+      status: "Final",
+      homeScore: teamLastGame.scores.home.points,
+      awayScore: teamLastGame.scores.visitors.points,
+      isPlayoff: false,
+    }
+  : null;
+
 
   const seasons = useMemo(() => {
     const start = player?.nba_start || 2015;
@@ -204,13 +212,17 @@ export default function PlayerDetailScreen() {
   return (
     <ScrollView contentContainerStyle={{ paddingBottom: 100 }}>
       {player && (
-        <PlayerHeader
-          player={player}
-          avatarUrl={avatarUrl}
-          isDark={isDark}
-          teamColor={teamObj?.color}
-          calculateAge={calculateAge}
-        />
+<PlayerHeader
+  player={player}
+  avatarUrl={avatarUrl}
+  isDark={isDark}
+  teamColor={teamObj?.color}              // primary team color
+  teamSecondaryColor={teamObj?.secondaryColor} // secondary team color
+  team_name={teamObj?.name}                // team name string
+  calculateAge={calculateAge}
+/>
+
+
       )}
 
       {!loading && !error && player && (

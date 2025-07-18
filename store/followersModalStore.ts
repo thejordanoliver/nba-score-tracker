@@ -4,14 +4,10 @@ interface FollowersModalState {
   isVisible: boolean;
   type: "followers" | "following";
   targetUserId: string | null;
-  currentUserId: string | null;
+  currentUserId: string | null; // <--- Add currentUserId here
   shouldRestore: boolean;
 
-  openModal: (
-    type: "followers" | "following",
-    targetUserId: string,
-    currentUserId?: string
-  ) => void;
+  openModal: (type: "followers" | "following", targetUserId: string, currentUserId?: string) => void;
   closeModal: () => void;
   markForRestore: () => void;
   clearRestore: () => void;
@@ -24,11 +20,7 @@ export const useFollowersModalStore = create<FollowersModalState>((set) => ({
   currentUserId: null,
   shouldRestore: false,
 
-  openModal: (
-    type: "followers" | "following",
-    targetUserId: string,
-    currentUserId?: string
-  ) =>
+  openModal: (type, targetUserId, currentUserId) =>
     set({
       isVisible: true,
       type,
@@ -37,8 +29,7 @@ export const useFollowersModalStore = create<FollowersModalState>((set) => ({
       shouldRestore: false,
     }),
 
-  closeModal: () =>
-    set({ isVisible: false, targetUserId: null, currentUserId: null }),
+  closeModal: () => set({ isVisible: false, targetUserId: null, currentUserId: null }),
 
   markForRestore: () => set({ shouldRestore: true }),
 

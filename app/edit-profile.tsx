@@ -17,6 +17,8 @@ import {
   useColorScheme,
   View,
 } from "react-native";
+import CropEditorModal from "@/components/CropEditorModal"; // adjust path if needed
+
 const BANNER_HEIGHT = 120;
 const PROFILE_PIC_SIZE = 120;
 const BASE_URL = process.env.EXPO_PUBLIC_API_URL;
@@ -31,6 +33,9 @@ export default function EditProfileScreen() {
   const isDark = useColorScheme() === "dark";
   const router = useRouter();
   const navigation = useNavigation();
+const [isCropOpen, setIsCropOpen] = useState(false);
+const [isCroppingBanner, setIsCroppingBanner] = useState(true);
+const [pendingImage, setPendingImage] = useState<string | null>(null);
 
   useEffect(() => {
     const loadData = async () => {
@@ -78,79 +83,101 @@ export default function EditProfileScreen() {
     }
   };
 
-  const handleSave = async () => {
-    try {
-      const formData = new FormData();
+const handlePickImage = async (isBanner: boolean) => {
+  const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+  if (status !== "granted") {
+    Alert.alert("Permission denied", "We need permission to access your gallery.");
+    return;
+  }
 
-      formData.append("fullName", fullName);
-      formData.append("email", email);
-      formData.append("bio", bio || "");
+  const result = await ImagePicker.launchImageLibraryAsync({
+    mediaTypes: ImagePicker.MediaTypeOptions.Images,
+    quality: 1,
+  });
 
-      // Append bannerImage - if local file, append file, else send URL string or omit if null
-      if (bannerImage?.startsWith("file://")) {
-        const filename = bannerImage.split("/").pop()!;
-        const match = /\.(\w+)$/.exec(filename);
-        const type = match ? `image/${match[1]}` : "image";
+  if (!result.canceled) {
+    setPendingImage(result.assets[0].uri);
+    setIsCroppingBanner(isBanner);
+    setIsCropOpen(true);
+  }
+};
 
-        formData.append("bannerImage", {
-          uri: bannerImage,
-          name: filename,
-          type,
-        } as any);
-      } else if (bannerImage) {
-        formData.append("bannerImage", bannerImage);
-      }
+const handleCropComplete = (uri: string) => {
+  if (isCroppingBanner) {
+    setBannerImage(uri);
+  } else {
+    setProfileImage(uri);
+  }
+  setIsCropOpen(false);
+};
 
-      // Append profileImage - same logic as before
-      if (profileImage?.startsWith("file://")) {
-        const filename = profileImage.split("/").pop()!;
-        const match = /\.(\w+)$/.exec(filename);
-        const type = match ? `image/${match[1]}` : "image";
 
-        formData.append("profileImage", {
-          uri: profileImage,
-          name: filename,
-          type,
-        } as any);
-      } else if (profileImage) {
-        formData.append("profileImage", profileImage);
-      }
 
-      const res = await fetch(`${BASE_URL}/api/users/${username}`, {
-        method: "PATCH",
-        headers: {
-          // Do NOT set Content-Type header manually when sending FormData with fetch,
-          // let fetch set the proper multipart/form-data boundary header automatically
-        },
-        body: formData,
-      });
+const handleSave = async () => {
+  try {
+    const formData = new FormData();
 
-      if (!res.ok) {
-        throw new Error("Failed to update profile");
-      }
+    formData.append("fullName", fullName);
+    formData.append("email", email);
+    formData.append("bio", bio || "");
 
-      const data = await res.json();
+    // Only append new local banner image
+    if (bannerImage?.startsWith("file://")) {
+      const filename = bannerImage.split("/").pop()!;
+      const match = /\.(\w+)$/.exec(filename);
+      const type = match ? `image/${match[1]}` : "image";
 
-      // Save returned user data in AsyncStorage
-      await AsyncStorage.setItem("fullName", data.user.full_name);
-      await AsyncStorage.setItem("email", data.user.email);
-      await AsyncStorage.setItem("bio", data.user.bio || "");
-      if (data.user.profile_image)
-        await AsyncStorage.setItem("profileImage", data.user.profile_image);
-
-      if (data.user.banner_image) {
-        await AsyncStorage.setItem("bannerImage", data.user.banner_image);
-      } else {
-        await AsyncStorage.removeItem("bannerImage");
-      }
-
-      Alert.alert("Saved", "Profile updated.");
-      router.back();
-    } catch (err) {
-      console.error(err);
-      Alert.alert("Error", "Failed to save profile info.");
+      formData.append("bannerImage", {
+        uri: bannerImage,
+        name: filename,
+        type,
+      } as any);
     }
-  };
+
+    // Only append new local profile image
+    if (profileImage?.startsWith("file://")) {
+      const filename = profileImage.split("/").pop()!;
+      const match = /\.(\w+)$/.exec(filename);
+      const type = match ? `image/${match[1]}` : "image";
+
+      formData.append("profileImage", {
+        uri: profileImage,
+        name: filename,
+        type,
+      } as any);
+    }
+
+    const res = await fetch(`${BASE_URL}/api/users/${username}`, {
+      method: "PATCH",
+      body: formData,
+    });
+
+    if (!res.ok) {
+      throw new Error("Failed to update profile");
+    }
+
+    const data = await res.json();
+
+    // ✅ Save correct relative paths in AsyncStorage
+    await AsyncStorage.setItem("fullName", data.user.full_name);
+    await AsyncStorage.setItem("email", data.user.email);
+    await AsyncStorage.setItem("bio", data.user.bio || "");
+
+    if (data.user.profile_image) {
+      await AsyncStorage.setItem("profileImage", data.user.profile_image); // /uploads/xyz.jpg
+    }
+
+    if (data.user.banner_image) {
+      await AsyncStorage.setItem("bannerImage", data.user.banner_image); // /uploads/abc.jpg
+    }
+
+    Alert.alert("Saved", "Profile updated.");
+    router.back();
+  } catch (err) {
+    console.error(err);
+    Alert.alert("Error", "Failed to save profile info.");
+  }
+};
 
   const styles = getStyles(isDark);
 
@@ -166,14 +193,16 @@ export default function EditProfileScreen() {
         }}
       >
         <View style={[styles.container]}>
-          <ProfileBanner
-            bannerImage={bannerImage}
-            profileImage={profileImage}
-            isDark={isDark}
-            editable
-            onPressBanner={() => pickImage(setBannerImage)}
-            onPressProfile={() => pickImage(setProfileImage)}
-          />
+<ProfileBanner
+  bannerImage={bannerImage}
+  profileImage={profileImage}
+  isDark={isDark}
+  editable
+  onPressBanner={() => handlePickImage(true)}
+  onPressProfile={() => handlePickImage(false)}
+/>
+
+
 
           <View style={styles.formContainer}>
             <Text style={[styles.label, { color: isDark ? "#fff" : "#000" }]}>
@@ -243,9 +272,13 @@ export default function EditProfileScreen() {
           </View>
         </View>
       </ScrollView>
+      
     </KeyboardAvoidingView>
+    
   );
+  
 }
+
 
 const getStyles = (isDark: boolean) =>
   StyleSheet.create({

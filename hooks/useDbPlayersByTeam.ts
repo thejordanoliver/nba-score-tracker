@@ -2,7 +2,7 @@ import axios from "axios";
 import { useEffect, useState, useCallback } from "react";
 import { Platform } from "react-native";
 
-interface Player {
+export interface Player {
   id: number;
   name: string;
   jersey_number: string;

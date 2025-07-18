@@ -1,6 +1,6 @@
+import { teams } from "@/constants/teams"; // adjust relative path
 import axios from "axios";
 import { useEffect, useState } from "react";
-import { teams } from "@/constants/teams"; // adjust relative path
 
 type GameApiResponse = {
   id: number;
@@ -17,9 +17,10 @@ type GameApiResponse = {
 };
 
 type LocalTeam = {
-  id: string;      // changed to string to match local teams
+  id: string; // changed to string to match local teams
   name: string;
   logo: string;
+  record?: { summary: string }; // 👈 Add this if your API returns it
 };
 
 type EnrichedGame = Omit<GameApiResponse, "teams"> & {

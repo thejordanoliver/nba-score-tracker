@@ -1,15 +1,16 @@
 import { useFollowers } from "@/hooks/useFollowers";
 import { useFollowersModalStore } from "@/store/followersModalStore";
 import { Ionicons } from "@expo/vector-icons";
+import {
+  BottomSheetBackdrop,
+  BottomSheetModal,
+  BottomSheetScrollView,
+} from "@gorhom/bottom-sheet";
 import { BlurView } from "expo-blur";
 import { useRouter } from "expo-router";
 import { useEffect, useMemo, useRef, useState } from "react";
 import {
-  Animated,
-  Dimensions,
-  FlatList,
   Image,
-  Modal,
   Pressable,
   StyleSheet,
   Text,
@@ -17,12 +18,11 @@ import {
   useColorScheme,
   View,
 } from "react-native";
-import FollowingButton from "./FollowingButton";
+import FollowingButton from "./ModalFollowingButton";
 
 const OSREGULAR = "Oswald_400Regular";
-const OSMEDIUM = "Oswald_500Medium";
-const OSLIGHT = "Oswald_300Light";
 const OSBOLD = "Oswald_700Bold";
+const OSLIGHT = "Oswald_300Light";
 
 type Props = {
   visible: boolean;
@@ -32,8 +32,6 @@ type Props = {
   targetUserId: string; // user whose followers/following we want to show
 };
 
-const { height: SCREEN_HEIGHT } = Dimensions.get("window");
-
 export default function FollowersModal({
   visible,
   onClose,
@@ -41,73 +39,123 @@ export default function FollowersModal({
   currentUserId,
   targetUserId,
 }: Props) {
-  const {
-    markForRestore,
-  } = useFollowersModalStore();
-
+  const sheetRef = useRef<BottomSheetModal>(null);
   const router = useRouter();
-
-  const handleUserPress = (userId: string) => {
-    markForRestore(); // mark modal for restore on back
-    onClose(); // close modal immediately before navigating
-    router.push(`/user/${userId}`);
-  };
   const isDark = useColorScheme() === "dark";
-  const slideAnim = useRef(new Animated.Value(SCREEN_HEIGHT)).current;
+
+  // State
   const [search, setSearch] = useState("");
   const [loadingIds, setLoadingIds] = useState<string[]>([]);
 
-  // Use custom hook to fetch users and toggle follow
-  const { users, loading, error, toggleFollow } = useFollowers(
-    currentUserId,
-    targetUserId,
-    type
-  );
+  // Custom hook for followers/following data & toggle
+  const {
+    users: usersFromHook,
+    loading,
+    error,
+    toggleFollow,
+  } = useFollowers(currentUserId, targetUserId, type);
 
+  // Local copy of users for optimistic UI updates
+  const [users, setUsers] = useState(usersFromHook);
+
+  // Sync local users state when hook updates
+  useEffect(() => {
+    setUsers(usersFromHook);
+  }, [usersFromHook]);
+
+  // Show or hide bottom sheet based on visible prop
   useEffect(() => {
     if (visible) {
-      Animated.timing(slideAnim, {
-        toValue: 0,
-        duration: 300,
-        useNativeDriver: true,
-      }).start();
+      sheetRef.current?.present();
     } else {
-      Animated.timing(slideAnim, {
-        toValue: SCREEN_HEIGHT,
-        duration: 300,
-        useNativeDriver: true,
-      }).start();
-      setSearch("");
+      sheetRef.current?.dismiss();
+      setSearch(""); // Clear search on close
     }
   }, [visible]);
 
-  const handleToggleFollow = async (targetId: string) => {
-    setLoadingIds((prev) => [...prev, targetId]);
-    await toggleFollow(targetId);
-    setLoadingIds((prev) => prev.filter((id) => id !== targetId));
+  // Navigate to user profile, close modal and mark modal restore
+  const { markForRestore } = useFollowersModalStore();
+  const handleUserPress = (userId: string) => {
+    markForRestore();
+    onClose();
+    router.push(`/user/${userId}`);
   };
 
-  const filteredUsers = useMemo(() => {
-    return users.filter((u) =>
-      u.username.toLowerCase().includes(search.toLowerCase())
+  // Optimistic follow toggle handler
+  const handleToggleFollow = async (targetId: string) => {
+    setUsers((prev) =>
+      prev.map((user) =>
+        user.id.toString() === targetId
+          ? { ...user, isFollowing: !user.isFollowing }
+          : user
+      )
     );
+    setLoadingIds((prev) => [...prev, targetId]);
+    try {
+      await toggleFollow(targetId);
+    } catch {
+      // Rollback if error
+      setUsers((prev) =>
+        prev.map((user) =>
+          user.id.toString() === targetId
+            ? { ...user, isFollowing: !user.isFollowing }
+            : user
+        )
+      );
+    } finally {
+      setLoadingIds((prev) => prev.filter((id) => id !== targetId));
+    }
+  };
+
+  // Filter users by search term
+  const filteredUsers = useMemo(() => {
+    return users
+      ? users.filter((u) =>
+          u.username.toLowerCase().includes(search.toLowerCase())
+        )
+      : [];
   }, [users, search]);
 
-  if (!visible) return null;
+  // Snap points for BottomSheet
+  const snapPoints = useMemo(() => ["80%", "90%"], []);
 
   return (
-    <Modal transparent visible={visible} animationType="none">
+    <BottomSheetModal
+      ref={sheetRef}
+      index={1}
+      snapPoints={snapPoints}
+      onDismiss={onClose}
+      backdropComponent={(props) => (
+        <BottomSheetBackdrop
+          {...props}
+          appearsOnIndex={0}
+          disappearsOnIndex={-1}
+          pressBehavior="close"
+        />
+      )}
+      handleStyle={{
+        backgroundColor: "transparent",
+        paddingTop: 12,
+        paddingBottom: 4,
+        alignItems: "center",
+        position: "absolute",
+        left: 8,
+        right: 8,
+      }}
+      handleIndicatorStyle={{
+        backgroundColor: isDark ? "#888" : "#ccc",
+        width: 36,
+        height: 4,
+        borderRadius: 2,
+      }}
+      backgroundStyle={{ backgroundColor: "transparent" }}
+    >
       <BlurView
         intensity={100}
         tint={isDark ? "dark" : "light"}
         style={styles.blurContainer}
       >
-        <Animated.View
-          style={[
-            styles.modalContainer,
-            { transform: [{ translateY: slideAnim }] },
-          ]}
-        >
+        <View style={styles.modalContainer}>
           <Text style={[styles.title, { color: isDark ? "#fff" : "#1d1d1d" }]}>
             {type === "followers" ? "Followers" : "Following"}
           </Text>
@@ -139,60 +187,69 @@ export default function FollowersModal({
             </Text>
           )}
 
-          <FlatList
-            data={filteredUsers}
-            keyExtractor={(item) => item.id}
-            style={{ marginTop: 10 }}
-            ListEmptyComponent={() =>
-              !loading ? (
-                <Text
-                  style={{
-                    textAlign: "center",
-                    marginTop: 20,
-                    fontFamily: OSREGULAR,
-                    color: isDark ? "#fff" : "#1d1d1d",
-                  }}
-                >
-                  No users found.
-                </Text>
-              ) : null
-            }
-            renderItem={({ item }) => {
-              const imageUri = item.profile_image.startsWith("http")
-                ? item.profile_image
-                : `${process.env.EXPO_PUBLIC_API_URL}${item.profile_image}`;
+          <BottomSheetScrollView
+            showsVerticalScrollIndicator={false}
+            contentContainerStyle={{ paddingBottom: 80 }}
+          >
+            {filteredUsers.length === 0 && !loading ? (
+              <Text
+                style={{
+                  textAlign: "center",
+                  marginTop: 20,
+                  fontFamily: OSREGULAR,
+                  color: isDark ? "#fff" : "#1d1d1d",
+                }}
+              >
+                No users found.
+              </Text>
+            ) : (
+              filteredUsers.map((item) => {
+                const imageUri = item.profile_image.startsWith("http")
+                  ? item.profile_image
+                  : `${process.env.EXPO_PUBLIC_API_URL}${item.profile_image}`;
 
-              return (
-                <Pressable onPress={() => handleUserPress(item.id)}>
-                  <View
-                    style={[
-                      styles.userItem,
-                      {
-                        borderBottomColor: isDark
-                          ? "rgba(255,255,255,0.2)"
-                          : "rgba(120, 120, 120, 0.5)",
-                      },
-                    ]}
+                const isCurrentUser = item.id.toString() === currentUserId;
+
+                return (
+                  <Pressable
+                    key={item.id.toString()}
+                    onPress={() => handleUserPress(item.id.toString())}
                   >
-                    <Image source={{ uri: imageUri }} style={styles.avatar} />
-                    <Text
+                    <View
                       style={[
-                        styles.username,
-                        { color: isDark ? "#fff" : "#1d1d1d" },
+                        styles.userItem,
+                        {
+                          borderBottomColor: isDark
+                            ? "rgba(255,255,255,0.2)"
+                            : "rgba(120, 120, 120, 0.5)",
+                        },
                       ]}
                     >
-                      {item.username}
-                    </Text>
-                    <FollowingButton
-                      isFollowing={item.isFollowing}
-                      loading={loadingIds.includes(item.id)}
-                      onToggle={() => handleToggleFollow(item.id)}
-                    />
-                  </View>
-                </Pressable>
-              );
-            }}
-          />
+                      <Image source={{ uri: imageUri }} style={styles.avatar} />
+                      <Text
+                        style={[
+                          styles.username,
+                          { color: isDark ? "#fff" : "#1d1d1d" },
+                        ]}
+                      >
+                        {item.username}
+                      </Text>
+
+                      {!isCurrentUser && (
+                        <FollowingButton
+                          isFollowing={item.isFollowing}
+                          loading={loadingIds.includes(item.id.toString())}
+                          onToggle={() =>
+                            handleToggleFollow(item.id.toString())
+                          }
+                        />
+                      )}
+                    </View>
+                  </Pressable>
+                );
+              })
+            )}
+          </BottomSheetScrollView>
 
           <Pressable style={styles.closeButton} onPress={onClose}>
             <Ionicons
@@ -201,22 +258,20 @@ export default function FollowersModal({
               color={isDark ? "#fff" : "#1d1d1d"}
             />
           </Pressable>
-        </Animated.View>
+        </View>
       </BlurView>
-    </Modal>
+    </BottomSheetModal>
   );
 }
 
 const styles = StyleSheet.create({
   blurContainer: {
     flex: 1,
-    paddingTop: 50,
-    justifyContent: "flex-start",
-  },
-  modalContainer: {
-    maxHeight: "80%",
     borderTopLeftRadius: 16,
     borderTopRightRadius: 16,
+    overflow: "hidden",
+  },
+  modalContainer: {
     padding: 20,
     paddingBottom: 40,
   },
@@ -232,7 +287,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     paddingVertical: 8,
     fontSize: 16,
-    color: "#1d1d1d",
     fontFamily: OSLIGHT,
   },
   userItem: {
