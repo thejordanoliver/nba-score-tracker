@@ -1,3 +1,5 @@
+import type { Game } from "@/types/types";
+
 export type RawNBAGame = {
   isPlayoff: boolean;
   id: number;
@@ -11,43 +13,27 @@ export type RawNBAGame = {
     clock?: string;
     halftime?: boolean; // <-- Add this
   };
+
   periods: {
     current: number;
     total: number;
+        endOfPeriod?: boolean;
+
   };
   teams: {
     home: { id: number; name: string; logo: string };
     visitors: { id: number; name: string; logo: string };
   };
-  scores: {
-    home: { points: number | null };
-    visitors: { points: number | null };
+scores: {
+    home: {
+      points: number | null;
+      linescore?: string[];
+    };
+    visitors: {
+      points: number | null;
+      linescore?: string[];
+    };
   };
-};
-
-export type Team = {
-  name: string;
-  logo: string;
-  record: string;
-  wins?: number;
-  losses?: number;
-};
-
-export type Game = {
-  id: number;
-  home: Team;
-  away: Team;
-  date: string;
-  time: string;
-  status: "Scheduled" | "In Progress" | "Final";
-  clock?: string;
-  period?: string;
-  homeScore?: number;
-  awayScore?: number;
-  isHalftime?: boolean; // <-- Add this
-  isPlayoff?: boolean;  // <-- Add this new field
-    stage?: number;  // <--- Add this line
-
 };
 
 export type TeamRecordMap = Record<string, { wins: number; losses: number }>;
@@ -56,7 +42,7 @@ export function transformGameData(
   raw: RawNBAGame,
   recordsMap?: TeamRecordMap
 ): Game {
-  const period = raw.periods?.current ? `Q${raw.periods.current}` : undefined;
+  const period = raw.periods?.current ?? undefined;
   const clock = raw.status?.clock;
 
   let status: Game["status"];
@@ -78,11 +64,12 @@ export function transformGameData(
     }
   }
 
-
   const homeRecordObj = recordsMap?.[raw.teams.home.id.toString()];
   const awayRecordObj = recordsMap?.[raw.teams.visitors.id.toString()];
 
-  const formatRecord = (record: { wins: number; losses: number } | undefined) =>
+  const formatRecord = (
+    record: { wins: number; losses: number } | undefined
+  ) =>
     record && record.wins !== undefined && record.losses !== undefined
       ? `${record.wins}-${record.losses}`
       : "-";
@@ -92,6 +79,7 @@ export function transformGameData(
   return {
     id: raw.id,
     home: {
+      id: raw.teams.home.id.toString(), // <-- add this
       name: raw.teams.home.name,
       logo: raw.teams.home.logo,
       record: homeRecord,
@@ -99,12 +87,14 @@ export function transformGameData(
       losses: homeRecordObj?.losses,
     },
     away: {
+      id: raw.teams.visitors.id.toString(), // <-- add this
       name: raw.teams.visitors.name,
       logo: raw.teams.visitors.logo,
       record: awayRecord,
       wins: awayRecordObj?.wins,
       losses: awayRecordObj?.losses,
     },
+
     date: raw.date.start,
     time: new Date(raw.date.start).toLocaleTimeString("en-US", {
       hour: "numeric",
@@ -112,13 +102,32 @@ export function transformGameData(
     }),
     status,
     clock: status === "In Progress" ? clock : undefined,
-    period: status === "In Progress" ? period : undefined,
-    homeScore: status !== "Scheduled" ? raw.scores.home.points ?? 0 : undefined,
+    period:
+      status === "In Progress" && period !== undefined
+        ? period.toString()
+        : undefined,
+    homeScore:
+      status !== "Scheduled" ? (raw.scores.home.points ?? 0) : undefined,
     awayScore:
-    status !== "Scheduled" ? raw.scores.visitors.points ?? 0 : undefined,
-    isHalftime,         // existing field
-    isPlayoff: raw.isPlayoff,  // <--- new field to propagate playoff flag
-    
-    stage: raw.date.stage,  // <-- add this
+      status !== "Scheduled" ? (raw.scores.visitors.points ?? 0) : undefined,
+    isHalftime, // existing field
+    isPlayoff: raw.isPlayoff, // <--- new field to propagate playoff flag
+
+    stage: raw.date.stage, // <-- add this
+     linescore:
+      raw.scores.home.linescore && raw.scores.visitors.linescore
+        ? {
+            home: raw.scores.home.linescore,
+            away: raw.scores.visitors.linescore,
+          }
+        : undefined,
+
+    periods: raw.periods
+      ? {
+          current: raw.periods.current,
+          total: raw.periods.total,
+          endOfPeriod: raw.periods.endOfPeriod ?? false,
+        }
+      : undefined,
   };
 }

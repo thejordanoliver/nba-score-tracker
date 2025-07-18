@@ -30,9 +30,10 @@ export default function TeamCard({
 
 
   const [city, nickname] = (() => {
-    const parts = item.fullName.split(" ");
-    return [parts.slice(0, -1).join(" "), parts.slice(-1).join(" ")];
+    const parts = item.fullName?.split(" ");
+    return [parts?.slice(0, -1).join(" "), parts?.slice(-1).join(" ")];
   })();
+
 
   const shouldShowLight =
     isDark && ["14", "27", "38", "40"].includes(item.id)

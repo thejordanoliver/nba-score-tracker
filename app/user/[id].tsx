@@ -1,11 +1,12 @@
-import FavoriteTeamsList from "@/components/FavoriteTeamsList";
-import FollowButton from "@/components/FollowButton";
-import { Team, teamsById } from "@/constants/teams";
-import { Ionicons } from "@expo/vector-icons";
+import BioSection from "@/components/profile/BioSection";
+import FavoriteTeamsSection from "@/components/profile/FavoriteTeamsSection";
+import FollowersModal from "@/components/profile/FollowersModal";
+import FollowStats from "@/components/profile/FollowStats";
+import ProfileBanner from "@/components/profile/ProfileBanner";
+import ProfileHeader from "@/components/profile/ProfileHeader";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { useNavigation } from "@react-navigation/native"; // <-- useNavigation for setOptions
-import { useLocalSearchParams, useRouter } from "expo-router";
-import { goBack } from "expo-router/build/global-state/routing";
+import { useFocusEffect } from "@react-navigation/native";
+import { useLocalSearchParams, useNavigation, useRouter } from "expo-router";
 import {
   useCallback,
   useEffect,
@@ -16,55 +17,162 @@ import {
 import {
   ActivityIndicator,
   Animated,
-  Image,
-  Pressable,
   ScrollView,
-  Text,
   View,
   useColorScheme,
   useWindowDimensions,
 } from "react-native";
-import { CustomHeaderTitle } from "../../components/CustomHeaderTitle";
-import { getStyles } from "../../styles/ProfileScreen.styles";
-const API_URL = process.env.EXPO_PUBLIC_API_URL
 
-const bannerDefault = { uri: "https://via.placeholder.com/800x200.png" };
-const profileDefault = { uri: "https://via.placeholder.com/120.png" };
+import { CustomHeaderTitle } from "@/components/CustomHeaderTitle";
+import { useFollowersModalStore } from "@/store/followersModalStore";
+
+import { teams } from "@/constants/teams";
+import { getStyles } from "@/styles/ProfileScreen.styles";
+
+const BASE_URL = process.env.EXPO_PUBLIC_API_URL?.replace(/\/$/, "") ?? "";
+
+function parseImageUrl(url: string | null | undefined): string | null {
+  if (!url || url === "null") return null;
+  if (url.startsWith("http://") || url.startsWith("https://")) return url;
+  return `${BASE_URL}${url.startsWith("/") ? "" : "/"}${url}`;
+}
 
 export default function UserProfileScreen() {
   const { width: screenWidth } = useWindowDimensions();
-
-  const params = useLocalSearchParams();
-  const userId = params.id as string | undefined;
-  const [currentUserId, setCurrentUserId] = useState<number | null>(null);
-  const viewedUserId = userId ? Number(userId) : null;
-  const [isFollowing, setIsFollowing] = useState(false);
-  const [profileLoading, setProfileLoading] = useState(false);
-  const [followLoading, setFollowLoading] = useState(false);
-  const [isGridView, setIsGridView] = useState(true);
   const numColumns = 3;
-  const horizontalPadding = 40; // Assuming padding: 20 on both sides
+  const horizontalPadding = 40;
   const columnGap = 12;
   const totalGap = columnGap * (numColumns - 1);
   const availableWidth = screenWidth - horizontalPadding - totalGap;
   const itemWidth = availableWidth / numColumns;
-  const [user, setUser] = useState<{
-    username: string;
-    fullName: string;
-    bio: string;
-    profileImage: string | null;
-    bannerImage: string | null;
-    followersCount: number;
-    followingCount: number;
-    favorites: number[];
-  } | null>(null);
 
-  const colorScheme = useColorScheme();
-  const isDark = colorScheme === "dark";
+  const params = useLocalSearchParams();
+  const userId = params.id as string | undefined;
+
+  const [isLoading, setIsLoading] = useState(true);
+  const [currentUserId, setCurrentUserId] = useState<number | null>(null);
+  const [isFollowing, setIsFollowing] = useState(false);
+  const [followLoading, setFollowLoading] = useState(false);
+  const [favorites, setFavorites] = useState<string[]>([]);
+  const [username, setUsername] = useState<string | null>(null);
+  const [fullName, setFullName] = useState<string | null>(null);
+  const [bio, setBio] = useState<string | null>(null);
+  const [profileImage, setProfileImage] = useState<string | null>(null);
+  const [bannerImage, setBannerImage] = useState<string | null>(null);
+  const [followersCount, setFollowersCount] = useState<number>(0);
+  const [followingCount, setFollowingCount] = useState<number>(0);
+  const [isGridView, setIsGridView] = useState(true);
   const fadeAnim = useRef(new Animated.Value(1)).current;
 
-  const router = useRouter();
   const navigation = useNavigation();
+  const router = useRouter();
+  const colorScheme = useColorScheme();
+  const isDark = colorScheme === "dark";
+
+  const {
+    isVisible,
+    type,
+    targetUserId,
+    openModal,
+    closeModal,
+    shouldRestore,
+    clearRestore,
+  } = useFollowersModalStore();
+
+  // Load current user ID from AsyncStorage (your logged in user)
+  useEffect(() => {
+    (async () => {
+      try {
+        const storedId = await AsyncStorage.getItem("userId");
+        if (storedId) setCurrentUserId(Number(storedId));
+      } catch {
+        /* ignore */
+      }
+    })();
+  }, []);
+
+  // Fetch other user profile data from API
+  const fetchUserData = useCallback(async () => {
+    if (!userId || currentUserId === null) return;
+    setIsLoading(true);
+    try {
+      const res = await fetch(
+        `${BASE_URL}/api/users/${userId}?currentUserId=${currentUserId}`
+      );
+      if (!res.ok) throw new Error("Failed to fetch user");
+      const data = await res.json();
+      console.log("Fetched user data:", data);
+
+      setUsername(data.username ?? null);
+      setFullName(data.fullName ?? null);
+      setBio(data.bio ?? null);
+      setProfileImage(parseImageUrl(data.profileImage));
+      setBannerImage(parseImageUrl(data.bannerImage));
+      setFollowersCount(data.followersCount ?? data.followers_count ?? 0);
+      setFollowingCount(data.followingCount ?? data.following_count ?? 0);
+      setFavorites(Array.isArray(data.favorites) ? data.favorites : []);
+
+      // If API returns current user's following status for this user
+      if (typeof data.isFollowing === "boolean") {
+        setIsFollowing(data.isFollowing);
+      }
+    } catch {
+      setUsername(null);
+      setFullName(null);
+      setBio(null);
+      setProfileImage(null);
+      setBannerImage(null);
+      setFollowersCount(0);
+      setFollowingCount(0);
+      setFavorites([]);
+      setIsFollowing(false);
+    } finally {
+      setIsLoading(false);
+    }
+  }, [userId, currentUserId]);
+
+  // Reload profile and restore modal if needed on focus
+  useFocusEffect(
+    useCallback(() => {
+      if (shouldRestore && targetUserId) {
+        openModal(
+          type,
+          targetUserId,
+          currentUserId ? String(currentUserId) : undefined
+        );
+        clearRestore();
+      }
+
+      // ✅ always re-fetch when currentUserId is available
+      if (!isVisible && currentUserId !== null) {
+        fetchUserData();
+      }
+    }, [
+      shouldRestore,
+      targetUserId,
+      type,
+      isVisible,
+      currentUserId,
+      openModal,
+      clearRestore,
+      fetchUserData,
+    ])
+  );
+
+  // Navigation header with back button & username
+  useLayoutEffect(() => {
+    navigation.setOptions({
+      header: () => (
+        <CustomHeaderTitle
+          title={username ? `@${username}` : "User"}
+          tabName="User"
+          onBack={() => router.back()}
+        />
+      ),
+    });
+  }, [navigation, username, router]);
+
+  // Toggle favorite teams view with fade animation
   const toggleFavoriteTeamsView = () => {
     Animated.timing(fadeAnim, {
       toValue: 0,
@@ -80,248 +188,140 @@ export default function UserProfileScreen() {
     });
   };
 
-  //   useEffect(() => {
+  // Follow/unfollow toggle handler
+const handleToggleFollow = async () => {
+  if (followLoading || currentUserId === null || !userId) return;
 
-  //     const debugAsyncStorage = async () => {
-  //       const allKeys = await AsyncStorage.getAllKeys();
-  //       console.log("All AsyncStorage keys:", allKeys);
-  //     };
-  //     debugAsyncStorage();
-  //   }, []);
-  // Load current user ID from AsyncStorage once on mount
+  // Optimistically update UI before API call
+  const previousIsFollowing = isFollowing;
+  const previousFollowersCount = followersCount;
 
-  useEffect(() => {
-    const loadCurrentUserId = async () => {
-      try {
-        const storedId = await AsyncStorage.getItem("userId");
-        console.log("Loaded currentUserId from AsyncStorage:", storedId);
-        if (storedId) setCurrentUserId(Number(storedId));
-      } catch (err) {
-        console.error("Error loading userId from AsyncStorage:", err);
-      }
-    };
-    loadCurrentUserId();
-  }, []);
+  const newIsFollowing = !previousIsFollowing;
+  const newFollowersCount = newIsFollowing
+    ? previousFollowersCount + 1
+    : Math.max(previousFollowersCount - 1, 0);
 
-  // Fetch user profile data with full URLs for images
-  const fetchUserData = useCallback(async () => {
-    if (!userId) return;
-    try {
-      setProfileLoading(true);
-      const res = await fetch(
-        `${process.env.EXPO_PUBLIC_API_URL}/api/users/${userId}`
-      );
-      if (!res.ok) throw new Error("Failed to fetch user");
-      const data = await res.json();
-      console.log("User data fetched:", data);
-      // Make sure base URL has no trailing slash
-      const baseUrl =
-        process.env.EXPO_PUBLIC_API_URL?.replace(/\/$/, "") ||
-        "https://your-api-domain.com";
-
-      setUser({
-        username: data.username,
-        fullName: data.full_name,
-        bio: data.bio || "",
-        profileImage: data.profile_image ? baseUrl + data.profile_image : null,
-        bannerImage: data.banner_image ? baseUrl + data.banner_image : null,
-        followersCount:
-          typeof data.followers_count === "number" ? data.followers_count : 0,
-        followingCount:
-          typeof data.following_count === "number" ? data.following_count : 0,
-        favorites: Array.isArray(data.favorites) ? data.favorites : [],
-      });
-    } catch (err) {
-      console.error("Failed to load user profile:", err);
-      setUser(null);
-    } finally {
-      setProfileLoading(false);
-    }
-  }, [userId]);
-
-  // Fetch user data on mount and whenever userId changes
-  useEffect(() => {
-    fetchUserData();
-  }, [fetchUserData]);
-
-  // Update navigation header
-  useLayoutEffect(() => {
-    navigation.setOptions({
-      header: () => (
-        <CustomHeaderTitle
-          title={user ? `@${user.username}` : "User"}
-          onBack={goBack}
-        />
-      ),
-    });
-  }, [navigation, user]);
-
-  useEffect(() => {
-    const fetchFollowStatus = async () => {
-      if (!userId || currentUserId === null) return;
-
-      try {
-        const res = await fetch(
-          `${process.env.EXPO_PUBLIC_API_URL}/api/follows/check?followerId=${currentUserId}&followeeId=${userId}`
-        );
-        if (!res.ok) throw new Error("Failed to fetch follow status");
-        const data = await res.json();
-        setIsFollowing(data.isFollowing);
-      } catch (err) {
-        console.error("Error checking follow status:", err);
-        setIsFollowing(false);
-      }
-    };
-
-    fetchFollowStatus();
-  }, [userId, currentUserId]); // <-- Depend on both
-
-  // Callback to refresh profile data after follow/unfollow
- const handleToggleFollow = async () => {
-  if (followLoading) return;
-  if (currentUserId === null || !userId) return;
-
+  setIsFollowing(newIsFollowing);
+  setFollowersCount(newFollowersCount);
   setFollowLoading(true);
 
   try {
-    const url = `${API_URL}/api/follows/toggle`;
-
-    const res = await fetch(url, {
+    const res = await fetch(`${BASE_URL}/api/follows/toggle`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        followerId: currentUserId,
-        followeeId: userId,
-      }),
+      body: JSON.stringify({ followerId: currentUserId, followeeId: userId }),
     });
-
-    if (!res.ok) {
-      const errorText = await res.text();
-      throw new Error(`Failed to toggle follow: ${res.status} ${errorText}`);
-    }
-
+    if (!res.ok) throw new Error("Failed to toggle follow");
     const data = await res.json();
-    setIsFollowing(data.isFollowing);
 
-    await fetchUserData(); // update counts and user info
-  } catch (err) {
-    console.error("Toggle follow error:", err);
+    // Confirm with server response, in case it differs
+    setIsFollowing(data.isFollowing);
+    setFollowersCount((count) =>
+      data.isFollowing ? Math.max(count, newFollowersCount) : Math.min(count, newFollowersCount)
+    );
+  } catch (error) {
+    console.error("Failed to toggle follow:", error);
+
+    // Rollback to previous state on failure
+    setIsFollowing(previousIsFollowing);
+    setFollowersCount(previousFollowersCount);
   } finally {
     setFollowLoading(false);
   }
 };
 
 
-  if (profileLoading) {
+  const favoriteTeams = teams.filter((team) => favorites.includes(team.id));
+  const styles = getStyles(isDark);
+
+  if (isLoading) {
     return (
-      <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
+      <View
+        style={{
+          flex: 1,
+          justifyContent: "center",
+          alignItems: "center",
+          backgroundColor: isDark ? "#000" : "#fff",
+        }}
+      >
         <ActivityIndicator size="large" color={isDark ? "white" : "black"} />
       </View>
     );
   }
 
-  if (!user) {
-    return (
-      <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
-        <Text style={{ color: isDark ? "#eee" : "#111" }}>User not found.</Text>
-      </View>
-    );
-  }
-  const favoriteTeams = user.favorites
-    .map((id) => teamsById[id.toString()])
-    .filter(Boolean) as Team[]; // type assertion
+  const onFollowersPress = () => {
+    if (currentUserId && userId) {
+      openModal("followers", userId, String(currentUserId));
+    }
+  };
 
-  const styles = getStyles(isDark);
-console.log("Checking follow status:", `${process.env.EXPO_PUBLIC_API_URL}/api/follows/check?followerId=${currentUserId}&followeeId=${userId}`);
+  const onFollowingPress = () => {
+    if (currentUserId && userId) {
+      openModal("following", userId, String(currentUserId));
+    }
+  };
 
-  console.log("Rendering profile for user:", user.username);
-  console.log("currentUserId:", currentUserId, "viewedUserId:", viewedUserId);
+  const isCurrentUser =
+    currentUserId !== null && String(currentUserId) === userId;
 
   return (
-    <ScrollView
-      style={styles.container}
-      contentContainerStyle={{ paddingBottom: 30 }}
-      contentInsetAdjustmentBehavior="never"
-    >
-      <View style={styles.bannerContainer}>
-        <Image
-          source={user.bannerImage ? { uri: user.bannerImage } : bannerDefault}
-          style={styles.banner}
-          resizeMode="cover"
+    <>
+      <ScrollView
+        style={styles.container}
+        contentContainerStyle={{ paddingBottom: 30 }}
+        contentInsetAdjustmentBehavior="never"
+      >
+        <ProfileBanner
+          bannerImage={bannerImage}
+          profileImage={profileImage}
+          isDark={isDark}
         />
 
-        <View style={styles.profilePicWrapper}>
-          <Image
-            source={
-              user.profileImage ? { uri: user.profileImage } : profileDefault
-            }
-            style={styles.profilePic}
-            resizeMode="cover"
+        <FollowStats
+          followersCount={followersCount}
+          followingCount={followingCount}
+          isDark={isDark}
+          currentUserId={currentUserId ? String(currentUserId) : ""}
+          targetUserId={userId ?? ""}
+          onFollowersPress={onFollowersPress}
+          onFollowingPress={onFollowingPress}
+        />
+
+        <ProfileHeader
+          fullName={fullName}
+          username={username}
+          isDark={isDark}
+          isCurrentUser={isCurrentUser}
+          isFollowing={isFollowing}
+          loading={followLoading}
+          onToggleFollow={handleToggleFollow}
+        />
+
+        <BioSection bio={bio} isDark={isDark} />
+
+        <View style={styles.favoritesContainer}>
+          <FavoriteTeamsSection
+            favoriteTeams={favoriteTeams}
+            isGridView={isGridView}
+            fadeAnim={fadeAnim}
+            toggleFavoriteTeamsView={toggleFavoriteTeamsView}
+            styles={styles}
+            itemWidth={itemWidth}
+            isCurrentUser={false}
+            username={username ?? undefined}
           />
         </View>
-      </View>
+      </ScrollView>
 
-      <View style={styles.followContainer}>
-        <View style={styles.followItem}>
-          <Text style={styles.followCount}>{user.followersCount}</Text>
-          <Text style={styles.followLabel}>Followers</Text>
-        </View>
-        <View style={styles.followItem}>
-          <Text style={styles.followCount}>{user.followingCount}</Text>
-          <Text style={styles.followLabel}>Following</Text>
-        </View>
-      </View>
-
-      <View style={styles.bioContainer}>
-        <View style={styles.wrapper}>
-          <View style={styles.nameContainer}>
-            <Text style={styles.fullNameText}>{user.fullName}</Text>
-            <Text style={styles.usernameText}>@{user.username}</Text>
-          </View>
-
-          {/* Show Follow Button if viewing other user */}
-          {currentUserId !== null &&
-            viewedUserId !== null &&
-            currentUserId !== viewedUserId && (
-              <FollowButton
-                isFollowing={isFollowing}
-                loading={followLoading}
-                onToggle={handleToggleFollow}
-              />
-            )}
-        </View>
-
-        <Text style={styles.bioText}>{user.bio}</Text>
-      </View>
-        <View style={styles.favoritesContainer}>
-          <View style={styles.favoritesHeader}>
-            <Text style={styles.heading}>Favorite Teams</Text>
-            <Pressable
-              onPress={toggleFavoriteTeamsView}
-              accessibilityRole="button"
-              accessibilityLabel="Toggle view"
-              style={styles.toggleIcon}
-            >
-              <Ionicons
-                name={isGridView ? "list" : "grid"}
-                size={22}
-                color={isDark ? "#fff" : "#000"}
-              />
-            </Pressable>
-          </View>
-
-          <Animated.View style={{ opacity: fadeAnim, flex: 1 }}>
-          <FavoriteTeamsList
-  favoriteTeams={favoriteTeams}
-  isGridView={isGridView}
-  styles={styles}
-  itemWidth={itemWidth}
-  key={isGridView ? "grid" : "list"}
-  isCurrentUser={currentUserId === viewedUserId}
-/>
-
-          </Animated.View>
-        </View>
-    </ScrollView>
+      {targetUserId && currentUserId && (
+        <FollowersModal
+          visible={isVisible}
+          onClose={closeModal}
+          type={type}
+          targetUserId={String(targetUserId)}
+          currentUserId={String(currentUserId)}
+        />
+      )}
+    </>
   );
 }

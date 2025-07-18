@@ -1,6 +1,13 @@
 // scoresStyles.ts
 import { StyleSheet } from "react-native";
 
+const OSEXTRALIGHT = "Oswald_200ExtraLight";
+const OSLIGHT = "Oswald_300Light";
+const OSREGULAR = "Oswald_400Regular";
+const OSMEDIUM = "Oswald_500Medium";
+const OSBOLD = "Oswald_700Bold";
+const OSSEMIBOLD = "Oswald_600SemiBold";
+
 export const getScoresStyles = (isDark: boolean) =>
   StyleSheet.create({
     container: {
@@ -17,6 +24,16 @@ export const getScoresStyles = (isDark: boolean) =>
       alignItems: "center",
       marginVertical: 8,
     },
+
+    sectionHeading: {
+      fontSize: 18,
+      fontWeight: "600",
+      marginLeft: 12,
+      marginTop: 16,
+      marginBottom: 8,
+      color: isDark ? "#fff" : "#000",
+    },
+
     dateNavButton: {
       paddingHorizontal: 16,
       paddingVertical: 8,
@@ -28,13 +45,13 @@ export const getScoresStyles = (isDark: boolean) =>
       color: isDark ? "black" : "white",
       fontWeight: "normal",
       fontSize: 18,
-      fontFamily: "Oswald_500Medium",
+      fontFamily: OSMEDIUM,
     },
     emptyText: {
       textAlign: "center",
       color: isDark ? "#aaa" : "#999",
       marginTop: 20,
       fontSize: 20,
-      fontFamily: "Oswald_300Light",
+      fontFamily: OSLIGHT,
     },
   });

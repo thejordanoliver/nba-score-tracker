@@ -2,6 +2,7 @@ import { WeatherData } from "@/hooks/useWeather";
 import { Ionicons } from "@expo/vector-icons";
 import React from "react";
 import { Image, StyleSheet, Text, useColorScheme, View } from "react-native";
+import HeadingTwo from "./HeadingTwo";
 const OSLIGHT = "Oswald_300Light";
 const OSREGULAR = "Oswald_400Regular";
 const OSBOLD = "Oswald_700Bold";
@@ -32,20 +33,7 @@ const TeamLocationSection: React.FC<Props> = ({
 
   return (
     <View style={{ marginTop: 20 }}>
-      <Text
-        style={{
-          fontSize: 24,
-          fontFamily: "Oswald_500Medium",
-          marginBottom: 16,
-          marginTop: 8,
-          paddingBottom: 4,
-          borderBottomWidth: 1,
-          borderBottomColor: isDark ? "#444" : "#ccc",
-          color: textColor,
-        }}
-      >
-        Location
-      </Text>
+      <HeadingTwo>Location </HeadingTwo>
 
       {arenaImage && (
         <View style={{ width: "100%", alignItems: "center" }}>
@@ -91,7 +79,9 @@ const TeamLocationSection: React.FC<Props> = ({
           color={isDark ? "#fff" : "#1d1d1d"} // 👈 Add dark mode color logic
         />
         {location && (
-<Text style={[styles.subText, { color: textColor, marginLeft: 8 }]}>{address}</Text>
+          <Text style={[styles.subText, { color: textColor, marginLeft: 8 }]}>
+            {address}
+          </Text>
         )}
       </View>
       <View style={styles.addressContainer}>
@@ -101,7 +91,9 @@ const TeamLocationSection: React.FC<Props> = ({
           color={isDark ? "#fff" : "#1d1d1d"} // 👈 Add dark mode color logic
         />
         {location && (
-<Text style={[styles.subText, { color: textColor, marginLeft: 8 }]}>Capcity: {arenaCapacity}</Text>
+          <Text style={[styles.subText, { color: textColor, marginLeft: 8 }]}>
+            Capcity: {arenaCapacity}
+          </Text>
         )}
       </View>
     </View>
@@ -120,7 +112,7 @@ const styles = StyleSheet.create({
   },
   arenaTitle: {
     fontFamily: OSBOLD,
-    fontSize: 24,
+    fontSize: 20,
   },
   icon: {
     width: 60,
@@ -131,7 +123,6 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-
   },
   addressContainer: {
     paddingHorizontal: 0,

@@ -65,8 +65,8 @@ export default function FollowingButton({
       ? "#1d1d1d"
       : "#fff"
     : isDark
-      ? "#fff"
-      : "#1d1d1d";
+    ? "#fff"
+    : "#1d1d1d";
 
   const borderColor = isDark ? "#fff" : "#1d1d1d";
 
@@ -76,7 +76,6 @@ export default function FollowingButton({
         {
           opacity: opacityAnim,
           width: 80,
-       
           overflow: "hidden",
           marginVertical: 4,
         },
@@ -89,7 +88,7 @@ export default function FollowingButton({
         style={{
           backgroundColor,
           borderColor,
-             borderRadius: 8,
+          borderRadius: 8,
           borderWidth: 1,
           paddingVertical: 8,
           paddingHorizontal: 16,

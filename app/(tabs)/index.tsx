@@ -1,6 +1,10 @@
 import GamesList from "@/components/GamesList";
 import Heading from "@/components/Heading";
 import NewsHighlightsList from "@/components/NewsHighlightsList";
+import SummerGamesList from "@/components/summer-league/SummerGamesList";
+import { useSummerLeagueGames } from "@/hooks/useSummerLeagueGames";
+import type { summerGame } from "@/types/types";
+import { Game } from "@/types/types";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useFocusEffect, useNavigation } from "@react-navigation/native";
 import { useRouter } from "expo-router";
@@ -20,7 +24,6 @@ import NewsCardSkeleton from "../../components/NewsCardSkeleton";
 import TabBar from "../../components/TabBar";
 import { useNewsStore } from "../../hooks/newsStore";
 import { useHighlights } from "../../hooks/useHighlights";
-import type { TransformedGame } from "../../hooks/useLiveGames";
 import { useLiveGames } from "../../hooks/useLiveGames";
 import { useNews } from "../../hooks/useNews";
 import { useWeeklyGames } from "../../hooks/useWeeklyGames";
@@ -47,6 +50,19 @@ type CombinedItem =
   | (NewsItem & { itemType: "news" })
   | (HighlightItem & { itemType: "highlight" });
 
+function mapSummerGameToGame(g: summerGame): Game {
+  return {
+    ...g,
+    status:
+      g.status.short === "FT"
+        ? "Final"
+        : g.status.short === "NS"
+          ? "Scheduled"
+          : "In Progress",
+    period: g.period !== undefined ? String(g.period) : undefined,
+  };
+}
+
 export default function HomeScreen() {
   const {
     games: weeklyGames,
@@ -57,9 +73,18 @@ export default function HomeScreen() {
   const {
     games: liveGames,
     loading: liveGamesLoading,
-    error: liveGamesError,
     refreshGames: refreshLiveGames,
   } = useLiveGames();
+
+  const {
+    games: summerGames,
+    loading: summerLoading,
+    refreshGames: refreshSummerGames,
+  } = useSummerLeagueGames() as {
+    games: summerGame[];
+    loading: boolean;
+    refreshGames: () => Promise<void>;
+  };
 
   const {
     news,
@@ -89,7 +114,7 @@ export default function HomeScreen() {
   const [favorites, setFavorites] = useState<string[]>([]);
   const [refreshing, setRefreshing] = useState(false);
 
-  React.useEffect(() => {
+  useEffect(() => {
     if (news && news.length > 0) {
       setArticles(news);
     }
@@ -146,10 +171,13 @@ export default function HomeScreen() {
     setRefreshing(true);
     try {
       if (selectedTab === "scores") {
-        await Promise.all([refreshLiveGames?.(), refreshWeeklyGames?.()]);
+        await Promise.all([
+          refreshLiveGames?.(),
+          refreshWeeklyGames?.(),
+          refreshSummerGames?.(),
+        ]);
       } else if (selectedTab === "news") {
         await refreshNews?.();
-        // You might add a way to refresh highlights if your hook supports it
       }
     } catch (err) {
       console.warn("Refresh failed:", err);
@@ -160,15 +188,43 @@ export default function HomeScreen() {
 
   const styles = getStyles(isDark);
 
-  const combinedGames: TransformedGame[] = React.useMemo(() => {
-    if (!liveGames.length) return weeklyGames;
-    const weeklyFiltered = weeklyGames.filter(
-      (wg) => !liveGames.some((lg) => lg.id === wg.id)
+  const isTodayOrTomorrow = (dateString: string) => {
+    const gameDate = new Date(dateString);
+    const now = new Date();
+    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const tomorrow = new Date(
+      now.getFullYear(),
+      now.getMonth(),
+      now.getDate() + 1
     );
-    return [...liveGames, ...weeklyFiltered];
-  }, [liveGames, weeklyGames]);
+    return (
+      (gameDate >= today && gameDate < new Date(today.getTime() + 86400000)) ||
+      (gameDate >= tomorrow &&
+        gameDate < new Date(tomorrow.getTime() + 86400000))
+    );
+  };
 
-  // Combine news and highlights for the "news" tab and sort by publishedAt descending
+  const filteredLive = liveGames.filter((g) => isTodayOrTomorrow(g.date));
+  const filteredWeekly = weeklyGames.filter((g) => isTodayOrTomorrow(g.date));
+  const filteredSummer: summerGame[] = summerGames.filter((g) =>
+    isTodayOrTomorrow(g.date)
+  );
+
+  const onlySummerLeagueToday =
+    filteredLive.length === 0 &&
+    filteredWeekly.length === 0 &&
+    filteredSummer.length > 0;
+
+  const combinedGames = [...filteredLive];
+  filteredWeekly.forEach((g) => {
+    if (!combinedGames.some((cg) => cg.id === g.id)) combinedGames.push(g);
+  });
+  filteredSummer.forEach((g) => {
+    if (!combinedGames.some((cg) => cg.id === g.id)) {
+      combinedGames.push(mapSummerGameToGame(g));
+    }
+  });
+
   const combinedNewsAndHighlights: CombinedItem[] = React.useMemo(() => {
     const taggedNews: CombinedItem[] = news.map((item) => ({
       ...item,
@@ -182,7 +238,6 @@ export default function HomeScreen() {
 
     const combined = [...taggedNews, ...taggedHighlights];
 
-    // Sort by publishedAt descending, fallback to 0 if no date for highlight (put highlights last)
     combined.sort((a, b) => {
       const aDate = a.publishedAt ? new Date(a.publishedAt).getTime() : 0;
       const bDate = b.publishedAt ? new Date(b.publishedAt).getTime() : 0;
@@ -203,7 +258,8 @@ export default function HomeScreen() {
       </View>
 
       {selectedTab !== "news" &&
-        ((weeklyGamesLoading || liveGamesLoading) && !favorites.length ? (
+        ((weeklyGamesLoading || liveGamesLoading || summerLoading) &&
+        !favorites.length ? (
           <FavoritesScrollSkeleton />
         ) : (
           <FavoritesScroll favoriteTeamIds={favorites} />
@@ -214,14 +270,24 @@ export default function HomeScreen() {
           <>
             <Heading>Latest Games</Heading>
 
-            {combinedGames.length === 0 &&
-            !weeklyGamesLoading &&
-            !liveGamesLoading ? (
-              <Text style={styles.emptyText}>No games today.</Text>
+            {onlySummerLeagueToday ? (
+              <SummerGamesList
+                games={filteredSummer}
+                loading={summerLoading}
+                refreshing={refreshing}
+                onRefresh={handleRefresh}
+              />
+            ) : combinedGames.length === 0 &&
+              !weeklyGamesLoading &&
+              !liveGamesLoading &&
+              !summerLoading ? (
+              <Text style={styles.emptyText}>No games today or tomorrow.</Text>
             ) : (
               <GamesList
                 games={combinedGames}
-                loading={liveGamesLoading || weeklyGamesLoading}
+                loading={
+                  liveGamesLoading || weeklyGamesLoading || summerLoading
+                }
                 refreshing={refreshing}
                 onRefresh={handleRefresh}
               />

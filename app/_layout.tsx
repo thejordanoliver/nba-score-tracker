@@ -22,6 +22,7 @@ import {
   useColorScheme,
 } from "react-native";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
+import { BottomSheetModalProvider } from "@gorhom/bottom-sheet";
 
 import { CustomHeaderTitle } from "@/components/CustomHeaderTitle";
 import CustomTabBar from "../components/CustomTabBar";
@@ -87,7 +88,7 @@ export default function RootLayout() {
     type,
     targetUserId,
     closeModal,
-    currentUserId, // You may want to store or pass currentUserId here globally
+    currentUserId,
   } = useFollowersModalStore();
 
   if (!fontsLoaded) {
@@ -112,73 +113,75 @@ export default function RootLayout() {
 
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
-      <ThemeProvider
-        value={colorScheme === "dark" ? CustomDarkTheme : CustomLightTheme}
-      >
-        <Stack
-          screenOptions={({ route, navigation }) => {
-            const isTabScreen = route.name === "(tabs)";
-            const isSplashScreen = route.name === "signup/success";
-            const isProfileScreen = route.name === "profile"; // Adjust if your profile route differs
-
-            return {
-              headerShown: !isSplashScreen && !isTabScreen,
-              header: !isSplashScreen
-                ? () => (
-                    <CustomHeaderTitle
-                      title={route.name}
-                      onBack={
-                        navigation.canGoBack() ? navigation.goBack : undefined
-                      }
-                    />
-                  )
-                : undefined,
-              gestureEnabled: !isTabScreen,
-              animation:
-                isProfileScreen
-                  ? "fade"
-                  : isSplashScreen
-                  ? "fade"
-                  : isTabScreen
-                  ? "none"
-                  : "default",
-              gestureDirection: "horizontal",
-            };
-          }}
+      <BottomSheetModalProvider>
+        <ThemeProvider
+          value={colorScheme === "dark" ? CustomDarkTheme : CustomLightTheme}
         >
-          <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-          <Stack.Screen
-            name="+not-found"
-            options={{ title: "Page Not Found" }}
+          <Stack
+            screenOptions={({ route, navigation }) => {
+              const isTabScreen = route.name === "(tabs)";
+              const isSplashScreen = route.name === "signup/success";
+              const isProfileScreen = route.name === "profile"; // Adjust if your profile route differs
+
+              return {
+                headerShown: !isSplashScreen && !isTabScreen,
+                header: !isSplashScreen
+                  ? () => (
+                      <CustomHeaderTitle
+                        title={route.name}
+                        onBack={
+                          navigation.canGoBack() ? navigation.goBack : undefined
+                        }
+                      />
+                    )
+                  : undefined,
+                gestureEnabled: !isTabScreen,
+                animation:
+                  isProfileScreen
+                    ? "fade"
+                    : isSplashScreen
+                    ? "fade"
+                    : isTabScreen
+                    ? "none"
+                    : "default",
+                gestureDirection: "horizontal",
+              };
+            }}
+          >
+            <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+            <Stack.Screen
+              name="+not-found"
+              options={{ title: "Page Not Found" }}
+            />
+            <Stack.Screen name="signup/success" />
+          </Stack>
+
+          <StatusBar style={colorScheme === "dark" ? "light" : "dark"} />
+
+          {/* Tab bar always mounted, instantly hidden or shown */}
+          <Animated.View
+            style={{
+              opacity,
+              position: "absolute",
+              left: 0,
+              right: 0,
+              bottom: 0,
+              pointerEvents: visibleTabBar ? "auto" : "none",
+            }}
+          >
+            <CustomTabBar />
+          </Animated.View>
+
+          {/* Global Followers Modal */}
+          <FollowersModal
+            visible={isVisible}
+            onClose={closeModal}
+            type={type}
+            currentUserId={currentUserId ?? ""}
+            targetUserId={targetUserId ?? ""}
           />
-          <Stack.Screen name="signup/success" />
-        </Stack>
-
-        <StatusBar style={colorScheme === "dark" ? "light" : "dark"} />
-
-        {/* Tab bar always mounted, instantly hidden or shown */}
-        <Animated.View
-          style={{
-            opacity,
-            position: "absolute",
-            left: 0,
-            right: 0,
-            bottom: 0,
-            pointerEvents: visibleTabBar ? "auto" : "none",
-          }}
-        >
-          <CustomTabBar />
-        </Animated.View>
-
-        {/* Global Followers Modal */}
-        <FollowersModal
-          visible={isVisible}
-          onClose={closeModal}
-          type={type}
-          currentUserId={currentUserId ?? ""} // Make sure currentUserId is set in store or pass via props/state
-          targetUserId={targetUserId ?? ""}
-        />
-      </ThemeProvider>
+        </ThemeProvider>
+      </BottomSheetModalProvider>
     </GestureHandlerRootView>
   );
 }
