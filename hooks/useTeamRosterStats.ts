@@ -1,7 +1,8 @@
+// hooks/useTeamRosterStats.ts
 import { useEffect, useState } from "react";
 import axios from "axios";
 
-const API_KEY = process.env.EXPO_PUBLIC_RAPIDAPI_KEY
+const API_KEY = process.env.EXPO_PUBLIC_RAPIDAPI_KEY;
 
 type Player = {
   id: number;
@@ -13,8 +14,8 @@ type Player = {
   college: string;
   nba: { start: number; pro: number };
   leag: string;
-    headshot_url?: string; // <-- add this
-
+  headshot_url?: string;
+  active: boolean;
 };
 
 type PlayerStat = {
@@ -38,6 +39,7 @@ type PlayerStat = {
   steals: number;
   turnovers: number;
   blocks: number;
+  plusMinus: string;
 };
 
 type AggregatedStats = {
@@ -55,18 +57,17 @@ type AggregatedStats = {
   totalFouls: number;
   totalFGM: number;
   totalFGA: number;
-  totalFGP: number;   // shooting % as number or string (e.g. "45.6")
+  totalFGP: number;
   total3PM: number;
   total3PA: number;
-  total3PP: number;   // 3pt shooting %
+  total3PP: number;
   totalFTM: number;
   totalFTA: number;
-  totalFTP: number;   // FT shooting %
+  totalFTP: number;
   totalOffReb: number;
   totalDefReb: number;
   plusMinus: number;
 };
-
 
 const API_HEADERS = {
   "x-rapidapi-key": API_KEY,
@@ -86,7 +87,6 @@ export function useTeamRosterStats(teamId: number, season = "2024") {
       setError(null);
 
       try {
-        // 1. Get team players
         const playersRes = await axios.get("https://api-nba-v1.p.rapidapi.com/players", {
           params: { team: teamId, season },
           headers: API_HEADERS,
@@ -107,33 +107,32 @@ export function useTeamRosterStats(teamId: number, season = "2024") {
             const games = statsRes.data.response;
             if (!games.length) return null;
 
-
-let totals: AggregatedStats = {
-  playerId: player.id,
-  name: `${player.firstname} ${player.lastname}`,
-  headshot_url: player.headshot_url,
-  gamesPlayed: games.length,
-  totalPoints: 0,
-  totalRebounds: 0,
-  totalAssists: 0,
-  totalSteals: 0,
-  totalBlocks: 0,
-  totalTurnovers: 0,
-  totalFouls: 0,
-  totalFGM: 0,
-  totalFGA: 0,
-  totalFGP: 0,
-  totalFTM: 0,
-  totalFTA: 0,
-  totalFTP: 0,
-  total3PM: 0,
-  total3PA: 0,
-  total3PP: 0,
-  totalOffReb: 0,
-  totalDefReb: 0,
-  plusMinus: 0,
-  minutesPlayed: 0,
-};
+            const totals: AggregatedStats = {
+              playerId: player.id,
+              name: `${player.firstname} ${player.lastname}`,
+              headshot_url: player.headshot_url,
+              gamesPlayed: games.length,
+              totalPoints: 0,
+              totalRebounds: 0,
+              totalAssists: 0,
+              totalSteals: 0,
+              totalBlocks: 0,
+              totalTurnovers: 0,
+              totalFouls: 0,
+              totalFGM: 0,
+              totalFGA: 0,
+              totalFGP: 0,
+              totalFTM: 0,
+              totalFTA: 0,
+              totalFTP: 0,
+              total3PM: 0,
+              total3PA: 0,
+              total3PP: 0,
+              totalOffReb: 0,
+              totalDefReb: 0,
+              plusMinus: 0,
+              minutesPlayed: 0,
+            };
 
             games.forEach((g) => {
               totals.totalPoints += g.points ?? 0;
@@ -149,12 +148,17 @@ let totals: AggregatedStats = {
               totals.totalFTA += g.fta ?? 0;
               totals.total3PM += g.tpm ?? 0;
               totals.total3PA += g.tpa ?? 0;
+              totals.totalOffReb += g.offReb ?? 0;
+              totals.totalDefReb += g.defReb ?? 0;
+
+              if (g.plusMinus) {
+                const parsed = parseInt(g.plusMinus, 10);
+                totals.plusMinus += isNaN(parsed) ? 0 : parsed;
+              }
 
               if (g.min) {
-                const parts = g.min.split(":").map(Number);
-                const minutes = parts[0] || 0;
-                const seconds = parts[1] || 0;
-                totals.minutesPlayed += minutes + seconds / 60;
+                const [min, sec] = g.min.split(":").map(Number);
+                totals.minutesPlayed += (min || 0) + (sec || 0) / 60;
               }
             });
 

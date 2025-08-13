@@ -22,7 +22,14 @@ export function useWeatherForecast(
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    if (!lat || !lon || !gameDateStr) return;
+    if (!lat || !lon || !gameDateStr) {
+      console.warn("Weather hook skipped due to missing inputs:", {
+        lat,
+        lon,
+        gameDateStr,
+      });
+      return;
+    }
 
     const cacheKey = getWeatherCacheKey(lat, lon, gameDateStr);
 
@@ -36,14 +43,21 @@ export function useWeatherForecast(
         const apiKey = "09f079f11f3ea22e5846e249da888468";
         const url = `https://api.openweathermap.org/data/2.5/forecast?lat=${lat}&lon=${lon}&units=metric&appid=${apiKey}`;
 
+      
+
         const response = await fetch(url);
         if (!response.ok) {
+          console.error("Weather API HTTP error:", response.status, response.statusText);
           throw new Error("Failed to fetch weather forecast");
         }
+
         const data = await response.json();
 
-        const gameTimestamp = new Date(gameDateStr).getTime();
+        if (!data.list || data.list.length === 0) {
+          throw new Error("No forecast data returned for this location");
+        }
 
+        const gameTimestamp = new Date(gameDateStr).getTime();
         let closestForecast = data.list[0];
         let minDiff = Math.abs(gameTimestamp - closestForecast.dt * 1000);
 
@@ -56,6 +70,7 @@ export function useWeatherForecast(
           }
         }
 
+
         const tempFahrenheit = closestForecast.main.temp * (9 / 5) + 32;
 
         const freshWeather: WeatherData = {
@@ -66,6 +81,8 @@ export function useWeatherForecast(
           datetime: closestForecast.dt_txt,
         };
 
+        console.log("Parsed weather data:", freshWeather);
+
         await AsyncStorage.setItem(cacheKey, JSON.stringify(freshWeather));
 
         if (isActive) {
@@ -73,8 +90,10 @@ export function useWeatherForecast(
           setLoading(false);
         }
       } catch (err: any) {
+        console.error("Weather fetch error:", err);
         if (isActive) {
           setError(err.message);
+          setWeather(null);
           setLoading(false);
         }
       }
@@ -84,16 +103,23 @@ export function useWeatherForecast(
       try {
         const cached = await AsyncStorage.getItem(cacheKey);
         if (cached) {
+          console.log("Weather cache hit:", cacheKey);
           const cachedData: WeatherData = JSON.parse(cached);
           if (isActive) {
             setWeather(cachedData);
             setLoading(false);
           }
         } else {
+          console.log("Weather cache miss:", cacheKey);
           setLoading(true);
         }
-      } catch {
-        // ignore cache read errors
+      } catch (err: any) {
+        console.error("Weather cache read error:", err);
+        if (isActive) {
+          setError(err.message);
+          setWeather(null);
+          setLoading(false);
+        }
       }
 
       // Fetch fresh in background regardless

@@ -1,10 +1,20 @@
-import GamesList from "@/components/GamesList";
-import RosterStats from "@/components/RosterStats";
+import TeamForum from "@/components/Forum/TeamForum";
+import GamesList from "@/components/Games/GamesList";
+import NewsHighlightsList from "@/components/News/NewsHighlightsList";
+import RosterStats from "@/components/Team/RosterStats";
+import TeamPlayerList from "@/components/Team/TeamRoster";
 import { useTeamRosterStats } from "@/hooks/useTeamRosterStats";
+import { User } from "@/types/types";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useLocalSearchParams, useNavigation } from "expo-router";
 import { goBack } from "expo-router/build/global-state/routing";
-import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
+import React, {
+  useEffect,
+  useLayoutEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import {
   ActivityIndicator,
   Animated,
@@ -17,8 +27,6 @@ import {
 } from "react-native";
 import DateTimePickerModal from "react-native-modal-datetime-picker";
 import { CustomHeaderTitle } from "../../components/CustomHeaderTitle";
-import NewsCard from "../../components/NewsCard";
-import PlayerCard from "../../components/PlayerCard";
 import TabBar from "../../components/TabBar";
 import { teams } from "../../constants/teams";
 import { useNewsStore } from "../../hooks/newsStore";
@@ -33,11 +41,11 @@ export default function TeamDetailScreen() {
   const [refreshing, setRefreshing] = useState(false);
   const teamIdNum = parseInt(teamId as string, 10);
   const [isFavorite, setIsFavorite] = useState(false);
-
+  const [loggedInUser, setLoggedInUser] = useState<User | null>(null);
   const colorScheme = useColorScheme();
   const isDark = colorScheme === "dark";
   const styles = style(isDark);
-  const tabs = ["schedule", "news", "roster", "stats"] as const;
+  const tabs = ["schedule", "news", "roster", "stats", "forum"] as const;
   const [selectedTab, setSelectedTab] =
     useState<(typeof tabs)[number]>("schedule");
   const underlineX = useRef(new Animated.Value(0)).current;
@@ -83,6 +91,13 @@ export default function TeamDetailScreen() {
     refreshNews, // <- now available
   } = useTeamNews(team?.fullName ?? "");
 
+  const combinedNewsItems = React.useMemo(() => {
+    return newsArticles.map((article) => ({
+      ...article,
+      itemType: "news" as const,
+    }));
+  }, [newsArticles]);
+
   const setArticles = useNewsStore((state) => state.setArticles);
 
   useEffect(() => {
@@ -90,6 +105,21 @@ export default function TeamDetailScreen() {
       setArticles(newsArticles);
     }
   }, [newsLoading, newsArticles, setArticles]);
+
+  useEffect(() => {
+    const loadUser = async () => {
+      try {
+        const jsonUser = await AsyncStorage.getItem("loggedInUser");
+        if (jsonUser) {
+          const userData = JSON.parse(jsonUser);
+          setLoggedInUser(userData);
+        }
+      } catch (e) {
+        console.error("Failed to load user:", e);
+      }
+    };
+    loadUser();
+  }, []);
 
   useEffect(() => {
     const checkFavorites = async () => {
@@ -184,7 +214,7 @@ export default function TeamDetailScreen() {
     players,
     loading: playersLoading,
     error: playersError,
-    refreshPlayers, // <- now available
+    refreshPlayers,
   } = useDbPlayersByTeam(teamIdNum.toString());
 
   const handleConfirmDate = (date: Date) => {
@@ -296,7 +326,7 @@ export default function TeamDetailScreen() {
               snapToInterval={70}
               decelerationRate="fast"
               scrollEventThrottle={16}
-              contentContainerStyle={{ paddingHorizontal: 10 }}
+              contentContainerStyle={{ paddingHorizontal: 12 }}
             >
               {monthsToShow.map(({ label, month, year }) => {
                 const isSelected =
@@ -342,100 +372,31 @@ export default function TeamDetailScreen() {
             loading={gamesLoading}
             refreshing={refreshing}
             onRefresh={handleRefresh}
+            expectedCount={filteredGames.length}
           />
         </>
       )}
 
       {selectedTab === "news" && (
-        <ScrollView
-          contentContainerStyle={{ paddingBottom: 100 }}
-          refreshControl={
-            <RefreshControl
-              refreshing={refreshing}
-              onRefresh={handleRefresh}
-              tintColor={team.color}
-            />
-          }
-        >
-          {newsLoading ? (
-            <ActivityIndicator size="large" style={{ marginTop: 20 }} />
-          ) : newsError ? (
-            <Text style={[styles.text, { textAlign: "center", marginTop: 20 }]}>
-              {newsError}
-            </Text>
-          ) : newsArticles.length === 0 ? (
-            <Text
-              style={[
-                styles.text,
-                {
-                  textAlign: "center",
-                  marginTop: 20,
-                  fontFamily: "Oswald_300Light",
-                  fontSize: 20,
-                },
-              ]}
-            >
-              No news articles available.
-            </Text>
-          ) : (
-            <View style={styles.newsContainer}>
-              {newsArticles.map((article) => (
-                <NewsCard
-                  key={article.id}
-                  id={article.id}
-                  title={article.title}
-                  source={article.source}
-                  url={article.url}
-                  thumbnail={article.thumbnail}
-                />
-              ))}
-            </View>
-          )}
-        </ScrollView>
+        <NewsHighlightsList
+          items={combinedNewsItems}
+          loading={newsLoading}
+          refreshing={refreshing}
+          onRefresh={handleRefresh}
+        />
       )}
 
       {selectedTab === "roster" && (
-        <ScrollView
-          contentContainerStyle={{ paddingBottom: 100 }}
-          refreshControl={
-            <RefreshControl
-              refreshing={refreshing}
-              onRefresh={handleRefresh}
-              tintColor={team.color}
-            />
-          }
-        >
-          {playersLoading ? (
-            <ActivityIndicator size="large" style={{ marginTop: 20 }} />
-          ) : playersError ? (
-            <Text style={[styles.text, { textAlign: "center", marginTop: 20 }]}>
-              {playersError}
-            </Text>
-          ) : players.length === 0 ? (
-            <Text style={[styles.text, { textAlign: "center", marginTop: 20 }]}>
-              No players found.
-            </Text>
-          ) : (
-            [...players]
-              .sort((a, b) => {
-                const jerseyA = parseInt(a.jersey_number ?? "0", 10);
-                const jerseyB = parseInt(b.jersey_number ?? "0", 10);
-                return jerseyA - jerseyB;
-              })
-              .map((player) => (
-                <PlayerCard
-                  key={player.id}
-                  id={player.id}
-                  playerId={player.player_id}
-                  name={player.name}
-                  position={player.position}
-                  team={team.fullName}
-                  avatarUrl={player.avatarUrl}
-                  jerseyNumber={player.jersey_number}
-                />
-              ))
-          )}
-        </ScrollView>
+        <TeamPlayerList
+          players={players}
+          loading={playersLoading}
+          error={playersError}
+          refreshing={refreshing}
+          onRefresh={handleRefresh}
+          teamFullName={team.fullName}
+          teamColor={team.color}
+          isDark={isDark}
+        />
       )}
 
       {selectedTab === "stats" && (
@@ -449,7 +410,7 @@ export default function TeamDetailScreen() {
             />
           }
         >
-          <View style={{ marginTop: 16 }}>
+          <View>
             {rosterStatsLoading ? (
               <ActivityIndicator size="large" style={{ marginTop: 20 }} />
             ) : rosterStatsError ? (
@@ -474,8 +435,7 @@ export default function TeamDetailScreen() {
           </View>
         </ScrollView>
       )}
-
-      {/* Your bottom navigation tab bar */}
+      {selectedTab === "forum" && <TeamForum teamId={teamId as string} />}
     </View>
   );
 }

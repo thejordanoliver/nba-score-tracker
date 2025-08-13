@@ -1,8 +1,11 @@
+import { useEffect, useRef, useState } from "react";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import axios from "axios";
 import { teams } from "@/constants/teams";
 import type { summerGame, GameStatus } from "@/types/types";
-import { useEffect, useState } from "react";
 
 const API_URL = process.env.EXPO_PUBLIC_API_URL;
+const RATE_LIMIT_MS = 30 * 1000;
 
 type ApiGame = {
   id: number;
@@ -62,6 +65,7 @@ type ApiGame = {
     };
   };
 };
+
 function normalizeName(name: string) {
   return name.toLowerCase().replace("la ", "los angeles ").trim();
 }
@@ -130,14 +134,12 @@ function transformGames(data: ApiGame[]): summerGame[] {
     const formattedTime = dateObj.toLocaleTimeString("en-US", optionsTime);
     const formattedMonthDay = `${dateObj.getMonth() + 1}/${dateObj.getDate()}`;
 
-    // We keep the full status object, no mapping to string here
     const status: GameStatus = {
       long: game.status.long,
       short: game.status.short,
       timer: game.status.timer ?? null,
     };
 
-    // Display time logic: if not started show date, else show formatted time
     const displayTime =
       status.long === "Not Started" || status.short === "NS"
         ? formattedMonthDay
@@ -195,7 +197,7 @@ function transformGames(data: ApiGame[]): summerGame[] {
       },
       venue: game.venue,
       stage: game.stage ?? undefined,
-      isHalftime: false, // or derive from data if available
+      isHalftime: false,
       league: {
         name: game.league?.name,
       },
@@ -207,21 +209,38 @@ export function useSummerLeagueGames() {
   const [games, setGames] = useState<summerGame[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const lastFetchTimeRef = useRef<number>(0);
 
   const fetchGames = async () => {
+    const now = Date.now();
+    if (now - lastFetchTimeRef.current < RATE_LIMIT_MS) {
+      console.warn("Rate limit hit: please wait before refreshing again.");
+      return;
+    }
+
     try {
       setLoading(true);
+      lastFetchTimeRef.current = now;
+
+      const token = await AsyncStorage.getItem("token");
+      if (!token) {
+        throw new Error("No authentication token found");
+      }
+
+const apiKey = process.env.EXPO_PUBLIC_RAPIDAPI_KEY;
+
+      const headers = {
+        Authorization: `Bearer ${token}`,
+        "x-api-key": apiKey,
+      };
 
       const [mainRes, utahRes] = await Promise.all([
-        fetch(`${API_URL}/api/summer-league/utah/games`),
-        fetch(`${API_URL}/api/summer-league/games`),
+        axios.get(`${API_URL}/api/summer-league/games`, { headers }),
+        axios.get(`${API_URL}/api/summer-league/utah/games`, { headers }),
       ]);
 
-      if (!mainRes.ok || !utahRes.ok)
-        throw new Error("Failed to fetch Summer League games");
-
-      const mainGames: ApiGame[] = await mainRes.json();
-      const utahGames: ApiGame[] = await utahRes.json();
+      const mainGames: ApiGame[] = mainRes.data;
+      const utahGames: ApiGame[] = utahRes.data;
 
       const allGames = [...mainGames, ...utahGames];
       const transformed = transformGames(allGames);
@@ -229,7 +248,8 @@ export function useSummerLeagueGames() {
       setGames(transformed);
       setError(null);
     } catch (err: any) {
-      setError(err.message || "Unknown error");
+      console.error("Axios error:", err);
+      setError(err?.response?.data?.message || err.message || "Unknown error");
     } finally {
       setLoading(false);
     }

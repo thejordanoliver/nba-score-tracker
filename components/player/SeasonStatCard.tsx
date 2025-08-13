@@ -8,17 +8,14 @@ import {
   View,
 } from "react-native";
 import { teams } from "../../constants/teams";
-
-const OSEXTRALIGHT = "Oswald_200ExtraLight";
-const OSREGULAR = "Oswald_400Regular";
-const OSMEDIUM = "Oswald_500Medium";
-const OSSEMIBOLD = "Oswald_600SemiBold";
-const OSBOLD = "Oswald_700Bold";
-
+import { Fonts } from "@/constants/fonts";
+import CenteredHeader from "../Headings/CenteredHeader";
 type Props = {
   playerId: number;
   teamColor?: string;
   teamColorDark?: string;
+    season?: string; // 👈 add this
+
 };
 
 export default function SeasonStatCard({
@@ -71,21 +68,9 @@ const forceWhiteTextTeams = [
 
   return (
     <>
-      <Text
-        style={{
-          fontSize: 24,
-          fontFamily: OSMEDIUM,
-          marginBottom: 16,
-          marginTop: 16,
-          paddingBottom: 4,
-          borderBottomWidth: 1,
-          borderBottomColor: isDark ? "#444" : "#ccc",
-          color: isDark ? "#fff" : "#1d1d1d",
-          textAlign: "center",
-        }}
-      >
+      <CenteredHeader>
         2024 Season
-      </Text>
+      </CenteredHeader>
       <View
         style={[styles.card, { backgroundColor: isDark ? "#2e2e2e" : "#eee" }]}
       >
@@ -163,10 +148,11 @@ const styles = StyleSheet.create({
   card: {
     borderRadius: 8,
     padding: 16,
+
   },
   title: {
     fontSize: 14,
-    fontFamily: OSSEMIBOLD,
+    fontFamily: Fonts.OSSEMIBOLD,
     marginBottom: 12,
     textAlign: "center",
   },
@@ -179,12 +165,12 @@ const styles = StyleSheet.create({
   },
   statValue: {
     fontSize: 18,
-    fontFamily: OSBOLD,
+    fontFamily: Fonts.OSBOLD,
     color: "#000",
   },
   statLabel: {
     fontSize: 12,
-    fontFamily: OSREGULAR,
+    fontFamily: Fonts.OSREGULAR,
     color: "#666",
     marginTop: 2,
   },

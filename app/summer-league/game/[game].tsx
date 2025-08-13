@@ -1,3 +1,5 @@
+import { summerGame } from "@/types/types";
+import CoxPavilionArena from "assets/Arenas/CoxPavilion.webp";
 import { useLocalSearchParams, useNavigation } from "expo-router";
 import { goBack } from "expo-router/build/global-state/routing";
 import { useEffect, useLayoutEffect, useMemo, useState } from "react";
@@ -5,45 +7,18 @@ import { ScrollView, Text, useColorScheme, View } from "react-native";
 import SaltLakeArena from "../../../assets/Arenas/SaltLakeArena.webp";
 import VegasArena from "../../../assets/Arenas/VegasSummerLeagueArena.webp";
 import { CustomHeaderTitle } from "../../../components/CustomHeaderTitle";
-import { TeamRow } from "../../../components/game-details";
+import TeamLocationSection from "../../../components/GameDetails/TeamLocationSection";
+import TeamLocationSkeleton from "../../../components/GameDetails/TeamLocationSkeleton";
 import { GameInfo } from "../../../components/summer-league/GameInfo";
-import TeamLocationSection from "../../../components/TeamLocationSection";
-import TeamLocationSkeleton from "../../../components/TeamLocationSkeleton";
+import LineScore from "../../../components/summer-league/LineScore";
+import { TeamRow } from "../../../components/summer-league/TeamRow";
 import { teams } from "../../../constants/teams";
 import { useWeatherForecast } from "../../../hooks/useWeather";
+import HistoricalOddsCard from "@/components/summer-league/HistoricalOddsCard";
+import { useHistoricalOdds } from "@/hooks/useHistoricalOdds";
+import HistoricalOddsCardSkeleton from "../../../components/summer-league/HistoricalOddsSkeleton";
 
 const OSEXTRALIGHT = "Oswald_200ExtraLight";
-
-type Team = {
-  id: string | number;
-  name: string;
-  logo: any;
-  logoLight?: any;
-  record?: string;
-  location?: string;
-  arenaImage?: any;
-  arenaName?: string;
-  address?: string;
-  arenaCapacity?: number;
-  code?: string;
-};
-
-type SummerGame = {
-  id: number;
-  home: Team;
-  away: Team;
-  date: string;
-  time: string;
-  status: string; // e.g. "Not Started", "Final", "Quarter 2"
-  clock?: string;
-  period?: number | string;
-  homeScore?: number;
-  awayScore?: number;
-  league?: {
-    name?: string;
-  };
-  venue?: string;
-};
 
 export default function SummerLeagueGameDetails() {
   const { game } = useLocalSearchParams();
@@ -53,7 +28,7 @@ export default function SummerLeagueGameDetails() {
 
   if (typeof game !== "string") return null;
 
-  const parsedGame: SummerGame = JSON.parse(game);
+  const parsedGame: summerGame = JSON.parse(game);
 
   const homeTeamData = teams.find(
     (t) =>
@@ -94,18 +69,36 @@ export default function SummerLeagueGameDetails() {
     parsedGame.date // ✅ This is already complete with time + timezone
   );
 
+  // Access .long property here
   const homeIsWinner =
-    parsedGame.status === "Final" &&
+    ["Final", "Game Finished"].includes(parsedGame.status.long) &&
     (parsedGame.homeScore ?? 0) > (parsedGame.awayScore ?? 0);
   const awayIsWinner =
-    parsedGame.status === "Final" &&
+    ["Final", "Game Finished"].includes(parsedGame.status.long) &&
     (parsedGame.awayScore ?? 0) > (parsedGame.homeScore ?? 0);
+
+  const gameStatusLong: string = parsedGame.status.long;
+
+  const isFinalStatus = ["Final", "Game Finished"].includes(gameStatusLong);
+
+
+const gameDate = new Date(parsedGame.date).toISOString().split("T")[0];
+  const {
+    data: historicalOdds,
+    loading: oddsLoading,
+    error: oddsError,
+  } = useHistoricalOdds({
+    date: gameDate,
+    team1: awayTeamData.code,
+    team2: homeTeamData.code,
+  });
+  
 
   useLayoutEffect(() => {
     navigation.setOptions({
       header: () => (
         <CustomHeaderTitle
-          title={`${awayTeamData.code} @ ${homeTeamData.code}`}
+          title={`${awayTeamData.code} vs ${homeTeamData.code}`}
           tabName="Game"
           onBack={goBack}
         />
@@ -130,14 +123,14 @@ export default function SummerLeagueGameDetails() {
 
   if (
     typeof parsedGame.period === "number" &&
-    parsedGame.status !== "Scheduled"
+    parsedGame.status.long !== "Scheduled"
   ) {
     quarterDisplay = `Q${parsedGame.period}`;
   } else if (typeof parsedGame.period === "string") {
     quarterDisplay = parsedGame.period;
   }
 
-  if (parsedGame.status === "Final") {
+  if (isFinalStatus) {
     quarterDisplay = "Final";
   }
 
@@ -148,13 +141,42 @@ export default function SummerLeagueGameDetails() {
   });
 
   const timeDisplay =
-    parsedGame.status === "Not Started" ? formattedTime : quarterDisplay;
+    parsedGame.status.long === "Not Started" ? formattedTime : quarterDisplay;
 
   function isSaltLakeCityGame(dateStr: string): boolean {
     const date = new Date(dateStr);
     const start = new Date("2025-07-05");
     const end = new Date("2025-07-09");
     return date >= start && date <= end;
+  }
+
+  // Determine arena info based on venue string (case-insensitive)
+  const venueLower = parsedGame.venue?.toLowerCase() ?? "";
+
+  let arenaImage = VegasArena;
+  let arenaName = "Thomas & Mack Center";
+  let location = "Las Vegas, NV";
+  let address = "4505 S Maryland Pkwy, Las Vegas, NV 89154";
+  let arenaCapacity = "17,923";
+
+  if (venueLower.includes("cox pavilion")) {
+    arenaImage = CoxPavilionArena;
+    arenaName = "Cox Pavilion";
+    location = "Las Vegas, NV";
+    address = "3720 S Maryland Pkwy, Las Vegas, NV 89169"; // example address
+    arenaCapacity = "2,500"; // example capacity
+  } else if (venueLower.includes("thomas & mack center")) {
+    arenaImage = VegasArena;
+    arenaName = "Thomas & Mack Center";
+    location = "Las Vegas, NV";
+    address = "4505 S Maryland Pkwy, Las Vegas, NV 89154";
+    arenaCapacity = "17,923";
+  } else if (venueLower.includes("huntsman center")) {
+    arenaImage = SaltLakeArena;
+    arenaName = "Jon M. Huntsman Center";
+    location = "Salt Lake City, UT";
+    address = "1825 E. South Campus Dr, Salt Lake City, UT 84112";
+    arenaCapacity = "15,000";
   }
 
   return (
@@ -206,17 +228,20 @@ export default function SummerLeagueGameDetails() {
           colors={colors}
         />
 
-        {/* Game Info */}
         <GameInfo
           status={
-            parsedGame.status === "Final"
+            isFinalStatus
               ? "Final"
-              : parsedGame.clock
+              : parsedGame.clock && parsedGame.status.long !== "Not Started"
                 ? "In Progress"
                 : "Scheduled"
           }
           date={formattedDate}
-          time={timeDisplay} // ✅ USE this instead of formattedTime
+          time={
+            parsedGame.status.long === "Not Started"
+              ? formattedTime
+              : timeDisplay
+          } // show actual start time only if not started
           period={
             typeof parsedGame.period === "number"
               ? `Q${parsedGame.period}`
@@ -227,7 +252,7 @@ export default function SummerLeagueGameDetails() {
           isDark={isDark}
           homeTeam={parsedGame.home.name}
           awayTeam={parsedGame.away.name}
-          isSummerLeague={true} // ✅ add this
+          isSummerLeague={true}
         />
 
         {/* Home Team */}
@@ -249,32 +274,47 @@ export default function SummerLeagueGameDetails() {
         />
       </View>
 
+  {oddsLoading ? (
+        <View style={{ marginTop: 20 }}>
+          {[...Array(1)].map((_, i) => (
+            <HistoricalOddsCardSkeleton key={i} />
+          ))}
+        </View>
+      ) : (
+        historicalOdds.length > 0 && (
+          <View style={{ marginTop: 20 }}>
+            {historicalOdds.map((game) => (
+              <HistoricalOddsCard key={game.id} game={game} />
+            ))}
+          </View>
+        )
+      )}
+      {oddsError && (
+        <View style={{ marginTop: 20 }}>
+          <Text style={{ color: "red" }}>Error loading odds: {oddsError}</Text>
+        </View>
+      )}
+
+      {parsedGame.scores?.home && parsedGame.scores?.away && (
+        <LineScore
+          homeScores={parsedGame.scores.home}
+          awayScores={parsedGame.scores.away}
+          isDark={isDark}
+          homeCode={homeTeamData.code}
+          awayCode={awayTeamData.code}
+        />
+      )}
+
       {/* Arena & Weather Info */}
       {isLoading ? (
         <TeamLocationSkeleton />
       ) : (
         <TeamLocationSection
-          arenaImage={
-            isSaltLakeCityGame(parsedGame.date) ? SaltLakeArena : VegasArena
-          }
-          arenaName={
-            isSaltLakeCityGame(parsedGame.date)
-              ? "Jon M. Huntsman Center "
-              : "Thomas & Mack Center"
-          }
-          location={
-            isSaltLakeCityGame(parsedGame.date)
-              ? "Salt Lake City, UT"
-              : "Las Vegas, NV"
-          }
-          address={
-            isSaltLakeCityGame(parsedGame.date)
-              ? "1825 E. South Campus Dr, Salt Lake City, UT 84112 "
-              : "4505 S Maryland Pkwy, Las Vegas, NV 89154"
-          }
-          arenaCapacity={
-            isSaltLakeCityGame(parsedGame.date) ? "15,000" : "17,923"
-          }
+          arenaImage={arenaImage}
+          arenaName={arenaName}
+          location={location}
+          address={address}
+          arenaCapacity={arenaCapacity}
           weather={weather}
           loading={weatherLoading}
           error={weatherError}

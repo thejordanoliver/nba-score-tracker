@@ -1,7 +1,6 @@
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import {
-  Image,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -10,7 +9,7 @@ import {
   useColorScheme,
 } from "react-native";
 import { teams } from "../constants/teams";
-
+import { Image } from "expo-image";
 type Props = {
   favoriteTeamIds: string[];
 };

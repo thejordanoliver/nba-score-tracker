@@ -1,12 +1,6 @@
 // scoresStyles.ts
+import { Fonts } from "@/constants/fonts";
 import { StyleSheet } from "react-native";
-
-const OSEXTRALIGHT = "Oswald_200ExtraLight";
-const OSLIGHT = "Oswald_300Light";
-const OSREGULAR = "Oswald_400Regular";
-const OSMEDIUM = "Oswald_500Medium";
-const OSBOLD = "Oswald_700Bold";
-const OSSEMIBOLD = "Oswald_600SemiBold";
 
 export const getScoresStyles = (isDark: boolean) =>
   StyleSheet.create({
@@ -27,7 +21,7 @@ export const getScoresStyles = (isDark: boolean) =>
 
     sectionHeading: {
       fontSize: 18,
-      fontWeight: "600",
+      fontFamily: Fonts.OSSEMIBOLD,
       marginLeft: 12,
       marginTop: 16,
       marginBottom: 8,
@@ -45,13 +39,13 @@ export const getScoresStyles = (isDark: boolean) =>
       color: isDark ? "black" : "white",
       fontWeight: "normal",
       fontSize: 18,
-      fontFamily: OSMEDIUM,
+      fontFamily: Fonts.OSMEDIUM,
     },
     emptyText: {
       textAlign: "center",
       color: isDark ? "#aaa" : "#999",
       marginTop: 20,
       fontSize: 20,
-      fontFamily: OSLIGHT,
+      fontFamily: Fonts.OSLIGHT,
     },
   });

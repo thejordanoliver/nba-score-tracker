@@ -1,13 +1,6 @@
 // TeamDetailScreen.styles.ts
+import { Fonts } from "@/constants/fonts";
 import { StyleSheet } from "react-native";
-
-
-const OSEXTRALIGHT = "Oswald_200ExtraLight";
-const OSLIGHT = "Oswald_300Light";
-const OSREGULAR = "Oswald_400Regular";
-const OSMEDIUM = "Oswald_500Medium";
-const OSBOLD = "Oswald_700Bold";
-const OSSEMIBOLD = "Oswald_600SemiBold";
 
 export const style = (isDark: boolean) =>
   StyleSheet.create({
@@ -31,9 +24,9 @@ export const style = (isDark: boolean) =>
       height: 80,
     },
 
-     heading: {
+    heading: {
       fontSize: 24,
-      fontFamily: OSMEDIUM,
+      fontFamily: Fonts.OSMEDIUM,
       marginBottom: 8,
       marginTop: 8,
       paddingBottom: 4,
@@ -65,12 +58,12 @@ export const style = (isDark: boolean) =>
       backgroundColor: "transparent",
     },
     monthText: {
-      fontFamily: OSREGULAR,
+      fontFamily: Fonts.OSREGULAR,
       fontSize: 20,
       color: isDark ? "#aaa" : "#777",
     },
     monthTextSelected: {
-      fontFamily: OSBOLD,
+      fontFamily: Fonts.OSBOLD,
       color: isDark ? "#fff" : "#000",
     },
     logo: {
@@ -82,7 +75,7 @@ export const style = (isDark: boolean) =>
     },
     teamName: {
       fontSize: 28,
-      fontFamily: OSMEDIUM,
+      fontFamily: Fonts.OSMEDIUM,
     },
     sectionHeader: {
       fontSize: 22,

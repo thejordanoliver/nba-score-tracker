@@ -1,15 +1,15 @@
 // profile.tsx
 import ConfirmModal from "@/components/ConfirmModal";
 import { CustomHeaderTitle } from "@/components/CustomHeaderTitle";
-import BioSection from "@/components/profile/BioSection";
-import FavoriteTeamsSection from "@/components/profile/FavoriteTeamsSection";
-import FollowStats from "@/components/profile/FollowStats";
-import ProfileBanner from "@/components/profile/ProfileBanner";
-import ProfileHeader from "@/components/profile/ProfileHeader";
-import SettingsModal from "@/components/SettingsModal";
+import BioSection from "@/components/Profile/BioSection";
+import FavoriteTeamsSection from "@/components/Profile/FavoriteTeamsSection";
+import FollowStats from "@/components/Profile/FollowStats";
+import ProfileBanner from "@/components/Profile/ProfileBanner";
+import ProfileHeader from "@/components/Profile/ProfileHeader";
 import { SkeletonProfileScreen } from "@/components/SkeletonProfileScreen";
 import { teams } from "@/constants/teams";
 import { useFollowersModalStore } from "@/store/followersModalStore";
+import { useSettingsModalStore } from "@/store/settingsModalStore";
 import { getStyles } from "@/styles/ProfileScreen.styles";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useFocusEffect } from "@react-navigation/native";
@@ -22,6 +22,8 @@ import {
   useColorScheme,
   useWindowDimensions,
 } from "react-native";
+import SettingsScreen from "@/app/settings"; // adjust path if needed
+import { useAuth } from "@/hooks/useAuth";
 
 const BASE_URL = process.env.EXPO_PUBLIC_API_URL?.replace(/\/$/, "") ?? "";
 
@@ -39,13 +41,12 @@ export default function ProfileScreen() {
   const totalGap = columnGap * (numColumns - 1);
   const availableWidth = screenWidth - horizontalPadding - totalGap;
   const itemWidth = availableWidth / numColumns;
-
+const { deleteAccount } = useAuth();
   const { id } = useLocalSearchParams();
   const [isLoading, setIsLoading] = useState(true);
   const [currentUserId, setCurrentUserId] = useState<number | null>(null);
   const [showSignOutModal, setShowSignOutModal] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
-  const [showSettingsModal, setShowSettingsModal] = useState(false);
   const [favorites, setFavorites] = useState<string[]>([]);
   const [username, setUsername] = useState<string | null>(null);
   const [fullName, setFullName] = useState<string | null>(null);
@@ -72,6 +73,12 @@ export default function ProfileScreen() {
     shouldRestore,
     clearRestore,
   } = useFollowersModalStore();
+  const {
+    showSettingsModal,
+    setShowSettingsModal,
+    showOnReturn,
+    setShowOnReturn,
+  } = useSettingsModalStore();
 
   const toggleFavoriteTeamsView = () => {
     Animated.timing(fadeAnim, {
@@ -95,39 +102,7 @@ export default function ProfileScreen() {
     router.push(`/settings/${screen}`);
   };
 
-  const handleLogout = () => {
-    setShowSettingsModal(false);
-    setShowSignOutModal(true);
-  };
-
-  const handleDeleteAccount = () => {
-    setShowSettingsModal(false);
-    setShowDeleteModal(true);
-  };
-
-  const confirmDeleteAccount = async () => {
-    try {
-      const storedUsername = await AsyncStorage.getItem("username");
-      if (!storedUsername) {
-        alert("No user found to delete.");
-        return;
-      }
-
-      await fetch(`${BASE_URL}/api/delete-account`, {
-        method: "DELETE",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ username: storedUsername }),
-      });
-
-      await AsyncStorage.clear();
-      router.replace("/login");
-    } catch (err) {
-      console.error("Delete error:", err);
-      alert("Failed to delete account.");
-    } finally {
-      setShowDeleteModal(false);
-    }
-  };
+ 
 
   const loadFollowCounts = async (userId: string) => {
     try {
@@ -172,30 +147,60 @@ export default function ProfileScreen() {
     }
   };
 
-  const signOut = async () => {
-    try {
-      await AsyncStorage.clear();
-      router.replace("/login");
-    } catch (error) {
-      console.warn("Failed to sign out:", error);
-    }
-  };
+const confirmDeleteAccount = async () => {
+  try {
+    await deleteAccount();
+    // After delete, redirect to login
+    router.replace("/login");
+  } catch (error) {
+    alert("Failed to delete account.");
+  } finally {
+    setShowDeleteModal(false);
+  }
+};
+
+const signOut = async () => {
+  try {
+    await AsyncStorage.clear();
+    router.replace("/login");
+  } catch (error) {
+    console.warn("Failed to sign out:", error);
+  } finally {
+    setShowSignOutModal(false);
+  }
+};
 
   useFocusEffect(
     useCallback(() => {
-      if (shouldRestore && targetUserId) {
-        openModal(
-          type,
-          targetUserId,
-          currentUserId ? String(currentUserId) : undefined
-        );
-        clearRestore();
-      }
+      let isActive = true;
 
-      if (!isVisible) {
+      const initialize = async () => {
+        if (shouldRestore && targetUserId) {
+          openModal(
+            type,
+            targetUserId,
+            currentUserId ? String(currentUserId) : undefined
+          );
+          clearRestore();
+        }
+
+        if (isVisible || !isActive) return;
+
         setIsLoading(true);
-        loadProfileData();
-      }
+        await loadProfileData();
+
+        // If user navigated back and expects the settings modal, show it
+        if (showOnReturn) {
+          setShowSettingsModal(true);
+          setShowOnReturn(false); // reset the flag
+        }
+      };
+
+      initialize();
+
+      return () => {
+        isActive = false;
+      };
     }, [
       shouldRestore,
       targetUserId,
@@ -204,21 +209,24 @@ export default function ProfileScreen() {
       currentUserId,
       openModal,
       clearRestore,
+      showOnReturn,
+      setShowSettingsModal,
+      setShowOnReturn,
     ])
   );
 
-  useLayoutEffect(() => {
-    navigation.setOptions({
-      header: () => (
-        <CustomHeaderTitle
-          title={`@${username}`}
-          tabName="Profile"
-          onLogout={() => setShowSignOutModal(true)}
-          onSettings={() => setShowSettingsModal(true)}
-        />
-      ),
-    });
-  }, [navigation, username, isDark]);
+useLayoutEffect(() => {
+  navigation.setOptions({
+    header: () => (
+      <CustomHeaderTitle
+        title={`@${username}`}
+        tabName="Profile"
+        onLogout={() => setShowSignOutModal(true)}
+        onSettings={() => router.push("/settings")} // ← this is the fix
+      />
+    ),
+  });
+}, [navigation, username, isDark]);
 
   const favoriteTeams = teams.filter((team) => favorites.includes(team.id));
   const styles = getStyles(isDark);
@@ -284,14 +292,6 @@ export default function ProfileScreen() {
         </View>
       </ScrollView>
 
-      <SettingsModal
-        visible={showSettingsModal}
-        onClose={() => setShowSettingsModal(false)}
-        onLogout={handleLogout}
-        onDeleteAccount={handleDeleteAccount}
-        onNavigate={handleNavigateSettings}
-      />
-
       <ConfirmModal
         visible={showSignOutModal}
         title="Confirm Sign Out"
@@ -306,14 +306,15 @@ export default function ProfileScreen() {
       />
 
       <ConfirmModal
-        visible={showDeleteModal}
-        title="Delete Account"
-        message="This action cannot be undone. Are you sure you want to delete your account?"
-        confirmText="Delete"
-        cancelText="Cancel"
-        onConfirm={confirmDeleteAccount}
-        onCancel={() => setShowDeleteModal(false)}
-      />
+      visible={showDeleteModal}
+      title="Delete Account"
+      message="This action cannot be undone. Are you sure you want to delete your account?"
+      confirmText="Delete"
+      cancelText="Cancel"
+      onConfirm={confirmDeleteAccount}
+      onCancel={() => setShowDeleteModal(false)}
+    />
+
     </>
   );
 }

@@ -1,6 +1,6 @@
 import { Animated } from "react-native";
 import { getStyles } from "../../styles/ProfileScreen.styles";
-import FavoriteTeamsList from "../FavoriteTeamsList";
+import FavoriteTeamsList from "../Favorites/FavoriteTeamsList";
 import SectionHeaderWithToggle from "../SectionHeaderWithToggle";
 
 type Props = {

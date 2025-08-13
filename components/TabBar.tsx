@@ -18,7 +18,7 @@ export interface TabBarProps<T extends string> {
   selected: T;
   onTabPress: (tab: T) => void;
   renderLabel?: (tab: T, isSelected: boolean) => React.ReactNode;
-  style?: StyleProp<ViewStyle>; // ✅ ensure this prop is used
+  style?: StyleProp<ViewStyle>;
 }
 
 export default function TabBar<T extends string>({
@@ -94,8 +94,8 @@ export default function TabBar<T extends string>({
     }
   }, [selected, tabs]);
 
-  const defaultLabelStyle = (isSelected: boolean): TextStyle => ({
-    fontSize: 20,
+  const defaultLabelStyle = (tab: T, isSelected: boolean): TextStyle => ({
+    fontSize: tab.toLowerCase() === "home" ? 20 : 18,
     color: isSelected
       ? isDark
         ? "#fff"
@@ -135,7 +135,7 @@ export default function TabBar<T extends string>({
               {renderLabel ? (
                 renderLabel(tab, isSelected)
               ) : (
-                <Text style={defaultLabelStyle(isSelected)}>
+                <Text style={defaultLabelStyle(tab, isSelected)}>
                   {tab.toUpperCase()}
                 </Text>
               )}
@@ -151,14 +151,14 @@ export default function TabBar<T extends string>({
 const styles = StyleSheet.create({
   tabs: {
     flexDirection: "row",
-    justifyContent: "space-between", // ✅ center all tabs
+    justifyContent: "space-between",
     marginBottom: 10,
     position: "relative",
   },
   tabPressable: {
     paddingTop: 10,
     paddingBottom: 4,
-    paddingHorizontal: 16, // ✅ add spacing for touch area
+    paddingHorizontal: 16,
     alignItems: "center",
   },
 });

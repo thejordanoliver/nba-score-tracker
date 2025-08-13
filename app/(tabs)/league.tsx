@@ -1,8 +1,9 @@
 import CalendarModal from "@/components/CalendarModal";
 import DateNavigator from "@/components/DateNavigator";
-import GamesList from "@/components/GamesList"; // import GamesList component
-import NewsHighlightsList from "@/components/NewsHighlightsList";
-import { StandingsList } from "@/components/StandingsList";
+import GamesList from "@/components/Games/GamesList"; // import GamesList component
+import NewsHighlightsList from "@/components/News/NewsHighlightsList";
+import { StandingsList } from "@/components/Standings/StandingsList";
+import SummerGamesList from "@/components/summer-league/SummerGamesList"; // Import your SummerGamesList
 import { useSummerLeagueGames } from "@/hooks/useSummerLeagueGames";
 import { getScoresStyles } from "@/styles/leagueStyles";
 import AsyncStorage from "@react-native-async-storage/async-storage";
@@ -10,20 +11,39 @@ import { useFocusEffect, useNavigation } from "@react-navigation/native";
 import { useRouter } from "expo-router";
 import * as React from "react";
 import { useCallback, useLayoutEffect, useRef, useState } from "react";
-import { Animated, Text, View, useColorScheme } from "react-native";
+import { Animated, View, useColorScheme } from "react-native";
 import { CustomHeaderTitle } from "../../components/CustomHeaderTitle";
 import TabBar from "../../components/TabBar";
 import { useHighlights } from "../../hooks/useHighlights";
 import { useNews } from "../../hooks/useNews";
 import { useSeasonGames } from "../../hooks/useSeasonGames";
-import SummerGamesList from "@/components/summer-league/SummerGamesList"; // Import your SummerGamesList
+// import { useSeasonGames } from "@/hooks/useDBGames";
+import SeasonLeadersList from "@/components/SeasonLeadersList";
+import { useSeasonLeaders } from "@/hooks/useSeasonLeaders";
+import LeagueForum from "@/components/Forum/LeagueForum";
+
+function StatsTabContent() {
+  const { leaders, loading, error } = useSeasonLeaders({
+    season: 2024,
+    limit: 5,
+    minGames: 10,
+  });
+
+  return (
+    <SeasonLeadersList
+      leadersByStat={leaders}
+      loading={loading}
+      error={error}
+    />
+  );
+}
 
 type TeamLike = {
   id: string;
   name: string;
   record?: string;
   logo?: any;
-  fullName?: string;
+  fullName: string;
 };
 
 type NewsItem = {
@@ -81,7 +101,7 @@ export default function ScoresScreen() {
   const [showCalendarModal, setShowCalendarModal] = useState(false);
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
 
-  const tabs = ["scores", "news", "standings", "stats"] as const;
+  const tabs = ["scores", "news", "standings", "stats", "forum"] as const;
   type TabType = (typeof tabs)[number];
   const [selectedTab, setSelectedTab] = useState<TabType>("scores");
 
@@ -108,16 +128,19 @@ export default function ScoresScreen() {
   );
 
   useLayoutEffect(() => {
-    navigation.setOptions({
-      header: () => (
-        <CustomHeaderTitle
-          title="League"
-          tabName="League"
-          onCalendarPress={() => setShowCalendarModal(true)}
-        />
-      ),
-    });
-  }, [navigation]);
+  navigation.setOptions({
+  header: () => (
+    <CustomHeaderTitle
+      title="League"
+      tabName="League"
+      onCalendarPress={
+        selectedTab === "scores" ? () => setShowCalendarModal(true) : undefined
+      }
+    />
+  ),
+});
+
+  }, [navigation, selectedTab]);
 
   const handleTabPress = (tab: TabType) => {
     setSelectedTab(tab);
@@ -161,7 +184,7 @@ export default function ScoresScreen() {
     });
   };
 
-  const summerStart = new Date("2025-07-06");
+  const summerStart = new Date("2025-07-05");
   const summerEnd = new Date("2025-07-23");
 
   const isSummerLeague =
@@ -202,7 +225,7 @@ export default function ScoresScreen() {
         name: team.name,
         record: team.record,
         logo: team.logo,
-        fullName: team.fullName,
+        fullName: team.fullName ?? team.name ?? "Unknown Team", // fallback string
       };
     }
     const fallbackName = team?.name ?? "Unknown Team";
@@ -211,7 +234,7 @@ export default function ScoresScreen() {
       name: fallbackName,
       record: undefined,
       logo: undefined,
-      fullName: undefined,
+      fullName: fallbackName, // always a string
     };
   }
 
@@ -241,6 +264,7 @@ export default function ScoresScreen() {
     const taggedHighlights: CombinedItem[] = highlights.map((item) => ({
       ...item,
       itemType: "highlight",
+      publishedAt: item.publishedAt ?? new Date().toISOString(), // fallback if missing
     }));
 
     const combined = [...taggedNews, ...taggedHighlights];
@@ -257,7 +281,11 @@ export default function ScoresScreen() {
   return (
     <>
       <View style={styles.container}>
-        <TabBar tabs={tabs} selected={selectedTab} onTabPress={handleTabPress} />
+        <TabBar
+          tabs={tabs}
+          selected={selectedTab}
+          onTabPress={handleTabPress}
+        />
 
         <View style={styles.contentArea}>
           {selectedTab === "scores" && (
@@ -299,7 +327,9 @@ export default function ScoresScreen() {
           )}
 
           {selectedTab === "standings" && <StandingsList />}
-          {selectedTab === "stats" && <StatsList />}
+          {selectedTab === "stats" && <StatsTabContent />}
+        {selectedTab === "forum" && <LeagueForum />}
+
         </View>
       </View>
 
@@ -317,7 +347,10 @@ export default function ScoresScreen() {
               const localDate = new Date(game.date);
               const localISODate = `${localDate.getFullYear()}-${String(
                 localDate.getMonth() + 1
-              ).padStart(2, "0")}-${String(localDate.getDate()).padStart(2, "0")}`;
+              ).padStart(
+                2,
+                "0"
+              )}-${String(localDate.getDate()).padStart(2, "0")}`;
               acc[localISODate] = {
                 marked: true,
                 dotColor: isDark ? "#fff" : "#1d1d1d",
@@ -331,11 +364,3 @@ export default function ScoresScreen() {
     </>
   );
 }
-
-const StatsList = () => (
-  <View style={{ paddingTop: 16 }}>
-    <Text style={{ textAlign: "center", color: "#888" }}>
-      Stats coming soon...
-    </Text>
-  </View>
-);

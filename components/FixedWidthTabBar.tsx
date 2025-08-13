@@ -1,22 +1,20 @@
-// FixedWidthTabBar.tsx
-import React, { useRef, useEffect } from "react";
+import { Fonts } from "@/constants/fonts";
+import React, { useEffect, useRef, useState } from "react";
 import {
   Animated,
+  LayoutChangeEvent,
   Pressable,
   StyleSheet,
   Text,
+  TextStyle,
   View,
   useColorScheme,
-  ViewStyle,
-  TextStyle,
 } from "react-native";
-
 export interface FixedWidthTabBarProps<T extends string> {
-  tabs: readonly T[];
+  tabs: readonly T[]; // Must be exactly 2 elements
   selected: T;
   onTabPress: (tab: T) => void;
   renderLabel?: (tab: T, isSelected: boolean) => React.ReactNode;
-  tabWidth?: number; // optional fixed width override
 }
 
 export default function FixedWidthTabBar<T extends string>({
@@ -24,12 +22,14 @@ export default function FixedWidthTabBar<T extends string>({
   selected,
   onTabPress,
   renderLabel,
-  tabWidth = 120, // default width per tab
 }: FixedWidthTabBarProps<T>) {
   const colorScheme = useColorScheme();
   const isDark = colorScheme === "dark";
 
   const underlineX = useRef(new Animated.Value(0)).current;
+  const [containerWidth, setContainerWidth] = useState(0);
+
+  const tabWidth = containerWidth / 2;
 
   useEffect(() => {
     const index = tabs.indexOf(selected);
@@ -38,58 +38,85 @@ export default function FixedWidthTabBar<T extends string>({
       duration: 200,
       useNativeDriver: false,
     }).start();
-  }, [selected, tabWidth, tabs]);
+  }, [selected, tabWidth]);
+
+  const handleLayout = (e: LayoutChangeEvent) => {
+    setContainerWidth(e.nativeEvent.layout.width);
+  };
 
   const defaultLabelStyle = (isSelected: boolean): TextStyle => ({
     fontSize: 16,
-    color: isSelected ? (isDark ? "#fff" : "#1d1d1d") : isDark ? "#888" : "rgba(0, 0, 0, 0.5)",
-    fontFamily: "Oswald_500Medium",
+    color: isSelected
+      ? isDark
+        ? "#fff"
+        : "#1d1d1d"
+      : isDark
+        ? "#888"
+        : "rgba(0, 0, 0, 0.5)",
+    fontFamily: Fonts.OSMEDIUM,
   });
 
-  const underlineStyle: ViewStyle = {
-    width: tabWidth,
-    transform: [{ translateX: underlineX }],
-    height: 2,
-    backgroundColor: isDark ? "#fff" : "#1d1d1d",
-    position: "absolute",
-    bottom: 0,
-    left: 0,
-    borderRadius: 50,
-  };
-
   return (
-    <View style={[styles.tabs, { width: tabWidth * tabs.length }]}>
-      {tabs.map((tab) => {
-        const isSelected = selected === tab;
-        return (
-          <Pressable
-            key={tab}
-            onPress={() => onTabPress(tab)}
-            style={[styles.tabPressable, { width: tabWidth }]}
-            accessibilityRole="tab"
-            accessibilityState={{ selected: isSelected }}
-            accessibilityLabel={`Switch to ${tab} tab`}
-          >
-            {renderLabel ? renderLabel(tab, isSelected) : (
-              <Text style={defaultLabelStyle(isSelected)}>{tab.toUpperCase()}</Text>
-            )}
-          </Pressable>
-        );
-      })}
-      <Animated.View style={underlineStyle} />
+    <View onLayout={handleLayout} style={styles.tabContainer}>
+      <View style={styles.tabs}>
+        {tabs.map((tab) => {
+          const isSelected = selected === tab;
+          return (
+            <Pressable
+              key={tab}
+              onPress={() => onTabPress(tab)}
+              style={styles.tabPressable}
+              accessibilityRole="tab"
+              accessibilityState={{ selected: isSelected }}
+              accessibilityLabel={`Switch to ${tab} tab`}
+            >
+              {renderLabel ? (
+                renderLabel(tab, isSelected)
+              ) : (
+                <Text style={defaultLabelStyle(isSelected)}>
+                  {tab.toUpperCase()}
+                </Text>
+              )}
+            </Pressable>
+          );
+        })}
+      </View>
+
+      {containerWidth > 0 && (
+        <Animated.View
+          style={[
+            styles.underline,
+            {
+              width: tabWidth,
+              backgroundColor: isDark ? "#fff" : "#1d1d1d",
+              transform: [{ translateX: underlineX }],
+            },
+          ]}
+        />
+      )}
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  tabs: {
-    flexDirection: "row",
-    justifyContent: "space-between",
+  tabContainer: {
     position: "relative",
     marginBottom: 10,
+    width: "100%",
+  },
+  tabs: {
+    flexDirection: "row",
   },
   tabPressable: {
+    width: "50%",
     alignItems: "center",
-    paddingVertical: 10,
+    paddingBottom: 10,
+  },
+  underline: {
+    position: "absolute",
+    bottom: 0,
+    left: 0,
+    height: 2,
+    borderRadius: 50,
   },
 });

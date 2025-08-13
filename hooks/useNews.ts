@@ -1,8 +1,7 @@
 import axios from "axios";
 import { useEffect, useState } from "react";
-import { useNewsStore } from "./newsStore"; // ✅ Zustand store
+import { useNewsStore } from "./newsStore";
 
-// Article types
 export type NewsItem = {
   id: string;
   title: string;
@@ -11,25 +10,9 @@ export type NewsItem = {
   thumbnail: string;
   content: string;
   publishedAt?: string;
-  date?: string; // <-- add this
+  date?: string;
 };
 
-interface BackendArticle {
-  source: { name: string };
-  title: string;
-  url: string;
-  urlToImage: string | null;
-  publishedAt: string;
-  content: string | null;
-}
-
-interface NewsApiResponse {
-  status: string;
-  totalResults: number;
-  articles: BackendArticle[];
-}
-
-// Convert HTML to plain text
 function htmlToPlainText(html: string | null): string {
   if (!html) return "Content not available";
   return html
@@ -39,29 +22,25 @@ function htmlToPlainText(html: string | null): string {
     .trim();
 }
 
-// Clean & format content
 function formatContent(rawContent: string): string {
   if (!rawContent) return "No content available.";
 
   let formatted = rawContent
-    // 🔴 REMOVE EMBEDDED IMAGES
-    .replace(/<img[^>]*>/gi, "")                  // HTML image tags
-    .replace(/!\[.*?\]\(.*?\)/g, "")              // Markdown image links
-    .replace(/image:\s*https?:\/\/\S+/gi, "")     // "image: https://..." style
-    .replace(/https?:\/\/\S+\.(jpg|jpeg|png|gif)/gi, "") // Any standalone image URLs
+    .replace(/<img[^>]*>/gi, "")
+    .replace(/!\[.*?\]\(.*?\)/g, "")
+    .replace(/image:\s*https?:\/\/\S+/gi, "")
+    .replace(/https?:\/\/\S+\.(jpg|jpeg|png|gif)/gi, "")
+    .replace(/\[\+\d+\schars\]/g, "")
+    .replace(/https?:\/\/\S+/g, "")
+    .replace(/[^\S\r\n]+/g, " ")
+    .replace(/\.(\s|$)/g, ". ")
+    .replace(/,(?=\S)/g, ", ")
+    .replace(/\?(?=\S)/g, "? ")
+    .replace(/!(?=\S)/g, "! ")
+    .replace(/\s{2,}/g, " ");
 
-    // 🔧 CLEAN FORMATTING
-    .replace(/\[\+\d+\schars\]/g, "")           // Remove truncation notes
-    .replace(/https?:\/\/\S+/g, "")             // Remove leftover URLs
-    .replace(/[^\S\r\n]+/g, " ")                // Collapse whitespace
-    .replace(/\.(\s|$)/g, ". ")                 // Space after period
-    .replace(/,(?=\S)/g, ", ")                  // Space after comma
-    .replace(/\?(?=\S)/g, "? ")                 // Space after question mark
-    .replace(/!(?=\S)/g, "! ")                  // Space after exclamation
-    .replace(/\s{2,}/g, " ");                   // Remove extra spaces
-
-  // 🧹 BOILERPLATE REMOVAL
   const boilerplatePatterns = [
+    /…?\s*\[\+\d+\schars\]/g,
     /subscribe\s+now[^\.]*\.?/gi,
     /read\s+more[^\.]*\.?/gi,
     /support\s+our\s+journalism[^\.]*\.?/gi,
@@ -72,14 +51,14 @@ function formatContent(rawContent: string): string {
     /advertisement/gi,
     /tap\s+to\s+continue/gi,
     /photo\s+credit[^\.]*\.?/gi,
-    /\.\.\.\s*$/, // remove trailing ellipsis
+    /\.\.\.\s*$/,
+    /[\u2026…]?\s*\[\+\d+\schars\]/g,
   ];
 
   for (const pattern of boilerplatePatterns) {
     formatted = formatted.replace(pattern, "");
   }
 
-  // 🧼 PARAGRAPH STRUCTURING
   formatted = formatted.replace(/(\r\n|\r|\n){2,}/g, "\n\n");
 
   const paragraphs = formatted
@@ -88,7 +67,7 @@ function formatContent(rawContent: string): string {
       p
         .trim()
         .replace(/\s+/g, " ")
-        .replace(/^\w/, (c) => c.toUpperCase()) // Capitalize first letter
+        .replace(/^\w/, (c) => c.toUpperCase())
     )
     .filter(Boolean);
 
@@ -97,10 +76,18 @@ function formatContent(rawContent: string): string {
 
 export function useNews() {
   const [news, setNews] = useState<NewsItem[]>([]);
-  const [loading, setLoading] = useState<boolean>(true);
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   const { setArticles, loadCachedArticles, articles } = useNewsStore.getState();
+
+  // Helper to normalize source name (string or object)
+  function getSourceName(source: string | { name: string }): string {
+    if (!source) return "Unknown";
+    if (typeof source === "string") return source;
+    if (typeof source === "object" && "name" in source) return source.name;
+    return "Unknown";
+  }
 
   const refreshNews = async () => {
     try {
@@ -110,23 +97,34 @@ export function useNews() {
       const API_URL = process.env.EXPO_PUBLIC_API_URL;
       if (!API_URL) throw new Error("EXPO_PUBLIC_API_URL is not defined");
 
-const res = await axios.get<NewsApiResponse>(`${API_URL}/api/news`);
+      // 1. Fetch Guardian articles first (your backend route)
+      const guardianResp = await axios.get(`${API_URL}/api/news/guardian`);
 
-      if (!res.data.articles) {
-        throw new Error("API response missing 'articles' field.");
-      }
+      // 2. Fetch general news if needed (or merge regardless)
+      const generalResp = await axios.get(`${API_URL}/api/news`);
 
-      const formatted: NewsItem[] = res.data.articles.map((article, index) => {
-        const plainContent = htmlToPlainText(article.content);
+      // 3. Combine both results with Guardian articles first
+      const combinedArticlesRaw = [
+        ...(guardianResp.data.articles || []),
+        ...(generalResp.data.articles || []),
+      ];
+
+      // 4. Map and format combined articles
+      const formatted: NewsItem[] = combinedArticlesRaw.map((article: any, index: number) => {
+        const rawContent = article.content || article.description || "";
+
+        const plainContent = htmlToPlainText(rawContent);
         const content = formatContent(plainContent);
 
         return {
-          id: `${article.publishedAt}-${index}`,
+          id: `${article.publishedAt || article.date || "unknown"}-${index}`,
           title: article.title,
-          source: article.source.name,
+          source: getSourceName(article.source),
           url: article.url,
-          thumbnail: article.urlToImage || "",
+          thumbnail: article.urlToImage || article.thumbnail || "",
           content,
+          publishedAt: article.publishedAt || article.date,
+          date: article.publishedAt || article.date,
         };
       });
 
@@ -148,7 +146,6 @@ const res = await axios.get<NewsApiResponse>(`${API_URL}/api/news`);
         setNews(cached);
         setLoading(false);
       }
-
       refreshNews();
     })();
   }, []);

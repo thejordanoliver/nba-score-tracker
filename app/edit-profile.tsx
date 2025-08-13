@@ -1,5 +1,7 @@
 import { CustomHeaderTitle } from "@/components/CustomHeaderTitle";
-import ProfileBanner from "@/components/profile/ProfileBanner";
+import LabeledInput from "@/components/LabeledInput";
+import ProfileBanner from "@/components/Profile/ProfileBanner";
+import SaveButton from "@/components/SaveButton"; // adjust path if needed
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import * as ImagePicker from "expo-image-picker";
 import { useNavigation, useRouter } from "expo-router";
@@ -9,15 +11,11 @@ import {
   Alert,
   KeyboardAvoidingView,
   Platform,
-  Pressable,
   ScrollView,
   StyleSheet,
-  Text,
-  TextInput,
   useColorScheme,
   View,
 } from "react-native";
-import CropEditorModal from "@/components/CropEditorModal"; // adjust path if needed
 
 const BANNER_HEIGHT = 120;
 const PROFILE_PIC_SIZE = 120;
@@ -33,9 +31,9 @@ export default function EditProfileScreen() {
   const isDark = useColorScheme() === "dark";
   const router = useRouter();
   const navigation = useNavigation();
-const [isCropOpen, setIsCropOpen] = useState(false);
-const [isCroppingBanner, setIsCroppingBanner] = useState(true);
-const [pendingImage, setPendingImage] = useState<string | null>(null);
+  const [isCropOpen, setIsCropOpen] = useState(false);
+  const [isCroppingBanner, setIsCroppingBanner] = useState(true);
+  const [pendingImage, setPendingImage] = useState<string | null>(null);
 
   useEffect(() => {
     const loadData = async () => {
@@ -83,101 +81,102 @@ const [pendingImage, setPendingImage] = useState<string | null>(null);
     }
   };
 
-const handlePickImage = async (isBanner: boolean) => {
-  const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
-  if (status !== "granted") {
-    Alert.alert("Permission denied", "We need permission to access your gallery.");
-    return;
-  }
-
-  const result = await ImagePicker.launchImageLibraryAsync({
-    mediaTypes: ImagePicker.MediaTypeOptions.Images,
-    quality: 1,
-  });
-
-  if (!result.canceled) {
-    setPendingImage(result.assets[0].uri);
-    setIsCroppingBanner(isBanner);
-    setIsCropOpen(true);
-  }
-};
-
-const handleCropComplete = (uri: string) => {
-  if (isCroppingBanner) {
-    setBannerImage(uri);
-  } else {
-    setProfileImage(uri);
-  }
-  setIsCropOpen(false);
-};
-
-
-
-const handleSave = async () => {
-  try {
-    const formData = new FormData();
-
-    formData.append("fullName", fullName);
-    formData.append("email", email);
-    formData.append("bio", bio || "");
-
-    // Only append new local banner image
-    if (bannerImage?.startsWith("file://")) {
-      const filename = bannerImage.split("/").pop()!;
-      const match = /\.(\w+)$/.exec(filename);
-      const type = match ? `image/${match[1]}` : "image";
-
-      formData.append("bannerImage", {
-        uri: bannerImage,
-        name: filename,
-        type,
-      } as any);
+  const handlePickImage = async (isBanner: boolean) => {
+    const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (status !== "granted") {
+      Alert.alert(
+        "Permission denied",
+        "We need permission to access your gallery."
+      );
+      return;
     }
 
-    // Only append new local profile image
-    if (profileImage?.startsWith("file://")) {
-      const filename = profileImage.split("/").pop()!;
-      const match = /\.(\w+)$/.exec(filename);
-      const type = match ? `image/${match[1]}` : "image";
-
-      formData.append("profileImage", {
-        uri: profileImage,
-        name: filename,
-        type,
-      } as any);
-    }
-
-    const res = await fetch(`${BASE_URL}/api/users/${username}`, {
-      method: "PATCH",
-      body: formData,
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      quality: 1,
     });
 
-    if (!res.ok) {
-      throw new Error("Failed to update profile");
+    if (!result.canceled) {
+      setPendingImage(result.assets[0].uri);
+      setIsCroppingBanner(isBanner);
+      setIsCropOpen(true);
     }
+  };
 
-    const data = await res.json();
-
-    // ✅ Save correct relative paths in AsyncStorage
-    await AsyncStorage.setItem("fullName", data.user.full_name);
-    await AsyncStorage.setItem("email", data.user.email);
-    await AsyncStorage.setItem("bio", data.user.bio || "");
-
-    if (data.user.profile_image) {
-      await AsyncStorage.setItem("profileImage", data.user.profile_image); // /uploads/xyz.jpg
+  const handleCropComplete = (uri: string) => {
+    if (isCroppingBanner) {
+      setBannerImage(uri);
+    } else {
+      setProfileImage(uri);
     }
+    setIsCropOpen(false);
+  };
 
-    if (data.user.banner_image) {
-      await AsyncStorage.setItem("bannerImage", data.user.banner_image); // /uploads/abc.jpg
+  const handleSave = async () => {
+    try {
+      const formData = new FormData();
+
+      formData.append("fullName", fullName);
+      formData.append("email", email);
+      formData.append("bio", bio || "");
+
+      // Only append new local banner image
+      if (bannerImage?.startsWith("file://")) {
+        const filename = bannerImage.split("/").pop()!;
+        const match = /\.(\w+)$/.exec(filename);
+        const type = match ? `image/${match[1]}` : "image";
+
+        formData.append("bannerImage", {
+          uri: bannerImage,
+          name: filename,
+          type,
+        } as any);
+      }
+
+      // Only append new local profile image
+      if (profileImage?.startsWith("file://")) {
+        const filename = profileImage.split("/").pop()!;
+        const match = /\.(\w+)$/.exec(filename);
+        const type = match ? `image/${match[1]}` : "image";
+
+        formData.append("profileImage", {
+          uri: profileImage,
+          name: filename,
+          type,
+        } as any);
+      }
+
+      const res = await fetch(`${BASE_URL}/api/users/${username}`, {
+        method: "PATCH",
+        body: formData,
+      });
+
+      if (!res.ok) {
+        throw new Error("Failed to update profile");
+      }
+
+      const data = await res.json();
+
+      // ✅ Save correct relative paths in AsyncStorage
+      await AsyncStorage.setItem("fullName", data.user.full_name);
+      await AsyncStorage.setItem("email", data.user.email);
+      await AsyncStorage.setItem("bio", data.user.bio || "");
+
+      if (data.user.profile_image) {
+        await AsyncStorage.setItem("profileImage", data.user.profile_image); // /uploads/xyz.jpg
+      }
+
+      if (data.user.banner_image) {
+        await AsyncStorage.setItem("bannerImage", data.user.banner_image); // /uploads/abc.jpg
+      }
+
+      Alert.alert("Saved", "Profile updated.");
+      router.back();
+    } catch (err) {
+      console.error(err);
+      Alert.alert("Error", "Failed to save profile info.");
     }
-
-    Alert.alert("Saved", "Profile updated.");
-    router.back();
-  } catch (err) {
-    console.error(err);
-    Alert.alert("Error", "Failed to save profile info.");
-  }
-};
+  };
 
   const styles = getStyles(isDark);
 
@@ -193,92 +192,44 @@ const handleSave = async () => {
         }}
       >
         <View style={[styles.container]}>
-<ProfileBanner
-  bannerImage={bannerImage}
-  profileImage={profileImage}
-  isDark={isDark}
-  editable
-  onPressBanner={() => handlePickImage(true)}
-  onPressProfile={() => handlePickImage(false)}
-/>
-
-
+          <ProfileBanner
+            bannerImage={bannerImage}
+            profileImage={profileImage}
+            isDark={isDark}
+            editable
+            onPressBanner={() => handlePickImage(true)}
+            onPressProfile={() => handlePickImage(false)}
+          />
 
           <View style={styles.formContainer}>
-            <Text style={[styles.label, { color: isDark ? "#fff" : "#000" }]}>
-              Name
-            </Text>
-            <TextInput
-              style={[
-                styles.input,
-                {
-                  color: isDark ? "#fff" : "#000",
-                  backgroundColor: isDark ? "#222" : "#eee",
-                },
-              ]}
+            <LabeledInput
+              label="Name"
               value={fullName}
               onChangeText={setFullName}
             />
-            <Text style={[styles.label, { color: isDark ? "#fff" : "#000" }]}>
-              Username
-            </Text>
-            <TextInput
-              style={[
-                styles.input,
-                {
-                  color: isDark ? "#fff" : "#000",
-                  backgroundColor: isDark ? "#222" : "#eee",
-                },
-              ]}
+
+            <LabeledInput
+              label="Username"
               value={username}
               onChangeText={setUsername}
             />
 
-            <Text style={[styles.label, { color: isDark ? "#fff" : "#000" }]}>
-              Email
-            </Text>
-            <TextInput
-              style={[
-                styles.input,
-                {
-                  color: isDark ? "#fff" : "#000",
-                  backgroundColor: isDark ? "#222" : "#eee",
-                },
-              ]}
-              value={email}
-              onChangeText={setEmail}
-            />
+            <LabeledInput label="Email" value={email} onChangeText={setEmail} />
 
-            <Text style={[styles.label, { color: isDark ? "#fff" : "#000" }]}>
-              Bio
-            </Text>
-            <TextInput
-              style={[
-                styles.input,
-                styles.bioInput,
-                {
-                  color: isDark ? "#fff" : "#000",
-                  backgroundColor: isDark ? "#222" : "#eee",
-                },
-              ]}
-              multiline
+            <LabeledInput
+              label="Bio"
               value={bio}
               onChangeText={setBio}
+              multiline
             />
 
-            <Pressable style={styles.saveButton} onPress={handleSave}>
-              <Text style={styles.saveButtonText}>Save</Text>
-            </Pressable>
+            <SaveButton onPress={handleSave} />
           </View>
         </View>
       </ScrollView>
-      
     </KeyboardAvoidingView>
-    
   );
-  
 }
-
 
 const getStyles = (isDark: boolean) =>
   StyleSheet.create({
@@ -294,70 +245,9 @@ const getStyles = (isDark: boolean) =>
       justifyContent: "center",
       alignItems: "center",
     },
-    profilePicContainer: {
-      position: "absolute",
-      top: BANNER_HEIGHT - 60, // Adjust as needed
-      alignSelf: "center",
-      zIndex: 10,
-    },
-    profilePic: {
-      width: PROFILE_PIC_SIZE,
-      height: PROFILE_PIC_SIZE,
-      borderRadius: PROFILE_PIC_SIZE / 2,
-      borderWidth: 4,
-      borderColor: isDark ? "#1d1d1d" : "#fff",
-    },
-
     formContainer: {
       paddingTop: 60,
-    },
-    label: {
-      marginTop: 40,
-      marginBottom: 20,
-      fontSize: 16,
-      fontFamily: "Oswald_400Regular",
-      marginHorizontal: 20,
-    },
-    input: {
-      padding: 20,
-      borderRadius: 8,
-      fontSize: 16,
-      marginBottom: 12,
-      marginHorizontal: 20,
-      fontFamily: "Oswald_300Light",
-    },
-    bioInput: {
-      marginHorizontal: 16,
-      height: 100,
-      textAlignVertical: "top",
-    },
-    saveButton: {
-      marginVertical: 24,
-      backgroundColor: isDark ? "#fff" : "#000",
-      padding: 16,
-      borderRadius: 8,
-      alignItems: "center",
-      marginHorizontal: 20,
-    },
-    saveButtonText: {
-      color: isDark ? "#000" : "#fff",
-      fontSize: 16,
-      fontFamily: "Oswald_500Medium",
-    },
-    placeholderText: {
-      color: "#fff",
-      fontFamily: "Oswald_400Regular",
-      fontSize: 20,
-      marginBottom: 40,
-      textAlign: "center",
-    },
-    profilePlaceholderText: {
-      color: "#fff",
-      fontFamily: "Oswald_400Regular",
-      fontSize: 16,
-      textAlign: "center",
-      marginVertical: 40,
-      marginHorizontal: 0,
+      paddingHorizontal: 16,
     },
     profilePicTouchOverlay: {
       position: "absolute",

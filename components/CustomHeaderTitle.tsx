@@ -1,4 +1,4 @@
-import TeamInfoBottomSheet from "@/components/TeamInfoModal";
+import TeamInfoBottomSheet from "@/components/Team/TeamInfoModal";
 import { teams } from "@/constants/teams";
 import { Ionicons } from "@expo/vector-icons";
 import { HeaderTitle } from "@react-navigation/elements";
@@ -163,7 +163,7 @@ export function CustomHeaderTitle({
         {tabName === "Profile" ? (
           <TouchableOpacity onPress={onLogout}>
             <Ionicons
-              name="log-out"
+              name="log-out-outline"
               size={24}
               color={isDark ? "#fff" : "#1d1d1d"}
             />
@@ -227,7 +227,7 @@ export function CustomHeaderTitle({
                 onPress={() => setModalVisible(true)}
                 style={{ padding: 8 }}
               >
-                <Ionicons name="information-circle" size={24} color="#fff" />
+                <Ionicons name="information-circle-outline" size={24} color="#fff" />
               </TouchableOpacity>
             )}
 
@@ -244,7 +244,7 @@ export function CustomHeaderTitle({
         ) : tabName === "Profile" && onSettings ? (
           <TouchableOpacity onPress={onSettings}>
             <Ionicons
-              name="settings"
+              name="settings-outline"
               size={24}
               color={isDark ? "#fff" : "#1d1d1d"}
             />
@@ -252,7 +252,7 @@ export function CustomHeaderTitle({
         ) : tabName === "League" && onCalendarPress ? (
 <TouchableOpacity onPress={onCalendarPress}>
             <Ionicons
-              name="calendar"
+              name="calendar-outline"
               size={24}
               color={isDark ? "#fff" : "#1d1d1d"}
             />

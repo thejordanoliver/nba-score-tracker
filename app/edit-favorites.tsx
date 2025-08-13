@@ -1,126 +1,50 @@
 import { CustomHeaderTitle } from "@/components/CustomHeaderTitle";
-import FavoriteTeamsSelector from "@/components/FavoriteTeamsSelector";
-import AsyncStorage from "@react-native-async-storage/async-storage";
+import FavoriteTeamsSelector from "@/components/Favorites/FavoriteTeamsSelector";
 import { useNavigation } from "@react-navigation/native";
 import { useRouter } from "expo-router";
-import { useEffect, useLayoutEffect, useRef, useState } from "react";
+import { useLayoutEffect } from "react";
 import {
   Animated,
-  Platform,
   Pressable,
   StyleSheet,
   Text,
   TextInput,
-  UIManager,
   View,
   useColorScheme,
   useWindowDimensions,
 } from "react-native";
-import { teams } from "../constants/teams";
-import { useMemo } from "react";
-
-const OSEXTRALIGHT = "Oswald_200ExtraLight";
-const OSLIGHT = "Oswald_300Light";
-const OSREGULAR = "Oswald_400Regular";
-const OSMEDIUM = "Oswald_500Medium";
-const OSBOLD = "Oswald_700Bold";
-const OSSEMIBOLD = "Oswald_600SemiBold";
-
-const BASE_URL = process.env.EXPO_PUBLIC_API_URL!;
-
-if (
-  Platform.OS === "android" &&
-  UIManager.setLayoutAnimationEnabledExperimental
-) {
-  UIManager.setLayoutAnimationEnabledExperimental(true);
-}
+import { Fonts } from "@/constants/fonts";
+import { useFavoriteTeams } from "@/hooks/useFavoriteTeams";
+import { teams } from "@/constants/teams";
 
 export default function EditFavoritesScreen() {
-  const { width: screenWidth } = useWindowDimensions();
+  const {
+    search,
+    setSearch,
+    favorites,
+    toggleFavorite,
+    isGridView,
+    toggleLayout,
+    fadeAnim,
+    username,
+    saveFavorites,
+    isLoading,
+  } = useFavoriteTeams();
 
+  const { width: screenWidth } = useWindowDimensions();
   const numColumns = 3;
-  const containerPadding = 40; // 20 left + 20 right
+  const containerPadding = 40;
   const columnGap = 12;
   const totalSpacing = columnGap * (numColumns - 1);
   const availableWidth = screenWidth - containerPadding - totalSpacing;
   const itemWidth = availableWidth / numColumns;
-  const [search, setSearch] = useState("");
-  const router = useRouter();
+
   const navigation = useNavigation();
+  const router = useRouter();
   const colorScheme = useColorScheme();
   const isDark = colorScheme === "dark";
+  const styles = getStyles(isDark);
 
-  const [isLoading, setIsLoading] = useState(false);
-  const [favorites, setFavorites] = useState<string[]>([]);
-  const [username, setUsername] = useState<string | null>(null);
-  const [isGridView, setIsGridView] = useState(true);
-
-  const fadeAnim = useRef(new Animated.Value(1)).current;
-const filteredTeams = useMemo(() => {
-  return teams.filter((team) =>
-    team.fullName.toLowerCase().includes(search.toLowerCase())
-  );
-}, [search]);
-  // Load username & favorites from AsyncStorage on mount
-  useEffect(() => {
-    const loadUserData = async () => {
-      setIsLoading(true);
-      try {
-        const storedUsername = await AsyncStorage.getItem("username");
-        if (storedUsername) {
-          setUsername(storedUsername);
-
-          const storedFavorites = await AsyncStorage.getItem("favorites");
-          if (storedFavorites) {
-            try {
-              const parsedFavorites = JSON.parse(storedFavorites);
-              setFavorites(parsedFavorites);
-            } catch (parseError) {
-              console.error("Failed to parse favorites JSON", parseError);
-              setFavorites([]); // fallback to empty array if parsing fails
-            }
-          } else {
-            setFavorites([]); // no favorites found, initialize empty
-          }
-        } else {
-          // username not found, reset username and favorites
-          setUsername(null);
-          setFavorites([]);
-        }
-      } catch (error) {
-        console.error("Failed to load user data from AsyncStorage", error);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    loadUserData();
-  }, []);
-
-  // Toggle favorite team selection
-  const toggleFavorite = (id: string) => {
-    setFavorites((prev) =>
-      prev.includes(id) ? prev.filter((f) => f !== id) : [...prev, id]
-    );
-  };
-
-  // Toggle between grid and list layout with fade animation
-  const toggleLayout = () => {
-    Animated.timing(fadeAnim, {
-      toValue: 0,
-      duration: 200,
-      useNativeDriver: true,
-    }).start(() => {
-      setIsGridView((prev) => !prev);
-      Animated.timing(fadeAnim, {
-        toValue: 1,
-        duration: 200,
-        useNativeDriver: true,
-      }).start();
-    });
-  };
-
-  // Set custom header with back and layout toggle buttons
   useLayoutEffect(() => {
     navigation.setOptions({
       header: () => (
@@ -134,36 +58,10 @@ const filteredTeams = useMemo(() => {
     });
   }, [navigation, isGridView]);
 
-  // Save favorites to server and AsyncStorage
-  const saveFavorites = async () => {
-    if (!username) {
-      console.warn("Username not loaded, cannot save favorites");
-      return;
-    }
-
-    try {
-      const res = await fetch(`${BASE_URL}/api/users/${username}/favorites`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ favorites }),
-      });
-
-      if (!res.ok) {
-        throw new Error("Failed to update favorites on server");
-      }
-
-      // Save favorites locally in AsyncStorage under 'favorites' and keep username
-      await AsyncStorage.setItem("favorites", JSON.stringify(favorites));
-
-      router.back();
-    } catch (error) {
-      console.error("Error saving favorites:", error);
-    }
+  const handleSave = async () => {
+    const success = await saveFavorites();
+    if (success) router.back();
   };
-
-
-  // Styles
-  const styles = getStyles(isDark);
 
   return (
     <View style={styles.container}>
@@ -185,12 +83,12 @@ const filteredTeams = useMemo(() => {
           fadeAnim={fadeAnim}
           search={search}
           itemWidth={itemWidth}
-          loading={isLoading} // your loading state
+          loading={isLoading}
         />
       </Animated.View>
 
       <Pressable
-        onPress={saveFavorites}
+        onPress={handleSave}
         disabled={!username}
         style={[styles.saveButton, !username && { opacity: 0.5 }]}
       >
@@ -215,9 +113,8 @@ const getStyles = (isDark: boolean) =>
       paddingVertical: 8,
       fontSize: 16,
       color: "#000",
-      fontFamily: OSLIGHT,
+      fontFamily: Fonts.OSLIGHT,
     },
-
     saveButton: {
       backgroundColor: isDark ? "#fff" : "#1d1d1d",
       padding: 16,
@@ -229,6 +126,6 @@ const getStyles = (isDark: boolean) =>
     saveText: {
       color: isDark ? "#000" : "#fff",
       fontSize: 16,
-      fontFamily: OSMEDIUM,
+      fontFamily: Fonts.OSMEDIUM,
     },
   });

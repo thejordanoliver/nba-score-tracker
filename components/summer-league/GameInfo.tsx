@@ -1,15 +1,11 @@
-// components/game-details/GameInfo.tsx
+// components/GameDetails/GameInfo.tsx
 import { useESPNBroadcasts } from "@/hooks/useESPNBroadcasts";
 import { matchBroadcastToGame } from "@/utils/matchBroadcast";
 import { StyleSheet, Text, View } from "react-native";
-
-const OSEXTRALIGHT = "Oswald_200ExtraLight";
-const OSREGULAR = "Oswald_400Regular";
-const OSBOLD = "Oswald_700Bold";
-const OSSEMIBOLD = "Oswald_600SemiBold";
+import { Fonts } from "@/constants/fonts";
 
 type GameInfoProps = {
-  status: "Scheduled" | "In Progress" | "Final";
+  status: string; // Allow string here to handle variants
   date: string;
   time?: string;
   period?: string;
@@ -19,7 +15,7 @@ type GameInfoProps = {
   playoffInfo?: string | string[];
   homeTeam: string;
   awayTeam: string;
-  isSummerLeague?: boolean; // ✅ NEW
+  isSummerLeague?: boolean;
 };
 
 export function GameInfo({
@@ -36,9 +32,10 @@ export function GameInfo({
 }: GameInfoProps) {
   const { broadcasts } = useESPNBroadcasts();
 
+  // Normalize status to handle "Final" and "Game Finished" as final statuses
+  const normalizedStatus =
+    status === "Final" || status === "Game Finished" ? "Final" : status;
 
-
-  
   const matched = matchBroadcastToGame(
     {
       date,
@@ -73,9 +70,7 @@ export function GameInfo({
 
   return (
     <View style={styles.container}>
-    
-
-      {status === "Scheduled" && (
+      {normalizedStatus === "Scheduled" && (
         <>
           <Text style={[styles.date, { color: colors.secondaryText }]}>
             {date}
@@ -86,7 +81,7 @@ export function GameInfo({
         </>
       )}
 
-      {status === "In Progress" && (
+      {normalizedStatus === "In Progress" && (
         <>
           <Text style={[styles.period, { color: isDark ? "#fff" : "#000" }]}>
             {period}
@@ -106,7 +101,7 @@ export function GameInfo({
         </>
       )}
 
-      {status === "Final" && (
+      {normalizedStatus === "Final" && (
         <>
           <Text style={[styles.final, { color: colors.finalText }]}>Final</Text>
           <Text style={[styles.date, { color: colors.secondaryText }]}>
@@ -116,7 +111,7 @@ export function GameInfo({
             <Text
               style={{
                 fontSize: 10,
-                fontFamily: OSREGULAR,
+                fontFamily: Fonts.OSREGULAR,
                 color: colors.secondaryText,
                 textAlign: "center",
               }}
@@ -128,6 +123,7 @@ export function GameInfo({
         </>
       )}
 
+      {renderPlayoffInfo()}
     </View>
   );
 }
@@ -141,16 +137,16 @@ const styles = StyleSheet.create({
   },
   summer: {
     fontSize: 14,
-    fontFamily: OSEXTRALIGHT,
+    fontFamily: Fonts.OSEXTRALIGHT,
     marginBottom: 4,
   },
   date: {
     fontSize: 14,
-    fontFamily: OSREGULAR,
+    fontFamily: Fonts.OSREGULAR,
   },
   time: {
     fontSize: 14,
-    fontFamily: OSREGULAR,
+    fontFamily: Fonts.OSREGULAR,
   },
   period: {
     fontFamily: "Oswald_500Medium",
@@ -166,12 +162,12 @@ const styles = StyleSheet.create({
   final: {
     fontSize: 14,
     fontWeight: "bold",
-    fontFamily: OSBOLD,
+    fontFamily: Fonts.OSBOLD,
   },
   playoffText: {
     marginTop: 6,
     fontSize: 13,
-    fontFamily: OSSEMIBOLD,
+    fontFamily: Fonts.OSSEMIBOLD,
     textAlign: "center",
   },
 });

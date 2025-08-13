@@ -1,12 +1,6 @@
 // GameCard.styles.ts
 import { StyleSheet } from "react-native";
-
-const OSEXTRALIGHT = "Oswald_200ExtraLight";
-const OSLIGHT = "Oswald_300Light";
-const OSREGULAR = "Oswald_400Regular";
-const OSMEDIUM = "Oswald_500Medium";
-const OSBOLD = "Oswald_700Bold";
-const OSSEMIBOLD = "Oswald_600SemiBold";
+import { Fonts } from "@/constants/fonts";
 
 export const getStyles = (isDark: boolean) =>
   StyleSheet.create({
@@ -31,21 +25,21 @@ export const getStyles = (isDark: boolean) =>
     },
     teamName: {
       marginVertical: 4,
-      fontFamily: OSREGULAR,
+      fontFamily: Fonts.OSREGULAR,
       fontSize: 12,
       color: isDark ? "#fff" : "#1d1d1d",
       textAlign: "center",
     },
     teamScore: {
       fontSize: 24,
-      fontFamily: OSMEDIUM,
+      fontFamily: Fonts.OSBOLD,
       color: isDark ? "#aaa" : "rgba(0, 0, 0, 0.4)",
       width: 40,
       textAlign: "center",
     },
     teamRecord: {
       fontSize: 12,
-      fontFamily: OSREGULAR,
+      fontFamily: Fonts.OSREGULAR,
       color: isDark ? "#ccc" : "#777",
       textAlign: "center",
       width: 40,
@@ -56,30 +50,30 @@ export const getStyles = (isDark: boolean) =>
       width: 120,
     },
     date: {
-      fontFamily: OSMEDIUM,
+      fontFamily: Fonts.OSMEDIUM,
       color: isDark ? "#fff" : "#1d1d1d",
       fontSize: 14,
     },
     dateFinal: {
-      fontFamily: OSREGULAR,
+      fontFamily: Fonts.OSREGULAR,
       color: isDark ? "rgba(255,255,255, 1)" : "rgba(0, 0, 0, .5)",
       fontSize: 14,
     },
     time: {
-      fontFamily: OSREGULAR,
+      fontFamily: Fonts.OSREGULAR,
       color: isDark ? "#aaa" : "#555",
       fontSize: 12,
       marginTop: 2,
     },
     finalText: {
-      fontFamily: OSMEDIUM,
+      fontFamily: Fonts.OSMEDIUM,
       fontSize: 14,
       color: isDark ? "#ff4444" : "#cc0000",
       fontWeight: "bold",
       textAlign: "center",
     },
     clock: {
-      fontFamily: OSMEDIUM,
+      fontFamily: Fonts.OSMEDIUM,
       fontSize: 14,
       color: isDark ? "#ff6b00" : "#d35400",
       fontWeight: "bold",
@@ -90,7 +84,7 @@ export const getStyles = (isDark: boolean) =>
     broadcast: {
       position: "absolute",
       bottom: -16,
-      fontFamily: OSREGULAR,
+      fontFamily: Fonts.OSREGULAR,
       color: isDark ? "rgba(255, 255, 255, 0.5)" : "rgba(0, 0, 0, .5)",
       fontSize: 10,
     },

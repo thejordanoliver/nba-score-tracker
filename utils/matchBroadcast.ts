@@ -31,20 +31,18 @@ export function normalizeTeamName(name: string): string {
 
 export function matchBroadcastToGame(
   game: SimpleGame,
-  broadcastData: BroadcastEntry[]
+  broadcastData?: BroadcastEntry[]
 ) {
-  const gameDate = game.date.split("T")[0];
+  if (!Array.isArray(broadcastData)) return null;
 
+  const gameDate = game.date.split("T")[0]; // e.g., 2025-08-01
   const awayName = normalizeTeamName(game.away.name);
   const homeName = normalizeTeamName(game.home.name);
 
   return broadcastData.find((b) => {
     const dateMatch = b.date === gameDate;
-    const homeMatch = normalizeTeamName(b.homeTeam).includes(homeName);
-    const awayMatch = normalizeTeamName(b.awayTeam).includes(awayName);
-
-    // Optional: for debug
-    // console.log(`Checking broadcast: ${b.date} ${b.homeTeam} vs ${b.awayTeam} => dateMatch: ${dateMatch}, homeMatch: ${homeMatch}, awayMatch: ${awayMatch}`);
+    const homeMatch = normalizeTeamName(b.homeTeam) === homeName;
+    const awayMatch = normalizeTeamName(b.awayTeam) === awayName;
 
     return dateMatch && homeMatch && awayMatch;
   });

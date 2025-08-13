@@ -9,32 +9,34 @@ import {
 } from "react-native";
 import { LongPressGestureHandler, State } from "react-native-gesture-handler";
 import SummerLeagueGameCard from "../summer-league/SummerLeagueGameCard";
-import GameCardSkeleton from "../GameCardSkeleton";
-// Import the summer league modal instead of the regular one
+import GameCardSkeleton from "../Games/GameCardSkeleton";
+import GameSquareCardSkeleton from "../Games/GameSquareCardSkeleton";  // Import your square skeleton
 import SummerLeagueGamePreviewModal from "../summer-league/SummerLeagueGamePreviewModal";
-import type { Game, summerGame } from "../../types/types";
+import type { summerGame } from "../../types/types";
+import SummerLeagueGameSquareCard from "../../components/summer-league/SummerGameSquareCard";
+import { usePreferences } from "@/contexts/PreferencesContext";
 
-type SummerGamesListProps = {
+type Props = {
   games: summerGame[];
   loading: boolean;
   refreshing: boolean;
   onRefresh: () => void;
+  expectedCount?: number;
 };
 
-/** Helper to convert summerGame → Game to satisfy modal props */
-
-
-const SummerGamesList: React.FC<SummerGamesListProps> = ({
+const SummerGamesList: React.FC<Props> = ({
   games,
   loading,
   refreshing,
   onRefresh,
+  expectedCount,
 }) => {
   const colorScheme = useColorScheme();
   const isDark = colorScheme === "dark";
 
   const [previewGame, setPreviewGame] = useState<summerGame | null>(null);
   const [modalVisible, setModalVisible] = useState(false);
+  const { viewMode } = usePreferences();
 
   const handleLongPress = (game: summerGame) => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
@@ -44,6 +46,7 @@ const SummerGamesList: React.FC<SummerGamesListProps> = ({
 
   const renderGameCard = (item: summerGame) => (
     <LongPressGestureHandler
+      key={item.id}
       minDurationMs={300}
       onHandlerStateChange={({ nativeEvent }) => {
         if (nativeEvent.state === State.ACTIVE) {
@@ -51,17 +54,27 @@ const SummerGamesList: React.FC<SummerGamesListProps> = ({
         }
       }}
     >
-      <View>
-        <SummerLeagueGameCard game={item} isDark={isDark} />
+      <View style={viewMode === "grid" ? styles.gridItem : undefined}>
+        {viewMode === "list" ? (
+          <SummerLeagueGameCard game={item} isDark={isDark} />
+        ) : (
+          <SummerLeagueGameSquareCard game={item} isDark={isDark} />
+        )}
       </View>
     </LongPressGestureHandler>
   );
 
   if (loading) {
+    const skeletonCount = games.length > 0 ? games.length : expectedCount ?? 4;
     return (
       <View style={styles.skeletonWrapper}>
-        <GameCardSkeleton />
-        <GameCardSkeleton />
+        {Array.from({ length: skeletonCount }).map((_, index) =>
+          viewMode === "list" ? (
+            <GameCardSkeleton key={index} />
+          ) : (
+            <GameSquareCardSkeleton key={index} />
+          )
+        )}
       </View>
     );
   }
@@ -74,22 +87,26 @@ const SummerGamesList: React.FC<SummerGamesListProps> = ({
         renderItem={({ item }) => renderGameCard(item)}
         refreshing={refreshing}
         onRefresh={onRefresh}
+        numColumns={viewMode === "grid" ? 2 : 1}
+        key={viewMode}
+        columnWrapperStyle={
+          viewMode === "grid" ? { justifyContent: "space-between" } : undefined
+        }
         contentContainerStyle={styles.contentContainer}
         showsVerticalScrollIndicator={false}
         ListEmptyComponent={
-          <Text style={[styles.emptyText, { color: isDark ? "#aaa" : "#999" }]}>
-            No summer league games found for this date.
+          <Text style={[styles.emptyText, { color: isDark ? "#aaa" : "#888" }]}>
+      No games found for this date.
           </Text>
         }
       />
 
       {modalVisible && previewGame && (
-     <SummerLeagueGamePreviewModal
-  visible={modalVisible}
-  game={previewGame} // ✅ already the correct summerGame type
-  onClose={() => setModalVisible(false)}
-/>
-
+        <SummerLeagueGamePreviewModal
+          visible={modalVisible}
+          game={previewGame}
+          onClose={() => setModalVisible(false)}
+        />
       )}
     </>
   );
@@ -111,6 +128,10 @@ const styles = StyleSheet.create({
     marginTop: 20,
     fontSize: 20,
     fontFamily: "Oswald_300Light",
+  },
+  gridItem: {
+    width: "48%", // Not 50% to account for margin space between items
+    marginBottom: 16,
   },
 });
 

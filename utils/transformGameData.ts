@@ -11,20 +11,18 @@ export type RawNBAGame = {
     long: string;
     short: string;
     clock?: string;
-    halftime?: boolean; // <-- Add this
+    halftime?: boolean;
   };
-
   periods: {
     current: number;
     total: number;
-        endOfPeriod?: boolean;
-
+    endOfPeriod?: boolean;
   };
   teams: {
     home: { id: number; name: string; logo: string };
     visitors: { id: number; name: string; logo: string };
   };
-scores: {
+  scores: {
     home: {
       points: number | null;
       linescore?: string[];
@@ -33,6 +31,13 @@ scores: {
       points: number | null;
       linescore?: string[];
     };
+  };
+  arena?: {
+    name: string;
+    city: string;
+    state?: string;
+    country?: string;
+    capacity?: number;
   };
 };
 
@@ -45,11 +50,12 @@ export function transformGameData(
   const period = raw.periods?.current ?? undefined;
   const clock = raw.status?.clock;
 
-  let status: Game["status"];
   const isHalftime = raw.status?.halftime || raw.status?.long === "Halftime";
 
+  let status: Game["status"];
+
   if (isHalftime) {
-    status = "In Progress"; // Still considered 'in progress' for logic
+    status = "In Progress"; // Consider halftime as in progress
   } else {
     switch (raw.status?.long) {
       case "In Play":
@@ -59,7 +65,17 @@ export function transformGameData(
       case "Final":
         status = "Final";
         break;
+      case "Canceled":
+      case "Cancelled":
+        status = "Canceled";
+        break;
+      case "Postponed":
+        status = "Postponed";
+        break;
       default:
+        console.warn(`Unknown game status: ${raw.status?.long}`);
+        console.warn(`Unknown game status (raw): "${raw.status?.long}"`);
+
         status = "Scheduled";
     }
   }
@@ -67,34 +83,34 @@ export function transformGameData(
   const homeRecordObj = recordsMap?.[raw.teams.home.id.toString()];
   const awayRecordObj = recordsMap?.[raw.teams.visitors.id.toString()];
 
-  const formatRecord = (
-    record: { wins: number; losses: number } | undefined
-  ) =>
+  const formatRecord = (record: { wins: number; losses: number } | undefined) =>
     record && record.wins !== undefined && record.losses !== undefined
       ? `${record.wins}-${record.losses}`
       : "-";
 
   const homeRecord = formatRecord(homeRecordObj);
   const awayRecord = formatRecord(awayRecordObj);
+
   return {
     id: raw.id,
     home: {
-      id: raw.teams.home.id.toString(), // <-- add this
+      id: raw.teams.home.id.toString(),
       name: raw.teams.home.name,
+      fullName: raw.teams.home.name,
       logo: raw.teams.home.logo,
       record: homeRecord,
       wins: homeRecordObj?.wins,
       losses: homeRecordObj?.losses,
     },
     away: {
-      id: raw.teams.visitors.id.toString(), // <-- add this
+      id: raw.teams.visitors.id.toString(),
       name: raw.teams.visitors.name,
+      fullName: raw.teams.visitors.name,
       logo: raw.teams.visitors.logo,
       record: awayRecord,
       wins: awayRecordObj?.wins,
       losses: awayRecordObj?.losses,
     },
-
     date: raw.date.start,
     time: new Date(raw.date.start).toLocaleTimeString("en-US", {
       hour: "numeric",
@@ -107,26 +123,37 @@ export function transformGameData(
         ? period.toString()
         : undefined,
     homeScore:
-      status !== "Scheduled" ? (raw.scores.home.points ?? 0) : undefined,
+      status !== "Scheduled" && status !== "Canceled" && status !== "Postponed"
+        ? raw.scores.home.points ?? 0
+        : undefined,
     awayScore:
-      status !== "Scheduled" ? (raw.scores.visitors.points ?? 0) : undefined,
-    isHalftime, // existing field
-    isPlayoff: raw.isPlayoff, // <--- new field to propagate playoff flag
-
-    stage: raw.date.stage, // <-- add this
-     linescore:
+      status !== "Scheduled" && status !== "Canceled" && status !== "Postponed"
+        ? raw.scores.visitors.points ?? 0
+        : undefined,
+    isHalftime,
+    isPlayoff: raw.isPlayoff,
+    stage: raw.date.stage,
+    linescore:
       raw.scores.home.linescore && raw.scores.visitors.linescore
         ? {
             home: raw.scores.home.linescore,
             away: raw.scores.visitors.linescore,
           }
         : undefined,
-
     periods: raw.periods
       ? {
           current: raw.periods.current,
           total: raw.periods.total,
           endOfPeriod: raw.periods.endOfPeriod ?? false,
+        }
+      : undefined,
+    arena: raw.arena
+      ? {
+          name: raw.arena.name,
+          city: raw.arena.city,
+          state: raw.arena.state,
+          country: raw.arena.country,
+          capacity: raw.arena.capacity,
         }
       : undefined,
   };

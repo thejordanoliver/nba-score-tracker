@@ -1,5 +1,5 @@
 // components/SignupSteps.tsx
-import FavoriteTeamsSelector from "@/components/FavoriteTeamsSelector";
+import FavoriteTeamsSelector from "@/components/Favorites/FavoriteTeamsSelector";
 import { getSignupStepsStyles } from "@/styles/signupStepStyles";
 import { useRef, useState } from "react";
 import {

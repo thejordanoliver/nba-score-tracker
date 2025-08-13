@@ -1,12 +1,7 @@
 // HomeScreen.styles.ts
 import { StyleSheet } from "react-native";
+import { Fonts } from "@/constants/fonts";
 
-const OSEXTRALIGHT = "Oswald_200ExtraLight";
-const OSLIGHT = "Oswald_300Light";
-const OSREGULAR = "Oswald_400Regular";
-const OSMEDIUM = "Oswald_500Medium";
-const OSBOLD = "Oswald_700Bold";
-const OSSEMIBOLD = "Oswald_600SemiBold";
 
 export const getStyles = (isDark: boolean) =>
   StyleSheet.create({
@@ -61,11 +56,11 @@ export const getStyles = (isDark: boolean) =>
       marginTop: 4,
       fontSize: 12,
       color: isDark ? "#ccc" : "#1d1d1d",
-      fontFamily: OSREGULAR,
+      fontFamily: Fonts.OSREGULAR,
     },
     heading: {
       fontSize: 24,
-      fontFamily: OSMEDIUM,
+      fontFamily: Fonts.OSMEDIUM,
       marginBottom: 8,
       marginTop: 8,
       paddingBottom: 4,
@@ -78,6 +73,6 @@ export const getStyles = (isDark: boolean) =>
       color: isDark ? "#aaa" : "#999",
       marginTop: 20,
       fontSize: 20,
-      fontFamily: OSLIGHT,
+      fontFamily: Fonts.OSLIGHT,
     },
   });

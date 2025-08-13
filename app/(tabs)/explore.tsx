@@ -1,40 +1,30 @@
+import HeadingThree from "@/components/Headings/HeadingThree";
 import players from "@/constants/players";
 import { teamsById } from "@/constants/teams";
+import { styles } from "@/styles/Explore.styles";
+import { Ionicons } from "@expo/vector-icons";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useNavigation } from "@react-navigation/native";
 import axios from "axios";
+import { Image } from "expo-image";
 import { useRouter } from "expo-router";
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
-
 import {
   ActivityIndicator,
   Animated,
   Easing,
   FlatList,
-  Image,
   Pressable,
-  StyleSheet,
   Text,
   TextInput,
   useColorScheme,
   View,
 } from "react-native";
 import { CustomHeaderTitle } from "../../components/CustomHeaderTitle";
-import TabBar from "../../components/TabBar"; // Adjust path if needed
-
-
+import TabBar from "../../components/TabBar";
 
 const API_URL = process.env.EXPO_PUBLIC_API_URL;
-
-const OSEXTRALIGHT = "Oswald_200ExtraLight";
-const OSLIGHT = "Oswald_300Light";
-const OSREGULAR = "Oswald_400Regular";
-const OSMEDIUM = "Oswald_500Medium";
-const OSBOLD = "Oswald_700Bold";
-const OSSEMIBOLD = "Oswald_600SemiBold";
-
-const RAPIDAPI_KEY = "5ce63285f3msh422b3ebd5978062p13acf6jsn31927b93628c";
-const currentSeason = 2024;
+const RECENT_SEARCHES_KEY = "recentSearches";
 
 type PlayerResult = {
   id: number;
@@ -64,10 +54,6 @@ type UserResult = {
 
 type ResultItem = PlayerResult | TeamResult | UserResult;
 
-interface ApiResponse<T> {
-  response: T[];
-}
-
 const tabs = ["All", "Teams", "Players", "Accounts"] as const;
 
 export default function ExplorePage() {
@@ -79,11 +65,31 @@ export default function ExplorePage() {
   const [isFocused, setIsFocused] = useState(false);
   const [selectedTab, setSelectedTab] = useState<(typeof tabs)[number]>("All");
   const [currentUserId, setCurrentUserId] = useState<number | null>(null);
+  const [recentSearches, setRecentSearches] = useState<ResultItem[]>([]);
 
   const navigation = useNavigation();
   const router = useRouter();
   const isDark = useColorScheme() === "dark";
   const inputAnim = useRef(new Animated.Value(0)).current;
+  const deleteRecentSearch = async (itemToDelete: ResultItem) => {
+    try {
+      const existing = await AsyncStorage.getItem(RECENT_SEARCHES_KEY);
+      let parsed: ResultItem[] = existing ? JSON.parse(existing) : [];
+
+      parsed = parsed.filter(
+        (item) =>
+          !(
+            item.type === itemToDelete.type &&
+            (item as any).id === (itemToDelete as any).id
+          )
+      );
+
+      await AsyncStorage.setItem(RECENT_SEARCHES_KEY, JSON.stringify(parsed));
+      setRecentSearches(parsed);
+    } catch (err) {
+      console.warn("Failed to delete recent search", err);
+    }
+  };
 
   useEffect(() => {
     const loadUserId = async () => {
@@ -100,62 +106,37 @@ export default function ExplorePage() {
       easing: Easing.out(Easing.ease),
       useNativeDriver: false,
     }).start();
+
+    if (searchVisible) {
+      loadRecentSearches();
+    }
   }, [searchVisible]);
 
   useEffect(() => {
     if (query.trim().length === 0) {
       setResults([]);
       setError(null);
-      setSelectedTab("All"); // reset tab when query clears
+      setSelectedTab("All");
       return;
     }
 
     const fetchFromDb = async () => {
       setLoading(true);
       setError(null);
-
       try {
-        const playerRes = await axios.get<{
+        const res = await axios.get<{
           players: PlayerResult[];
           teams: TeamResult[];
           users: UserResult[];
         }>(`${API_URL}/api/search`, { params: { query } });
 
-        const data = playerRes.data;
+        const combined: ResultItem[] = [
+          ...res.data.teams.map((t) => ({ ...t, type: "team" as const })),
+          ...res.data.players.map((p) => ({ ...p, type: "player" as const })),
+          ...res.data.users.map((u) => ({ ...u, type: "user" as const })),
+        ];
 
-        const combinedResults: ResultItem[] = [];
-
-        if (data.teams?.length) {
-          combinedResults.push(
-            ...data.teams.map((team) => ({
-              ...team,
-              type: "team" as const,
-            }))
-          );
-        }
-
-      if (data.players?.length) {
-  combinedResults.push(
-    ...data.players
-      .filter((p) => p.team_id !== null && p.team_id !== undefined)
-      .map((p) => ({
-        ...p,
-        type: "player" as const,
-      }))
-  );
-}
-
-
-        if (data.users?.length) {
-          combinedResults.push(
-            ...data.users.map((u) => ({
-              ...u,
-              type: "user" as const,
-            }))
-          );
-        }
-
-        setResults(combinedResults);
+        setResults(combined);
       } catch (err: any) {
         setError(err.message || "Failed to fetch data");
         setResults([]);
@@ -180,49 +161,129 @@ export default function ExplorePage() {
     });
   }, [navigation]);
 
-  // Filter results based on selected tab
-  const filteredResults = results.filter((item) => {
-    if (selectedTab === "All") return true;
-    if (selectedTab === "Teams") return item.type === "team";
-    if (selectedTab === "Players") return item.type === "player";
-    if (selectedTab === "Accounts") return item.type === "user";
-    return true;
-  });
-
-  const getItemKey = (item: ResultItem): string => {
-    switch (item.type) {
-      case "team":
-        return `team-${item.id}`;
-      case "player":
-        return `player-${item.id}`;
-      case "user":
-        return `user-${item.id}`;
-      default:
-        return Math.random().toString(); // fallback
+  const loadRecentSearches = async () => {
+    try {
+      const stored = await AsyncStorage.getItem(RECENT_SEARCHES_KEY);
+      if (stored) {
+        const parsed = JSON.parse(stored);
+        const validResults = parsed.filter(
+          (item: any) =>
+            typeof item === "object" &&
+            item !== null &&
+            "type" in item &&
+            "id" in item
+        );
+        setRecentSearches(validResults);
+      }
+    } catch (err) {
+      console.warn("Error loading recent searches", err);
     }
   };
 
-  const renderItem = ({ item }: { item: ResultItem }) => {
-    if (item.type === "team") {
-      const localTeam =
-        item?.id != null ? teamsById[item.id.toString()] : undefined;
+  useEffect(() => {
+    AsyncStorage.removeItem(RECENT_SEARCHES_KEY).then(() =>
+      console.log("Cleared corrupted recentSearches")
+    );
+  }, []);
 
-      // localTeam.logo is a local image import (not a URL string)
-      const logoSource = isDark
-        ? localTeam?.logoLight || localTeam?.logo
-        : localTeam?.logo;
+  const saveToRecentSearches = async (item: ResultItem) => {
+    if (!item || typeof item !== "object" || !item.type || !(item as any).id) {
+      console.warn("Invalid item passed to saveToRecentSearches:", item);
+      return;
+    }
 
-      return (
+    try {
+      const existing = await AsyncStorage.getItem(RECENT_SEARCHES_KEY);
+      let parsed: ResultItem[] = existing ? JSON.parse(existing) : [];
+
+      parsed = parsed.filter(
+        (r) =>
+          !(
+            typeof r === "object" &&
+            r.type === item.type &&
+            (r as any).id === (item as any).id
+          )
+      );
+
+      parsed.unshift(item);
+      parsed = parsed.slice(0, 10);
+      await AsyncStorage.setItem(RECENT_SEARCHES_KEY, JSON.stringify(parsed));
+      setRecentSearches(parsed);
+    } catch (err) {
+      console.warn("Failed to save recent search", err);
+    }
+  };
+
+  function isResultItem(obj: any): obj is ResultItem {
+    return (
+      typeof obj === "object" &&
+      obj !== null &&
+      typeof obj.id === "number" &&
+      typeof obj.type === "string" &&
+      ["player", "team", "user"].includes(obj.type)
+    );
+  }
+
+  const tabToTypeMap = {
+    Teams: "team",
+    Players: "player",
+    Accounts: "user",
+  };
+
+  const filteredResults = (query.trim() ? results : recentSearches).filter(
+    (item) => {
+      if (selectedTab === "All") return true;
+      return item.type === tabToTypeMap[selectedTab];
+    }
+  );
+
+  const getItemKey = (item: ResultItem) => {
+    const id = (item as any)?.id;
+    if (!id) {
+      console.warn("Missing ID for item:", item);
+      return `${item.type}-unknown-${Math.random()}`;
+    }
+    return `${item.type}-${id}`;
+  };
+
+  const handleSelectItem = (item: ResultItem) => {
+    saveToRecentSearches(item);
+    switch (item.type) {
+      case "team":
+        router.push(`/team/${item.id}`);
+        break;
+      case "player":
+        router.push({
+          pathname: "/player/[id]",
+          params: {
+            id: item.player_id.toString(),
+            teamId: item.team_id?.toString() || "",
+          },
+        });
+        break;
+      case "user":
+        router.push(`/user/${item.id}`);
+        break;
+    }
+  };
+
+ const renderItem = ({ item }: { item: ResultItem }) => {
+  if (item.type === "team") {
+    const localTeam = teamsById[item.id.toString()];
+    const logoSource = isDark
+      ? localTeam?.logoLight || localTeam?.logo
+      : localTeam?.logo;
+
+    return (
+      <View style={styles.itemRow}>
         <Pressable
-          onPress={() => {
-            router.push(`/team/${item.id}`);
-          }}
+          onPress={() => handleSelectItem(item)}
           style={[styles.itemContainer, isDark && styles.itemContainerDark]}
         >
           <View style={styles.teamRow}>
             {logoSource && (
               <Image
-                source={logoSource} // <-- Directly use the imported image, no 'uri:'
+                source={logoSource}
                 style={styles.teamLogo}
                 resizeMode="contain"
               />
@@ -232,29 +293,29 @@ export default function ExplorePage() {
             </Text>
           </View>
         </Pressable>
-      );
-    }
+        {query.length === 0 && (
+          <Pressable onPress={() => deleteRecentSearch(item)}>
+            <Ionicons
+              name="close"
+              size={20}
+              color={isDark ? "#ccc" : "#333"}
+            />
+          </Pressable>
+        )}
+      </View>
+    );
+  }
 
-    if (item.type === "player") {
-      const fullName = item.name;
-      const avatarUrl = item.avatarUrl?.trim()
-        ? item.avatarUrl
-        : players[fullName];
+  if (item.type === "player") {
+    const avatarUrl = item.avatarUrl?.trim()
+      ? item.avatarUrl
+      : players[item.name];
+    const localTeam = teamsById[item.team_id?.toString()];
 
-      const localTeam =
-        item?.team_id != null ? teamsById[item.team_id.toString()] : undefined;
-
-      return (
+    return (
+      <View style={styles.itemRow}>
         <Pressable
-          onPress={() => {
-            router.push({
-              pathname: "/player/[id]",
-              params: {
-                id: item.player_id.toString(),
-                teamId: item.team_id.toString(),
-              },
-            });
-          }}
+          onPress={() => handleSelectItem(item)}
           style={[styles.itemContainer, isDark && styles.itemContainerDark]}
         >
           <View style={styles.playerRow}>
@@ -267,34 +328,40 @@ export default function ExplorePage() {
               <Text style={[styles.playerName, isDark && styles.textDark]}>
                 {item.name}
               </Text>
-              <Text style={[styles.playerTeam, isDark && styles.textDark]}>
-                {localTeam?.fullName}
-              </Text>
+           <Text style={[styles.playerTeam, isDark && styles.textDark]}>
+  {localTeam?.fullName || "Free Agent"}
+</Text>
+
             </View>
           </View>
         </Pressable>
-      );
-    }
+        {query.length === 0 && (
+          <Pressable onPress={() => deleteRecentSearch(item)}>
+            <Ionicons
+              name="close"
+              size={20}
+              color={isDark ? "#ccc" : "#333"}
+            />
+          </Pressable>
+        )}
+      </View>
+    );
+  }
 
-    if (item.type === "user") {
-      // Make sure profileImageUrl is a full URL
-      const profileImageFullUrl = item.profileImageUrl.startsWith("http")
-        ? item.profileImageUrl
-        : `${API_URL}${item.profileImageUrl}`;
+  if (item.type === "user") {
+    const profileImageUrl = item.profileImageUrl.startsWith("http")
+      ? item.profileImageUrl
+      : `${API_URL}${item.profileImageUrl}`;
 
-      return (
+    return (
+      <View style={styles.itemRow}>
         <Pressable
-          onPress={() => {
-            router.push({
-              pathname: "/user/[id]",
-              params: { id: item.id.toString() },
-            });
-          }}
+          onPress={() => handleSelectItem(item)}
           style={[styles.itemContainer, isDark && styles.itemContainerDark]}
         >
           <View style={styles.userRow}>
             <Image
-              source={{ uri: profileImageFullUrl }}
+              source={{ uri: profileImageUrl }}
               style={styles.avatar}
               resizeMode="cover"
             />
@@ -305,11 +372,22 @@ export default function ExplorePage() {
             </View>
           </View>
         </Pressable>
-      );
-    }
+        {query.length === 0 && (
+          <Pressable onPress={() => deleteRecentSearch(item)}>
+            <Ionicons
+              name="close"
+              size={20}
+              color={isDark ? "#ccc" : "#333"}
+            />
+          </Pressable>
+        )}
+      </View>
+    );
+  }
 
-    return null;
-  };
+  return null;
+};
+
 
   return (
     <View style={[styles.container, isDark && styles.containerDark]}>
@@ -352,11 +430,11 @@ export default function ExplorePage() {
           tabs={tabs}
           selected={selectedTab}
           onTabPress={setSelectedTab}
-          style={{ marginBottom: 12}}
+          style={{ marginBottom: 12 }}
         />
       )}
 
-      {query.length === 0 && !loading && !error && (
+      {!searchVisible && (
         <View style={styles.centerPrompt}>
           <Image
             source={require("../../assets/Logos/NBA.png")}
@@ -379,14 +457,16 @@ export default function ExplorePage() {
         </Text>
       )}
 
-      {!loading && query.length > 0 && filteredResults.length === 0 && (
+      {!loading && filteredResults.length === 0 && query.length > 0 && (
         <Text style={[styles.emptyText, isDark && styles.textDark]}>
           No results found.
         </Text>
       )}
-
-      {!loading && !error && filteredResults.length > 0 && (
-        <FlatList<ResultItem>
+      {searchVisible && query.length === 0 && recentSearches.length > 0 && (
+        <HeadingThree>Recents</HeadingThree>
+      )}
+      {searchVisible && !loading && filteredResults.length > 0 && (
+        <FlatList
           data={filteredResults}
           keyExtractor={getItemKey}
           renderItem={renderItem}
@@ -396,124 +476,3 @@ export default function ExplorePage() {
     </View>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    padding: 16,
-    backgroundColor: "#fff",
-  },
-  containerDark: {
-    backgroundColor: "#1d1d1d",
-  },
-  searchBarWrapper: {
-    overflow: "hidden",
-  },
-  searchInput: {
-    borderWidth: 1,
-    borderColor: "#888",
-    borderRadius: 8,
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    fontSize: 16,
-    color: "#000",
-    fontFamily: OSLIGHT,
-  },
-  searchInputDark: {
-    borderColor: "#555",
-    color: "#fff",
-  },
-  itemContainer: {
-    paddingVertical: 12,
-    paddingHorizontal: 8,
-    borderBottomWidth: 1,
-    borderBottomColor: "#eee",
-  },
-  itemContainerDark: {
-    borderBottomColor: "#333",
-  },
-  teamName: {
-    fontSize: 18,
-    fontFamily: OSSEMIBOLD,
-  },
-  playerRow: {
-    flexDirection: "row",
-    alignItems: "center",
-  },
-  avatar: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
-    marginRight: 12,
-    backgroundColor: "#888",
-  },
-  playerInfo: {
-    flex: 1,
-  },
-  playerName: {
-    fontSize: 18,
-    fontFamily: OSSEMIBOLD,
-  },
-  playerTeam: {
-    fontSize: 14,
-    color: "#555",
-    fontFamily: OSLIGHT,
-    opacity: 0.5,
-  },
-  textDark: {
-    color: "#eee",
-  },
-  emptyText: {
-    textAlign: "center",
-    marginTop: 20,
-    fontSize: 16,
-    color: "#888",
-  },
-  errorText: {
-    color: "red",
-    textAlign: "center",
-  },
-  errorTextDark: {
-    color: "#ff6666",
-  },
-  centerPrompt: {
-    flex: 1,
-    marginTop: 80,
-    justifyContent: "flex-start",
-    alignItems: "center",
-  },
-  nbaLogo: {
-    width: 100,
-    height: 100,
-    marginBottom: 12,
-  },
-  promptText: {
-    fontSize: 24,
-    fontFamily: OSREGULAR,
-    color: "#555",
-  },
-
-  teamRow: {
-    flexDirection: "row",
-    alignItems: "center",
-  },
-  teamLogo: {
-    width: 40,
-    height: 40,
-    marginRight: 12,
-  },
-
-  userRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-  },
-  userInfo: {
-    flex: 1,
-    marginLeft: 12,
-  },
-  userName: {
-    fontSize: 18,
-    fontFamily: OSSEMIBOLD,
-  },
-});

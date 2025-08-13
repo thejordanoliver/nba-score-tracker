@@ -1,4 +1,4 @@
-import GameTeamStats from "@/components/game-details/GameTeamStats";
+import GameTeamStats from "@/components/GameDetails/GameTeamStats";
 import { teams } from "@/constants/teams";
 import { useESPNBroadcasts } from "@/hooks/useESPNBroadcasts";
 import { useGameStatistics } from "@/hooks/useGameStatistics";
@@ -14,21 +14,22 @@ import {
 import { BlurView } from "expo-blur";
 import { LinearGradient } from "expo-linear-gradient";
 import { useEffect, useMemo, useRef } from "react";
-import { StyleSheet, View, useColorScheme } from "react-native";
-import LineScore from "../game-details/LineScore";
+import { Dimensions, StyleSheet, View, useColorScheme } from "react-native";
+import { GameLeaders } from "../GameDetails";
+import LineScore from "../GameDetails/LineScore";
 import CenterInfo from "./CenterInfo";
 import TeamInfo from "./TeamInfo";
-
 type Props = {
   visible: boolean;
   game: Game;
   onClose: () => void;
 };
 
+const windowHeight = Dimensions.get("window").height;
+
 export default function GamePreviewModal({ visible, game, onClose }: Props) {
   const colorScheme = useColorScheme();
   const isDark = colorScheme === "dark";
-  const dark = isDark ?? colorScheme === "dark";
   const sheetRef = useRef<BottomSheetModal>(null);
 
   const { broadcasts } = useESPNBroadcasts();
@@ -99,19 +100,23 @@ export default function GamePreviewModal({ visible, game, onClose }: Props) {
 
   const getTeamColor = (team?: (typeof teams)[number]) => {
     if (!team) return "#444";
-    if (isDark && team.code === "BKN" && team.secondaryColor) {
-      return team.secondaryColor;
-    }
-    return team.color || "#444";
+
+    const { code, color, secondaryColor } = team;
+
+    if (code === "SAS") return secondaryColor || "#fff";
+    if (code === "BKN" && isDark) return secondaryColor || color || "#444";
+
+    return color || "#444";
   };
 
   const homeColor = getTeamColor(home);
   const awayColor = getTeamColor(away);
 
+  const isCanceled = game.status === "Canceled";
   const isFinal = game.status === "Final";
   const homeWins = isFinal && (game.homeScore ?? 0) > (game.awayScore ?? 0);
   const awayWins = isFinal && (game.awayScore ?? 0) > (game.homeScore ?? 0);
-const isPlayoffs = game.stage === 4 || !!seriesSummary; // adjust logic based on your API
+  const isPlayoffs = game.stage === 4 || !!seriesSummary; // adjust logic based on your API
 
   const winnerStyle = (teamWins: boolean) =>
     teamWins
@@ -129,48 +134,53 @@ const isPlayoffs = game.stage === 4 || !!seriesSummary; // adjust logic based on
     dateObj.getDate() <= 22;
 
   const showLiveInfo = game.status !== "Scheduled" && game.status !== "Final";
-  const snapPoints = useMemo(() => ["40%", "50%", "90%", "92%"], []);
+  const snapPoints = useMemo(() => ["40%", "60%", "80%", "87.5%", "94%"], []);
   const homeCode = home?.code ?? game.home.code ?? "";
   const awayCode = away?.code ?? game.away.code ?? "";
+  const maxHeight = windowHeight * 0.9;
+  const currentPeriodRaw = Number(game.periods?.current ?? game.period);
+  const totalPeriodsPlayed =
+    game.linescore?.home?.length ??
+    game.linescore?.away?.length ??
+    currentPeriodRaw;
 
   return (
- <BottomSheetModal
-  ref={sheetRef}
-  index={1}
-  snapPoints={snapPoints}
-  onDismiss={onClose}
-    enableContentPanningGesture={false}
-  enableHandlePanningGesture={true} 
-  backdropComponent={(props) => (
-    <BottomSheetBackdrop
-      {...props}
-      appearsOnIndex={0}
-      disappearsOnIndex={-1}
-    />
-  )}
-  // ✅ keep gestures working
-  handleStyle={{
-    backgroundColor: "transparent",
-    paddingTop: 12,
-    paddingBottom: 4,
-    alignItems: "center",
-    position: "absolute",
-    left: 8,
-    right: 8,
-  }}
-  handleIndicatorStyle={{
-    backgroundColor: isDark ? "#888" : "#ccc",
-    width: 36,
-    height: 4,
-    borderRadius: 2,
-  }}
-  backgroundStyle={{ backgroundColor: "transparent" }}
->
-
-
+    <BottomSheetModal
+      ref={sheetRef}
+      index={1}
+      snapPoints={snapPoints}
+      onDismiss={onClose}
+      enableContentPanningGesture={true}
+      enableHandlePanningGesture={true}
+      enableDynamicSizing={false}
+      backdropComponent={(props) => (
+        <BottomSheetBackdrop
+          {...props}
+          appearsOnIndex={0}
+          disappearsOnIndex={-1}
+        />
+      )}
+      handleStyle={{
+        backgroundColor: "transparent",
+        height: 40, // bigger tap target for drag gesture
+        justifyContent: "center",
+        alignItems: "center",
+        position: "absolute",
+        left: 8,
+        right: 8,
+        top: 0,
+      }}
+      handleIndicatorStyle={{
+        backgroundColor: isDark ? "#888" : "#444",
+        width: 36,
+        height: 4,
+        borderRadius: 2,
+      }}
+      backgroundStyle={{ backgroundColor: "transparent" }}
+    >
       <View
         style={{
-          flex: 1,
+          flex: 1, // fill all available height inside bottom sheet
           overflow: "hidden",
           borderTopLeftRadius: 20,
           borderTopRightRadius: 20,
@@ -201,16 +211,15 @@ const isPlayoffs = game.stage === 4 || !!seriesSummary; // adjust logic based on
 
         <BlurView
           intensity={100}
-          tint={isDark ? "dark" : "light"}
+          tint={"systemUltraThinMaterial"}
           style={{
             flex: 1,
             padding: 20,
             borderTopLeftRadius: 20,
             borderTopRightRadius: 20,
+            paddingTop: 40, // <-- add extra top padding here so content isn't flush with top
           }}
         >
-
-
           <View
             style={{
               flexDirection: "row",
@@ -229,20 +238,26 @@ const isPlayoffs = game.stage === 4 || !!seriesSummary; // adjust logic based on
               }
               isWinner={awayWins}
               isDark={isDark}
+              isGameOver
             />
 
             <CenterInfo
               isNBAFinals={isNBAFinals}
               isFinal={isFinal}
-              isPlayoffs={isPlayoffs}
+              isCanceled={isCanceled}
+              isHalftime={game.isHalftime ?? false}
               broadcastNetworks={broadcastNetworks}
               showLiveInfo={showLiveInfo}
-              period={game.period ?? ""} // <-- add fallback here
+              period={game.periods?.current ?? 0}
+              endOfPeriod={game.periods?.endOfPeriod ?? false}
+              totalPeriodsPlayed={totalPeriodsPlayed}
+              time={game.time}
               clock={game.clock}
               formattedDate={formattedDate}
               isDark={isDark}
-              gameNumberLabel={gameNumberLabel} // ✅ ADD THIS
+              gameNumberLabel={gameNumberLabel}
               seriesSummary={seriesSummary ?? undefined}
+              isPlayoffs={isPlayoffs}
             />
 
             <TeamInfo
@@ -255,27 +270,44 @@ const isPlayoffs = game.stage === 4 || !!seriesSummary; // adjust logic based on
               }
               isWinner={homeWins}
               isDark={isDark}
+              isGameOver
             />
           </View>
 
-          <BottomSheetScrollView
-            showsVerticalScrollIndicator={false}
-            contentContainerStyle={{
-              flexGrow: 1,
-              justifyContent: "flex-start",
-              paddingBottom: 80,
-            }}
-          >
-            {game.linescore && (
-              <LineScore
-                linescore={game.linescore}
-                homeCode={homeCode}
-                awayCode={awayCode}
-              />
-            )}
-            {/* Game Stats */}
-            {!statsLoading && gameStats && <GameTeamStats stats={gameStats} />}
-          </BottomSheetScrollView>
+          <View style={{ flex: 1, minHeight: 0 }}>
+            <BottomSheetScrollView
+              showsVerticalScrollIndicator={false}
+              contentContainerStyle={{
+                paddingBottom: 100, // reduced padding to avoid overlap
+                minHeight: 0,
+              }}
+              style={{ flexGrow: 0 }}
+            >
+              {game.linescore && (
+                <View style={{ marginBottom: 16 }}>
+                  <LineScore
+                    linescore={game.linescore}
+                    homeCode={homeCode}
+                    awayCode={awayCode}
+                  />
+                </View>
+              )}
+
+              {game?.id && homeId && awayId && (
+                <View style={{ marginBottom: 16 }}>
+                  <GameLeaders
+                    gameId={game.id.toString()}
+                    homeTeamId={homeId}
+                    awayTeamId={awayId}
+                  />
+                </View>
+              )}
+
+              {!statsLoading && gameStats && (
+                <GameTeamStats stats={gameStats} />
+              )}
+            </BottomSheetScrollView>
+          </View>
         </BlurView>
       </View>
     </BottomSheetModal>
