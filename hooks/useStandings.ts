@@ -1,39 +1,6 @@
 import { useEffect, useState } from "react";
 import { teams } from "../constants/teams";
-
-export type TeamStanding = {
-  team: {
-    id: number;
-    name: string;
-    nickname: string;
-    code: string;
-    logo: any;
-    logoLight: any;
-  };
-  conference: {
-    name: string;
-    rank: number;
-    win: number;
-    loss: number;
-  };
-  division: {
-    name: string;
-    rank: number;
-    win: number;
-    loss: number;
-    gamesBehind: string;
-  };
-  win: {
-    total: number;
-    percentage: string;
-  };
-  loss: {
-    total: number;
-  };
-  streak: number;
-  winStreak: boolean;
-  gamesBehind: string;
-};
+import { TeamStanding } from "@/types/standingsTypes";
 
 const RAPIDAPI_KEY = process.env.EXPO_PUBLIC_RAPIDAPI_KEY || "";
 const RAPIDAPI_HOST = process.env.EXPO_PUBLIC_RAPIDAPI_HOST || "";
@@ -65,17 +32,53 @@ export function useStandings(season = 2024) {
 
         const enrichedStandings: TeamStanding[] = json.response.map(
           (teamData: any) => {
+            // Find local team logos by id (stored as string in your teams)
             const localTeam = teams.find(
-              (t) => t.id === String(teamData.team.id)
+              (t) => Number(t.id) === teamData.team.id
             );
 
             return {
-              ...teamData,
+              league: teamData.league,
+              season: teamData.season,
               team: {
-                ...teamData.team,
+                id: teamData.team.id,
+                name: teamData.team.name,
+                nickname: teamData.team.nickname,
+                code: teamData.team.code,
                 logo: localTeam?.logo ?? teamData.team.logo,
-                logoLight: localTeam?.logoLight ?? null, // inject logoLight here
+                logoLight: localTeam?.logoLight ?? null,
               },
+              conference: {
+                name: teamData.conference.name,
+                rank: teamData.conference.rank,
+                win: teamData.conference.win,
+                loss: teamData.conference.loss,
+              },
+              division: {
+                name: teamData.division.name,
+                rank: teamData.division.rank,
+                win: teamData.division.win,
+                loss: teamData.division.loss,
+                gamesBehind: teamData.division.gamesBehind,
+              },
+              win: {
+                home: teamData.win.home,
+                away: teamData.win.away,
+                total: teamData.win.total,
+                percentage: teamData.win.percentage,
+                lastTen: teamData.win.lastTen,
+              },
+              loss: {
+                home: teamData.loss.home,
+                away: teamData.loss.away,
+                total: teamData.loss.total,
+                percentage: teamData.loss.percentage,
+                lastTen: teamData.loss.lastTen,
+              },
+              gamesBehind: teamData.gamesBehind,
+              streak: teamData.streak,
+              winStreak: teamData.winStreak,
+              tieBreakerPoints: teamData.tieBreakerPoints,
             };
           }
         );

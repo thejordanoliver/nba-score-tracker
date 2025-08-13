@@ -1,4 +1,5 @@
-import { Image, Text, View, ImageSourcePropType } from "react-native";
+import { Text, View, ImageSourcePropType } from "react-native";
+import { Image } from 'expo-image';
 
 
 const OSEXTRALIGHT = "Oswald_200ExtraLight";
@@ -60,8 +61,7 @@ export default function TeamInfo({
       <Text
         style={[
           {
-            fontSize: 20,
-            fontFamily: OSBOLD,
+   fontSize: 30,            fontFamily: OSBOLD,
             color: isDark ? "#aaa" : "rgba(0, 0, 0, 0.4)",
           },
           winnerStyle,

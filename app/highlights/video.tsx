@@ -1,5 +1,6 @@
 import { CustomHeaderTitle } from "@/components/CustomHeaderTitle";
 import { useLocalSearchParams, useNavigation, useRouter } from "expo-router";
+import { goBack } from "expo-router/build/global-state/routing";
 import React, { useCallback, useLayoutEffect, useRef, useState } from "react";
 import {
   ActivityIndicator,
@@ -10,9 +11,8 @@ import {
   useColorScheme,
 } from "react-native";
 import YoutubePlayer from "react-native-youtube-iframe";
-import HighlightCard from "../../components/HighlightCard";
+import HighlightCard from "../../components/News/HighlightCard";
 import { useHighlights } from "../../hooks/useHighlights";
-import { goBack } from "expo-router/build/global-state/routing";
 
 const OSEXTRALIGHT = "Oswald_200ExtraLight";
 const OSLIGHT = "Oswald_300Light";
@@ -72,7 +72,12 @@ export default function HighlightVideoScreen() {
   useLayoutEffect(() => {
     navigation.setOptions({
       header: () => (
-        <CustomHeaderTitle title="" tabName="" isTeamScreen={false} onBack={goBack} />
+        <CustomHeaderTitle
+          title=""
+          tabName=""
+          isTeamScreen={false}
+          onBack={goBack}
+        />
       ),
     });
   }, [navigation, isDark]);
@@ -85,41 +90,39 @@ export default function HighlightVideoScreen() {
       <Text style={styles.title}>{currentVideo.title}</Text>
 
       <View style={styles.videoContainer}>
-     <YoutubePlayer
-  ref={playerRef}
-  height={230}
-  play={true}
-  videoId={currentVideo.videoId}
-  onChangeState={(
-  state:
-    | "playing"
-    | "paused"
-    | "ended"
-    | "buffering"
-    | "unstarted"
-    | "video-cued"
-) => {
-  if (state === "ended") handleVideoEnd();
-}}
-
-  webViewProps={{
-    injectedJavaScript: `
+        <YoutubePlayer
+          ref={playerRef}
+          height={230}
+          play={true}
+          videoId={currentVideo.videoId}
+          onChangeState={(
+            state:
+              | "playing"
+              | "paused"
+              | "ended"
+              | "buffering"
+              | "unstarted"
+              | "video-cued"
+          ) => {
+            if (state === "ended") handleVideoEnd();
+          }}
+          webViewProps={{
+            injectedJavaScript: `
       var style = document.createElement('style');
       style.innerHTML = '.ytp-large-play-button { display: none !important; }';
       document.head.appendChild(style);
       true;
     `,
-  }}
-  initialPlayerParams={{
-    controls: 1,      // hide player controls
-    modestbranding: 1, // minimal YouTube branding
-    rel: 0,           // don't show related videos
-    fs: 1,            // disable fullscreen button
-    showinfo: 0,      // hide video title
-    autoplay: true,   // auto-play video
-  }}
-/>
-
+          }}
+          initialPlayerParams={{
+            controls: 1, // hide player controls
+            modestbranding: 1, // minimal YouTube branding
+            rel: 0, // don't show related videos
+            fs: 1, // disable fullscreen button
+            showinfo: 0, // hide video title
+            autoplay: true, // auto-play video
+          }}
+        />
       </View>
 
       <Text style={styles.subheading}>Up Next</Text>
@@ -172,8 +175,7 @@ const getStyles = (isDark: boolean) =>
     videoContainer: {
       borderRadius: 12,
       overflow: "hidden",
-        backgroundColor: isDark ? "#000" : "#fff", // ✅ prevent WebView bleed-through
-
+      backgroundColor: isDark ? "#000" : "#fff", // ✅ prevent WebView bleed-through
     },
     centered: {
       flex: 1,

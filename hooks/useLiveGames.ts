@@ -182,9 +182,24 @@ export function useLiveGames() {
     }
   };
 
-  useEffect(() => {
-    refreshGames();
-  }, []);
+useEffect(() => {
+let interval: ReturnType<typeof setInterval>;
+
+  const fetchAndSetInterval = async () => {
+  await refreshGames();
+
+  // Check if there are live games before polling
+  if (games.length > 0) {
+    interval = setInterval(refreshGames, 30000);
+  }
+};
+
+
+  fetchAndSetInterval();
+
+  return () => clearInterval(interval);
+}, []);
+
 
   return { games, loading, error, refreshGames };
 }

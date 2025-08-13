@@ -17,7 +17,7 @@ type CropEditorModalProps = {
   onCancel: () => void;
   onCrop: (uri: string) => void;
   aspectRatio: number;
-  mode: "profile" | "banner"; // 👈 NEW
+  mode: "profile" | "banner" | "post"; // 👈 Added "post"
 };
 
 const BANNER_HEIGHT = 100; // Increased banner height
@@ -33,12 +33,23 @@ export default function CropEditorModal({
 }: CropEditorModalProps) {
   const windowWidth = Dimensions.get("window").width;
 
-  const isProfile = mode === "profile";
-  const isLandscape = aspectRatio > 1;
+const isProfile = mode === "profile";
+const isBanner = mode === "banner";
+const isPost = mode === "post";
 
-  // Crop box dimensions bigger now
-  const cropWidth = isLandscape ? windowWidth * 0.9 : PROFILE_PIC_SIZE;
-  const cropHeight = isLandscape ? BANNER_HEIGHT : PROFILE_PIC_SIZE;
+let cropWidth = windowWidth * 0.9;
+let cropHeight = cropWidth / aspectRatio;
+
+if (isProfile) {
+  cropWidth = PROFILE_PIC_SIZE;
+  cropHeight = PROFILE_PIC_SIZE;
+} else if (isBanner) {
+  cropWidth = windowWidth * 0.9;
+  cropHeight = BANNER_HEIGHT;
+} else if (isPost) {
+  cropWidth = windowWidth * 0.9;
+  cropHeight = cropWidth * (3 / 4); // 4:3 aspect ratio
+}
 
   const [scale, setScale] = useState(1);
   const [offset, setOffset] = useState({ x: 0, y: 0 });

@@ -2,12 +2,7 @@ import { BlurView } from "expo-blur";
 import { Tabs } from "expo-router";
 import { Image, StyleSheet, useColorScheme, View } from "react-native";
 
-const OSEXTRALIGHT = "Oswald_200ExtraLight";
-const OSLIGHT = "Oswald_300Light";
-const OSREGULAR = "Oswald_400Regular";
-const OSMEDIUM = "Oswald_500Medium";
-const OSBOLD = "Oswald_700Bold";
-const OSSEMIBOLD = "Oswald_600SemiBold";
+
 
 export default function TabLayout() {
   const isDark = useColorScheme() === "dark";

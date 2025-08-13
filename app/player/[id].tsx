@@ -1,5 +1,7 @@
 import { CustomHeaderTitle } from "@/components/CustomHeaderTitle";
-import GameCard from "@/components/GameCard";
+import GameCard from "@/components/Games/GameCard";
+import HeadingTwo from "@/components/Headings/HeadingTwo";
+import PlayerHeader from "@/components/player/PlayerHeader";
 import PlayerStatTable from "@/components/player/PlayerStatTable";
 import SeasonStatCard from "@/components/player/SeasonStatCard";
 import players from "@/constants/players"; // player image map
@@ -16,25 +18,9 @@ import {
 } from "react-native";
 import { teams } from "../../constants/teams";
 import type { Game } from "../../types/types";
-
-import Heading from "@/components/Heading";
-import PlayerHeader from "@/components/player/PlayerHeader";
-type DbPlayer = {
-  id: number;
-  player_id: number;
-  first_name: string;
-  last_name: string;
-  team_id: number;
-  position: string;
-  headshot_url: string;
-  jersey_number: string;
-  weight: string;
-  height: string;
-  birth_date: string;
-  college: string;
-  nba_start: number;
-  nba_pro: number;
-};
+import { DBPlayer } from "../../types/types";
+// Extend Team type locally to include optional 'record' property
+type TeamWithRecord = (typeof teams)[number] & { record?: string };
 
 const BASE_API_URL = process.env.EXPO_PUBLIC_API_URL;
 
@@ -45,22 +31,25 @@ export default function PlayerDetailScreen() {
     ? params.teamId[0]
     : params.teamId;
 
-  console.log("playerIdParam:", playerIdParam);
-
   const parsedPlayerId = parseInt(playerIdParam ?? "", 10);
   const sanitizedTeamId = String(teamIdParam ?? "")
     .replace(/"/g, "")
     .trim();
 
-  const teamObj = teams.find((t) => String(t.id) === sanitizedTeamId);
+  // Cast teamObj as TeamWithRecord so .record is allowed
+  const teamObj = teams.find((t) => String(t.id) === sanitizedTeamId) as
+    | TeamWithRecord
+    | undefined;
   const isDark = useColorScheme() === "dark";
   const teamNumericId = parseInt(sanitizedTeamId, 10);
+
+  // Use the updated hook - it returns a `Game | null`
   const { lastGame: teamLastGame, loading: teamGameLoading } =
     useLastTeamGame(teamNumericId);
 
   const router = useRouter();
   const navigation = useNavigation();
-  const [player, setPlayer] = useState<DbPlayer | null>(null);
+  const [player, setPlayer] = useState<DBPlayer | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -90,7 +79,7 @@ export default function PlayerDetailScreen() {
     const fetchPlayer = async () => {
       setLoading(true);
       try {
-        const resp = await axios.get<{ player: DbPlayer }>(
+        const resp = await axios.get<{ player: DBPlayer }>(
           `${API_URL}/api/players/player-id/${parsedPlayerId}`
         );
         setPlayer(resp.data.player);
@@ -155,13 +144,17 @@ export default function PlayerDetailScreen() {
   }, [isDark, teamObj]);
 
   useLayoutEffect(() => {
+    const isTeamAvailable = !!teamObj;
+
     navigation.setOptions({
       header: () => (
         <CustomHeaderTitle
           playerName={fullName}
-          logo={teamObj?.logo}
+          logo={
+            isTeamAvailable ? teamObj?.logo : require("@/assets/Logos/NBA.png")
+          }
           logoLight={teamObj?.logoLight}
-          teamColor={teamObj?.color}
+          teamColor={isTeamAvailable ? teamObj?.color : "#1D428A"} // NBA blue
           onBack={goBack}
           isTeamScreen={!!teamObj}
           isPlayerScreen={true} // 👈 Add this
@@ -171,35 +164,31 @@ export default function PlayerDetailScreen() {
   }, [navigation, fullName, teamObj, isDark]);
 
   const initial = player ? player.first_name[0]?.toUpperCase() : "?";
- const teamGameTransformed: Game | null = teamLastGame
-  ? {
-      id: teamLastGame.id,
-      date: teamLastGame.date.start,
-      time: new Date(teamLastGame.date.start).toLocaleTimeString("en-US", {
-        hour: "numeric",
-        minute: "2-digit",
-      }),
-      home: {
-        id: String(teamLastGame.teams.home.id), // ✅ required
-        name: teamLastGame.teams.home.name,
-        logo: "", // You can map this later with `teams` if needed
-        record: teamLastGame.teams.home.record?.summary ?? "",
-        fullName: teamLastGame.teams.home.name,
-      },
-      away: {
-        id: String(teamLastGame.teams.visitors.id), // ✅ required
-        name: teamLastGame.teams.visitors.name,
-        logo: "",
-        record: teamLastGame.teams.visitors.record?.summary ?? "",
-        fullName: teamLastGame.teams.visitors.name,
-      },
-      status: "Final",
-      homeScore: teamLastGame.scores.home.points,
-      awayScore: teamLastGame.scores.visitors.points,
-      isPlayoff: false,
-    }
-  : null;
 
+  // teamLastGame already matches the Game type
+  // so you can pass it directly to GameCard, no need to transform deeply
+  // but you can enhance missing logo or record fields here if you want
+
+  // Find away team with extended type
+  const awayTeamObj = teams.find((t) => t.id === teamLastGame?.away.id) as
+    | TeamWithRecord
+    | undefined;
+
+  const enrichedLastGame: Game | null = teamLastGame
+    ? {
+        ...teamLastGame,
+        home: {
+          ...teamLastGame.home,
+          logo: teamObj?.logo || "", // or find in teams by ID
+          record: teamObj?.record || "",
+        },
+        away: {
+          ...teamLastGame.away,
+          logo: awayTeamObj?.logo || "",
+          record: awayTeamObj?.record || "",
+        },
+      }
+    : null;
 
   const seasons = useMemo(() => {
     const start = player?.nba_start || 2015;
@@ -212,21 +201,19 @@ export default function PlayerDetailScreen() {
   return (
     <ScrollView contentContainerStyle={{ paddingBottom: 100 }}>
       {player && (
-<PlayerHeader
-  player={player}
-  avatarUrl={avatarUrl}
-  isDark={isDark}
-  teamColor={teamObj?.color}              // primary team color
-  teamSecondaryColor={teamObj?.secondaryColor} // secondary team color
-  team_name={teamObj?.name}                // team name string
-  calculateAge={calculateAge}
-/>
-
-
+        <PlayerHeader
+          player={player}
+          avatarUrl={avatarUrl}
+          isDark={isDark}
+          teamColor={teamObj?.color} // primary team color
+          teamSecondaryColor={teamObj?.secondaryColor} // secondary team color
+          team_name={teamObj?.name} // team name string
+          calculateAge={calculateAge}
+        />
       )}
 
       {!loading && !error && player && (
-        <View style={{ padding: 16 }}>
+        <View style={{ paddingHorizontal: 12, marginTop: 24 }}>
           <SeasonStatCard
             playerId={parsedPlayerId}
             teamColor={teamObj?.secondaryColor}
@@ -234,15 +221,15 @@ export default function PlayerDetailScreen() {
           />
         </View>
       )}
-      {!teamGameLoading && teamGameTransformed && (
+      {!teamGameLoading && enrichedLastGame && (
         <>
-          <Heading>Previous Game</Heading>
-          <View style={{ paddingHorizontal: 16 }}>
-            <GameCard game={teamGameTransformed} isDark={isDark} />
+          <View style={{ paddingHorizontal: 12, marginTop: 24 }}>
+            <HeadingTwo>Last Game</HeadingTwo>
+            <GameCard game={enrichedLastGame} isDark={isDark} />
           </View>
 
-          <Heading>Career Stats</Heading>
-          <View style={{ paddingHorizontal: 16 }}>
+          <View style={{ paddingHorizontal: 12, marginTop: 24 }}>
+            <HeadingTwo>Career Stats</HeadingTwo>
             <PlayerStatTable playerId={parsedPlayerId} seasons={seasons} />
           </View>
         </>

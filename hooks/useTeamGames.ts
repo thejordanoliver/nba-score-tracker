@@ -24,7 +24,9 @@ interface Standing {
 }
 
 export function useTeamGames(teamId?: string) {
-  const [games, setGames] = useState<ReturnType<typeof transformGameData>[]>([]);
+  const [games, setGames] = useState<ReturnType<typeof transformGameData>[]>(
+    []
+  );
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
   const [refreshing, setRefreshing] = useState<boolean>(false);
@@ -77,14 +79,30 @@ export function useTeamGames(teamId?: string) {
       const playoffStart = new Date("2025-04-20");
       const playoffEnd = new Date("2025-06-30");
 
+      const statusCodeMap: Record<number, string> = {
+        1: "Scheduled",
+        2: "Final",
+        3: "In Progress",
+        4: "Postponed",
+        5: "Delayed",
+        6: "Canceled",
+      };
+
       const filteredGames = gamesData.filter((game) => {
         const gameDate = new Date(game.date.start);
-        const isPastGame = gameDate < now;
-        const isScheduled =
-          game.status.long &&
-          game.status.long.toLowerCase() === "scheduled";
+        const now = new Date();
 
-        return !(isPastGame && isScheduled);
+        const statusShort =
+          typeof game.status?.short === "number" ? game.status.short : -1;
+        const status = statusCodeMap[statusShort] || "Unknown";
+
+        const isValidStatus = Object.values(statusCodeMap).includes(status);
+
+        const shouldHide =
+          gameDate < now &&
+          ["Scheduled", "Postponed", "Delayed"].includes(status);
+
+        return isValidStatus && !shouldHide;
       });
 
       const enrichedGames = filteredGames.map((game) => {

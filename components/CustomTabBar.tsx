@@ -41,6 +41,11 @@ const TAB_ROUTE_PARENTS: { [key: string]: string } = {
   "/league/stats": "/league",
   "/league/schedule": "/league",
 
+  "/settings": "/profile",
+  "/settings/accountdetails": "/profile",
+  "/settings/appearance": "/profile",
+  "/settings/preferences": "/profile",
+
   "/": "/",
   "/league": "/league",
   "/explore": "/explore",
@@ -74,30 +79,35 @@ export default function CustomTabBar() {
 
   const currentActiveTab = getActiveTab(pathname);
 
-  useEffect(() => {
-    if (
-      !pathname.startsWith("/team") &&
-      !pathname.startsWith("/game") &&
-      !pathname.startsWith("/player")
-    ) {
-      setLastActiveTab(currentActiveTab || "/");
-    }
-  }, [pathname, currentActiveTab]);
+useEffect(() => {
+  if (
+    !pathname.startsWith("/team") &&
+    !pathname.startsWith("/game") &&
+    !pathname.startsWith("/player") &&
+    !pathname.startsWith("/user")
+  ) {
+    setLastActiveTab(currentActiveTab || "/");
+  }
+}, [pathname, currentActiveTab]);
 
-  const activeTabRoute =
-    pathname.startsWith("/team") ||
-    pathname.startsWith("/game") ||
-    pathname.startsWith("/player")
-      ? lastActiveTab
-      : currentActiveTab;
+
+const activeTabRoute =
+  pathname.startsWith("/team") ||
+  pathname.startsWith("/game") ||
+  pathname.startsWith("/player") ||
+  pathname.startsWith("/user")
+    ? lastActiveTab
+    : currentActiveTab;
+
 
   if (pathname === "/login") return null;
 
   // Helper to identify detail screens
-  const isDetailScreen = (path: string) =>
-    path.startsWith("/team") ||
-    path.startsWith("/game") ||
-    path.startsWith("/player");
+const isDetailScreen = (path: string) =>
+  path.startsWith("/team") ||
+  path.startsWith("/game") ||
+  path.startsWith("/player") ||
+  path.startsWith("/user");
 
   // Main tabs routes
   const mainTabs = ["/", "/league", "/explore", "/profile"];
@@ -116,7 +126,7 @@ export default function CustomTabBar() {
             {
               backgroundColor: isDark
                 ? "rgba(0,0,0,0.3)"
-                : "rgba(255,255,255,0.3)",
+                : "rgba(255, 255, 255, 0.5)",
             },
           ]}
         />

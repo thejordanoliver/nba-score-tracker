@@ -1,12 +1,6 @@
 // app/news/NewsArticle.styles.ts
 import { StyleSheet } from "react-native";
-
-const OSEXTRALIGHT = "Oswald_200ExtraLight";
-const OSLIGHT = "Oswald_300Light";
-const OSREGULAR = "Oswald_400Regular";
-const OSMEDIUM = "Oswald_500Medium";
-const OSBOLD = "Oswald_700Bold";
-const OSSEMIBOLD = "Oswald_600SemiBold";
+import { Fonts } from "@/constants/fonts";
 
 export const getStyles = (isDark: boolean) =>
   StyleSheet.create({
@@ -17,7 +11,7 @@ export const getStyles = (isDark: boolean) =>
     },
     title: {
       fontSize: 24,
-      fontFamily: OSBOLD,
+      fontFamily: Fonts.OSBOLD,
       marginBottom: 12,
       color: isDark ? "#fff" : "#000",
     },
@@ -29,14 +23,14 @@ export const getStyles = (isDark: boolean) =>
     },
     source: {
       fontStyle: "italic",
-      fontFamily: OSMEDIUM,
+      fontFamily: Fonts.OSMEDIUM,
       color: isDark ? "#bbb" : "#444",
       marginBottom: 8,
     },
     content: {
       fontSize: 16,
       lineHeight: 24,
-      fontFamily: OSREGULAR,
+      fontFamily: Fonts.OSREGULAR,
       color: isDark ? "#ddd" : "#222",
     flex: 1
     },

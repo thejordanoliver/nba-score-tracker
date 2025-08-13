@@ -1,6 +1,7 @@
-import GamesList from "@/components/GamesList";
-import Heading from "@/components/Heading";
-import NewsHighlightsList from "@/components/NewsHighlightsList";
+import DummyGameCard from "@/components/Games/DummyGameCard";
+import GamesList from "@/components/Games/GamesList";
+import Heading from "@/components/Headings/Heading";
+import NewsHighlightsList from "@/components/News/NewsHighlightsList";
 import SummerGamesList from "@/components/summer-league/SummerGamesList";
 import { useSummerLeagueGames } from "@/hooks/useSummerLeagueGames";
 import type { summerGame } from "@/types/types";
@@ -20,7 +21,6 @@ import { Animated, Text, View, useColorScheme } from "react-native";
 import { CustomHeaderTitle } from "../../components/CustomHeaderTitle";
 import FavoritesScroll from "../../components/FavoritesScroll";
 import FavoritesScrollSkeleton from "../../components/FavoritesScrollSkeleton";
-import NewsCardSkeleton from "../../components/NewsCardSkeleton";
 import TabBar from "../../components/TabBar";
 import { useNewsStore } from "../../hooks/newsStore";
 import { useHighlights } from "../../hooks/useHighlights";
@@ -28,6 +28,7 @@ import { useLiveGames } from "../../hooks/useLiveGames";
 import { useNews } from "../../hooks/useNews";
 import { useWeeklyGames } from "../../hooks/useWeeklyGames";
 import { getStyles } from "../../styles/indexStyles";
+
 type Tab = "scores" | "news";
 
 type NewsItem = {
@@ -247,6 +248,21 @@ export default function HomeScreen() {
     return combined;
   }, [news, highlights]);
 
+
+  useEffect(() => {
+  const interval = setInterval(() => {
+    // Auto-refresh only if we're on the scores tab
+    if (selectedTab === "scores") {
+      refreshLiveGames?.();
+      refreshWeeklyGames?.();
+      refreshSummerGames?.();
+    }
+  }, 60_000); // refresh every 60 seconds (adjust as needed)
+
+  return () => clearInterval(interval); // cleanup on unmount
+}, [selectedTab, refreshLiveGames, refreshWeeklyGames, refreshSummerGames]);
+
+
   return (
     <View style={styles.container}>
       <View style={styles.tabBarWrapper}>
@@ -254,6 +270,23 @@ export default function HomeScreen() {
           tabs={tabs}
           selected={selectedTab}
           onTabPress={handleTabPress}
+          renderLabel={(tab, isSelected) => (
+            <Text
+              style={{
+                fontSize: 20, // <- Larger font for Home screen
+                color: isSelected
+                  ? isDark
+                    ? "#fff"
+                    : "#1d1d1d"
+                  : isDark
+                    ? "#888"
+                    : "rgba(0, 0, 0, 0.5)",
+                fontFamily: "Oswald_400Regular",
+              }}
+            >
+              {tab.toUpperCase()}
+            </Text>
+          )}
         />
       </View>
 
@@ -269,7 +302,7 @@ export default function HomeScreen() {
         {selectedTab === "scores" ? (
           <>
             <Heading>Latest Games</Heading>
-
+            {/* <DummyGameCard /> */}
             {onlySummerLeagueToday ? (
               <SummerGamesList
                 games={filteredSummer}
@@ -295,20 +328,16 @@ export default function HomeScreen() {
           </>
         ) : (
           <>
-            {(newsLoading || (highlightsLoading && !newsLoading)) &&
-            !refreshing ? (
-              <>
-                <NewsCardSkeleton />
-                <NewsCardSkeleton />
-                <NewsCardSkeleton />
-              </>
-            ) : newsError ? (
+
+            {newsError ? (
               <Text style={styles.emptyText}>{newsError}</Text>
-            ) : combinedNewsAndHighlights.length === 0 ? (
+            ) : combinedNewsAndHighlights.length === 0 && !refreshing ? (
               <Text style={styles.emptyText}>
                 No news or highlights available.
               </Text>
             ) : (
+
+              
               <NewsHighlightsList
                 items={combinedNewsAndHighlights}
                 loading={newsLoading}

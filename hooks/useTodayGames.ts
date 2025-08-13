@@ -1,13 +1,16 @@
 // useTodayGames.ts
 import axios from "axios";
 import rateLimit from "axios-rate-limit";
+import { DateTime } from "luxon";
 import { useEffect, useState } from "react";
 import { transformGameData } from "../utils/transformGameData";
-import { DateTime } from "luxon";
 
 type APIGame = {
   id: number;
-  date: { start: string };
+  date: {
+    start: string;
+    stage: number; // ✅ Add this line
+  };
   status: {
     long: string;
     short: string;
@@ -114,11 +117,10 @@ export function useTodayGames() {
       const todayET = DateTime.now().setZone("America/New_York");
 
       // Fetch games for today and tomorrow ET to cover all games that might fall into today ET
-    const dateStrings = [
-  todayET.toFormat("yyyy-MM-dd"),
-  todayET.plus({ days: 10 }).toFormat("yyyy-MM-dd"),
-];
-
+      const dateStrings = [
+        todayET.toFormat("yyyy-MM-dd"),
+        todayET.plus({ days: 10 }).toFormat("yyyy-MM-dd"),
+      ];
 
       const allGames: TransformedGame[] = [];
 
@@ -136,13 +138,11 @@ export function useTodayGames() {
 
         const dayGames = res.data.response.map((game: APIGame) => {
           if (game.teams?.home && game.teams?.visitors) {
-            // Replace team names with nicknames if available
             game.teams.home.name =
               teamMap[game.teams.home.id] || game.teams.home.name;
             game.teams.visitors.name =
               teamMap[game.teams.visitors.id] || game.teams.visitors.name;
 
-            // Inject team records from standings
             const homeRecord = standingsMap[game.teams.home.id] || {
               wins: 0,
               losses: 0,
@@ -152,21 +152,25 @@ export function useTodayGames() {
               losses: 0,
             };
 
-            const extendedGame: ExtendedAPIGame = {
+            const extendedGame: ExtendedAPIGame & { isPlayoff: boolean } = {
               ...game,
               teams: {
                 home: { ...game.teams.home, record: homeRecord },
                 visitors: { ...game.teams.visitors, record: visitorRecord },
               },
+              isPlayoff: false,
             };
 
             return transformGameData(extendedGame);
           }
 
-          return transformGameData(game as ExtendedAPIGame);
-        });
+          return transformGameData({
+            ...(game as ExtendedAPIGame),
+            isPlayoff: false,
+          });
+        }); // ✅ You were missing this
 
-        allGames.push(...dayGames);
+        allGames.push(...dayGames); // ✅ This must be outside the map()
       }
 
       // Filter games to only those starting on today in Eastern Time

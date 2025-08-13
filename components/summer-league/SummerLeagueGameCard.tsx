@@ -4,19 +4,17 @@ import React, { useMemo, useEffect, useRef } from "react";
 import {
   Animated,
   Easing,
-  Image,
   Text,
   TouchableOpacity,
   useColorScheme,
   View,
 } from "react-native";
-
+import { Fonts } from "@/constants/fonts";
 import { teams } from "../../constants/teams";
 import { getStyles } from "../../styles/SLGameCard.styles";
 import type { summerGame, Team } from "../../types/types";
 
-const OSEXTRALIGHT = "Oswald_200ExtraLight";
-const OSBOLD = "Oswald_700Bold";
+
 
 function AnimatedLogo({
   lightSource,
@@ -214,7 +212,7 @@ export default function SummerLeagueGameCard({
           >
             <Text
               style={{
-                fontFamily: OSEXTRALIGHT,
+                fontFamily: Fonts.OSEXTRALIGHT,
                 fontSize: 10,
                 color: dark ? "#fff" : "#000",
                 opacity: 0.8,

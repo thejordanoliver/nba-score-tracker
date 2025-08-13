@@ -19,11 +19,7 @@ import {
   View,
 } from "react-native";
 import FollowingButton from "./ModalFollowingButton";
-
-const OSREGULAR = "Oswald_400Regular";
-const OSBOLD = "Oswald_700Bold";
-const OSLIGHT = "Oswald_300Light";
-
+import { Fonts } from "@/constants/fonts";
 type Props = {
   visible: boolean;
   onClose: () => void;
@@ -117,7 +113,7 @@ export default function FollowersModal({
   }, [users, search]);
 
   // Snap points for BottomSheet
-  const snapPoints = useMemo(() => ["80%", "90%"], []);
+  const snapPoints = useMemo(() => ["80%", "94%"], []);
 
   return (
     <BottomSheetModal
@@ -143,7 +139,7 @@ export default function FollowersModal({
         right: 8,
       }}
       handleIndicatorStyle={{
-        backgroundColor: isDark ? "#888" : "#ccc",
+        backgroundColor: isDark ? "#888" : "#444",
         width: 36,
         height: 4,
         borderRadius: 2,
@@ -152,7 +148,7 @@ export default function FollowersModal({
     >
       <BlurView
         intensity={100}
-        tint={isDark ? "dark" : "light"}
+        tint={isDark ? "systemMaterialDark" : "systemMaterialLight"}
         style={styles.blurContainer}
       >
         <View style={styles.modalContainer}>
@@ -180,7 +176,7 @@ export default function FollowersModal({
                 color: "red",
                 textAlign: "center",
                 marginVertical: 8,
-                fontFamily: OSREGULAR,
+                fontFamily: Fonts.OSREGULAR,
               }}
             >
               {error}
@@ -196,7 +192,7 @@ export default function FollowersModal({
                 style={{
                   textAlign: "center",
                   marginTop: 20,
-                  fontFamily: OSREGULAR,
+                  fontFamily: Fonts.OSREGULAR,
                   color: isDark ? "#fff" : "#1d1d1d",
                 }}
               >
@@ -277,7 +273,7 @@ const styles = StyleSheet.create({
   },
   title: {
     fontSize: 22,
-    fontFamily: OSBOLD,
+    fontFamily: Fonts.OSBOLD,
     textAlign: "center",
     marginBottom: 12,
   },
@@ -287,7 +283,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     paddingVertical: 8,
     fontSize: 16,
-    fontFamily: OSLIGHT,
+    fontFamily: Fonts.OSLIGHT,
   },
   userItem: {
     flexDirection: "row",
@@ -304,7 +300,7 @@ const styles = StyleSheet.create({
   username: {
     flex: 1,
     fontSize: 16,
-    fontFamily: OSREGULAR,
+    fontFamily: Fonts.OSREGULAR,
   },
   closeButton: {
     position: "absolute",

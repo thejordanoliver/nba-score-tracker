@@ -175,17 +175,56 @@ const bannerMap: Record<string, any> = {
   "41": require("../assets/banners/WIZARDS.png"),
 };
 
-function getBannerImage(teamId?: string | number) {
+const bannerLightMap: Record<string, any> = {
+  "1": require("../assets/banners/HAWKSLIGHT.png"),
+  "2": require("../assets/banners/CELTICSLIGHT.png"),
+  "4": require("../assets/banners/NETSLIGHT.png"),
+  "5": require("../assets/banners/HORNETSLIGHT.png"),
+  "6": require("../assets/banners/BULLSLIGHT.png"),
+  "7": require("../assets/banners/CAVSLIGHT.png"),
+  "8": require("../assets/banners/MAVSLIGHT.png"),
+  "9": require("../assets/banners/NUGGETSLIGHT.png"),
+  "10": require("../assets/banners/PISTONSLIGHT.png"),
+  "11": require("../assets/banners/WARRIORSLIGHT.png"),
+  "14": require("../assets/banners/ROCKETSLIGHT.png"),
+  "15": require("../assets/banners/PACERSLIGHT.png"),
+  "16": require("../assets/banners/CLIPPERSLIGHT.png"),
+  "17": require("../assets/banners/LAKERSLIGHT.png"),
+  "19": require("../assets/banners/GRIZZLIESLIGHT.png"),
+  "20": require("../assets/banners/HEATLIGHT.png"),
+  "21": require("../assets/banners/BUCKSLIGHT.png"),
+  "22": require("../assets/banners/TIMBERWOLVESLIGHT.png"),
+  "23": require("../assets/banners/PELICANSLIGHT.png"),
+  "24": require("../assets/banners/KNICKSLIGHT.png"),
+  "25": require("../assets/banners/THUNDERLIGHT.png"),
+  "26": require("../assets/banners/MAGICLIGHT.png"),
+  "27": require("../assets/banners/76ERSLIGHT.png"),
+  "28": require("../assets/banners/SUNSLIGHT.png"),
+  "29": require("../assets/banners/TRAILBLAZERSLIGHT.png"),
+  "30": require("../assets/banners/KINGSLIGHT.png"),
+  "31": require("../assets/banners/SPURSLIGHT.png"),
+  "38": require("../assets/banners/RAPTORSLIGHT.png"),
+  "40": require("../assets/banners/JAZZLIGHT.png"),
+  "41": require("../assets/banners/WIZARDSLIGHT.png"),
+};
+
+
+function getBannerImage(teamId?: string | number, isDark?: boolean) {
   const fallback = require("../assets/banners/DEFAULT.png");
 
   if (!teamId) return fallback;
 
   const id = String(teamId);
 
+  if (isDark && bannerLightMap[id]) {
+    return bannerLightMap[id];
+  }
+
   if (bannerMap[id]) {
     return bannerMap[id];
-  } else {
-    console.warn("Banner not found for team ID:", id);
-    return fallback;
   }
+
+  console.warn("Banner not found for team ID:", id);
+  return fallback;
 }
+

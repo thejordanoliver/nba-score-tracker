@@ -1,8 +1,7 @@
-import React from "react";
+import FollowButton from "@/components/Profile/FollowButton";
 import { Ionicons } from "@expo/vector-icons";
 import { Pressable, Text, View } from "react-native";
 import { getStyles } from "../../styles/ProfileScreen.styles";
-import FollowButton from "@/components/profile/FollowButton";
 
 type Props = {
   fullName?: string | null;
@@ -35,7 +34,9 @@ export default function ProfileHeader({
     <View style={styles.wrapper}>
       <View style={styles.nameContainer}>
         <Text style={styles.fullNameText}>{fullName}</Text>
-        <Text style={styles.usernameText}>{"@" + (username || "Your Username")}</Text>
+        <Text style={styles.usernameText}>
+          {"@" + (username || "Your Username")}
+        </Text>
       </View>
 
       {isCurrentUser ? (

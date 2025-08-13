@@ -1,13 +1,6 @@
 import { Image, Text, View } from "react-native";
-import { teams } from "@/constants/teams"; // adjust the path as needed
-
-
-
-const OSEXTRALIGHT = "Oswald_200ExtraLight";
-const OSLIGHT = "Oswald_300Light";
-const OSMEDIUM = "Oswald_500Medium";
-const OSREGULAR = "Oswald_400Regular";
-const OSBOLD = "Oswald_700Bold";
+import { teams } from "@/constants/teams";
+import { Fonts } from "@/constants/fonts";
 
 type TeamInfoProps = {
   team?: typeof teams[number];
@@ -15,6 +8,7 @@ type TeamInfoProps = {
   scoreOrRecord: string | number;
   isWinner: boolean;
   isDark: boolean;
+  isGameOver: boolean; // ✅ new prop
 };
 
 export default function TeamInfo({
@@ -23,12 +17,15 @@ export default function TeamInfo({
   scoreOrRecord,
   isWinner,
   isDark,
+  isGameOver,
 }: TeamInfoProps) {
-  const winnerStyle = isWinner
-    ? {
-        color: isDark ? "#fff" : "#000",
-      }
-    : {};
+  // Score opacity logic
+  const scoreOpacity =
+    !isGameOver // game in progress → full opacity
+      ? 1
+      : isWinner
+      ? 1
+      : 0.5; // game over → loser gets 0.5 opacity
 
   return (
     <View style={{ alignItems: "center" }}>
@@ -37,27 +34,22 @@ export default function TeamInfo({
         style={{ width: 80, height: 80, resizeMode: "contain" }}
       />
       <Text
-        style={[
-          {
-            fontSize: 14,
-            fontFamily: OSREGULAR,
-            color: isDark ? "#aaa" : "rgba(0, 0, 0, 0.4)",
-            marginTop: 6,
-          },
-          winnerStyle,
-        ]}
+        style={{
+          fontSize: 14,
+          fontFamily: Fonts.OSREGULAR,
+          color: isDark ? "#fff" : "#1d1d1d",
+          marginTop: 6,
+        }}
       >
         {teamName}
       </Text>
       <Text
-        style={[
-          {
-            fontSize: 20,
-            fontFamily: OSBOLD,
-            color: isDark ? "#aaa" : "rgba(0, 0, 0, 0.4)",
-          },
-          winnerStyle,
-        ]}
+        style={{
+          fontSize: 30,
+          fontFamily: Fonts.OSBOLD,
+          color: isDark ? "#fff" : "#000", // solid colors for clarity
+          opacity: scoreOpacity, // ✅ apply opacity rule
+        }}
       >
         {scoreOrRecord}
       </Text>

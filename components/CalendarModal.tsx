@@ -7,27 +7,29 @@ import {
   TouchableOpacity,
   useColorScheme,
   View,
+  Text,
 } from "react-native";
 import { Calendar, LocaleConfig } from "react-native-calendars";
 import Modal from "react-native-modal";
+import { Fonts } from "@/constants/fonts";
+import dayjs from "dayjs";
 
 LocaleConfig.locales["custom"] = {
   monthNames: [
     "January", "February", "March", "April", "May", "June",
-    "July", "August", "September", "October", "November", "December",
+    "July", "August", "September", "October", "November", "December"
   ],
   monthNamesShort: [
     "Jan", "Feb", "Mar", "Apr", "May", "Jun",
-    "Jul", "Aug", "Sep", "Oct", "Nov", "Dec",
+    "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"
   ],
   dayNames: [
     "Sunday", "Monday", "Tuesday", "Wednesday",
-    "Thursday", "Friday", "Saturday",
+    "Thursday", "Friday", "Saturday"
   ],
-  dayNamesShort: ["S", "M", "T", "W", "T", "F", "S"], // <-- just the first letter here
+  dayNamesShort: ["S", "M", "T", "W", "T", "F", "S"],
   today: "Today",
 };
-
 
 LocaleConfig.defaultLocale = "custom";
 
@@ -54,6 +56,8 @@ export default function CalendarModal({
 }: Props) {
   const systemColorScheme = useColorScheme();
   const [isDark, setIsDark] = useState(systemColorScheme === "dark");
+  const [selectedDate, setSelectedDate] = useState<string>(dayjs().format("YYYY-MM-DD"));
+  const [calendarKey, setCalendarKey] = useState(0); // force re-render to update `initialDate`
 
   useEffect(() => {
     const listener = Appearance.addChangeListener(({ colorScheme }) => {
@@ -62,12 +66,25 @@ export default function CalendarModal({
     return () => listener.remove();
   }, []);
 
+  useEffect(() => {
+    if (visible) {
+      setCalendarKey(prev => prev + 1); // re-render calendar on modal open
+    }
+  }, [visible]);
+
+  const goToToday = () => {
+    const today = dayjs().format("YYYY-MM-DD");
+    setSelectedDate(today);
+    setCalendarKey(prev => prev + 1); // force re-render with today
+  };
+
   return (
     <Modal
       isVisible={visible}
       onBackdropPress={onClose}
       backdropOpacity={0.5}
       style={styles.modal}
+      useNativeDriver={true}
     >
       <BlurView
         intensity={100}
@@ -75,23 +92,58 @@ export default function CalendarModal({
         style={styles.blurContainer}
       >
         <View style={styles.calendarWrapper}>
-          {/* X Button */}
+          {/* Close Button */}
           <TouchableOpacity style={styles.closeButton} onPress={onClose}>
-            <Ionicons name="close" size={28} color={isDark ? "#fff" : "#1d1d1d"} />
+            <Ionicons
+              name="close"
+              size={28}
+              color={isDark ? "#fff" : "#1d1d1d"}
+            />
           </TouchableOpacity>
 
-<Calendar
-  markedDates={markedDates}
+          {/* Today Button */}
+          <TouchableOpacity style={styles.todayButton} onPress={goToToday}>
+            <Ionicons
+              name="calendar"
+              size={18}
+              color={isDark ? "#fff" : "#1d1d1d"}
+              style={{ marginRight: 6 }}
+            />
+            <Text style={{ color: isDark ? "#fff" : "#1d1d1d", fontFamily: Fonts.OSBOLD }}>
+              Today
+            </Text>
+          </TouchableOpacity>
+
+          {/* Calendar */}
+         <Calendar
+  key={calendarKey}
+  current={selectedDate}
+  markedDates={{
+    ...markedDates,
+    [selectedDate]: {
+      customStyles: {
+        container: {
+          backgroundColor: "transparent",
+        },
+        text: {
+          color: "green",
+          fontFamily: Fonts.OSBOLD,
+        },
+      },
+    },
+  }}
+  markingType="custom"
   onDayPress={(day: CalendarDay) => {
+    setSelectedDate(day.dateString);
     onSelectDate(day.dateString);
     onClose();
   }}
+  enableSwipeMonths={true}
+  disableMonthChange={false}
   theme={{
     backgroundColor: "transparent",
     calendarBackground: "transparent",
-    textSectionTitleColor: isDark ? "white" : "#444", // Days of week
-    selectedDayBackgroundColor: isDark ? "#fff" : "#1d1d1d",
-    selectedDayTextColor: isDark ? "#1d1d1d" : "#fff",
+    textSectionTitleColor: isDark ? "white" : "#444",
     todayTextColor: isDark ? "#ff7675" : "red",
     dayTextColor: isDark ? "#fff" : "#1d1d1d",
     textDisabledColor: isDark ? "#555" : "#ccc",
@@ -99,14 +151,14 @@ export default function CalendarModal({
     selectedDotColor: isDark ? "#1d1d1d" : "#fff",
     monthTextColor: isDark ? "#fff" : "#1d1d1d",
     arrowColor: isDark ? "#fff" : "#1d1d1d",
-    textMonthFontWeight: "bold",
-    textDayFontWeight: "700",
+    textDayFontFamily: Fonts.OSBOLD,
+    textMonthFontFamily: Fonts.OSBOLD,
+    textDayHeaderFontFamily: Fonts.OSBOLD,
     textMonthFontSize: 24,
     textDayFontSize: 20,
     textDayHeaderFontSize: 18,
   }}
 />
-
 
         </View>
       </BlurView>
@@ -138,5 +190,15 @@ const styles = StyleSheet.create({
     alignSelf: "flex-end",
     marginBottom: 10,
     padding: 5,
+  },
+  todayButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    alignSelf: "flex-start",
+    marginBottom: 10,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: 10,
+    backgroundColor: "rgba(120,120,120,0.15)",
   },
 });

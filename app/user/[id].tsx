@@ -1,9 +1,9 @@
-import BioSection from "@/components/profile/BioSection";
-import FavoriteTeamsSection from "@/components/profile/FavoriteTeamsSection";
-import FollowersModal from "@/components/profile/FollowersModal";
-import FollowStats from "@/components/profile/FollowStats";
-import ProfileBanner from "@/components/profile/ProfileBanner";
-import ProfileHeader from "@/components/profile/ProfileHeader";
+import BioSection from "@/components/Profile/BioSection";
+import FavoriteTeamsSection from "@/components/Profile/FavoriteTeamsSection";
+import FollowersModal from "@/components/Profile/FollowersModal";
+import FollowStats from "@/components/Profile/FollowStats";
+import ProfileBanner from "@/components/Profile/ProfileBanner";
+import ProfileHeader from "@/components/Profile/ProfileHeader";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useFocusEffect } from "@react-navigation/native";
 import { useLocalSearchParams, useNavigation, useRouter } from "expo-router";
@@ -189,47 +189,48 @@ export default function UserProfileScreen() {
   };
 
   // Follow/unfollow toggle handler
-const handleToggleFollow = async () => {
-  if (followLoading || currentUserId === null || !userId) return;
+  const handleToggleFollow = async () => {
+    if (followLoading || currentUserId === null || !userId) return;
 
-  // Optimistically update UI before API call
-  const previousIsFollowing = isFollowing;
-  const previousFollowersCount = followersCount;
+    // Optimistically update UI before API call
+    const previousIsFollowing = isFollowing;
+    const previousFollowersCount = followersCount;
 
-  const newIsFollowing = !previousIsFollowing;
-  const newFollowersCount = newIsFollowing
-    ? previousFollowersCount + 1
-    : Math.max(previousFollowersCount - 1, 0);
+    const newIsFollowing = !previousIsFollowing;
+    const newFollowersCount = newIsFollowing
+      ? previousFollowersCount + 1
+      : Math.max(previousFollowersCount - 1, 0);
 
-  setIsFollowing(newIsFollowing);
-  setFollowersCount(newFollowersCount);
-  setFollowLoading(true);
+    setIsFollowing(newIsFollowing);
+    setFollowersCount(newFollowersCount);
+    setFollowLoading(true);
 
-  try {
-    const res = await fetch(`${BASE_URL}/api/follows/toggle`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ followerId: currentUserId, followeeId: userId }),
-    });
-    if (!res.ok) throw new Error("Failed to toggle follow");
-    const data = await res.json();
+    try {
+      const res = await fetch(`${BASE_URL}/api/follows/toggle`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ followerId: currentUserId, followeeId: userId }),
+      });
+      if (!res.ok) throw new Error("Failed to toggle follow");
+      const data = await res.json();
 
-    // Confirm with server response, in case it differs
-    setIsFollowing(data.isFollowing);
-    setFollowersCount((count) =>
-      data.isFollowing ? Math.max(count, newFollowersCount) : Math.min(count, newFollowersCount)
-    );
-  } catch (error) {
-    console.error("Failed to toggle follow:", error);
+      // Confirm with server response, in case it differs
+      setIsFollowing(data.isFollowing);
+      setFollowersCount((count) =>
+        data.isFollowing
+          ? Math.max(count, newFollowersCount)
+          : Math.min(count, newFollowersCount)
+      );
+    } catch (error) {
+      console.error("Failed to toggle follow:", error);
 
-    // Rollback to previous state on failure
-    setIsFollowing(previousIsFollowing);
-    setFollowersCount(previousFollowersCount);
-  } finally {
-    setFollowLoading(false);
-  }
-};
-
+      // Rollback to previous state on failure
+      setIsFollowing(previousIsFollowing);
+      setFollowersCount(previousFollowersCount);
+    } finally {
+      setFollowLoading(false);
+    }
+  };
 
   const favoriteTeams = teams.filter((team) => favorites.includes(team.id));
   const styles = getStyles(isDark);

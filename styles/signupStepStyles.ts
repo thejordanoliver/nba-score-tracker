@@ -1,10 +1,6 @@
 // components/styles/SignupStepsStyles.ts
 import { StyleSheet } from "react-native";
-
-const OSREGULAR = "Oswald_400Regular";
-const OSMEDIUM = "Oswald_500Medium";
-const OSLIGHT = "Oswald_300Light";
-const OSBOLD = "Oswald_700Bold";
+import { Fonts } from "@/constants/fonts";
 
 export const getSignupStepsStyles = (isDark: boolean) =>
   StyleSheet.create({
@@ -24,7 +20,7 @@ export const getSignupStepsStyles = (isDark: boolean) =>
     },
     title: {
       fontSize: 24,
-      fontFamily: OSBOLD,
+      fontFamily: Fonts.OSBOLD,
       marginTop: 10,
       marginBottom: 20,
       color: isDark ? "#fff" : "#000",
@@ -43,7 +39,7 @@ export const getSignupStepsStyles = (isDark: boolean) =>
       textAlign: "center",
       fontSize: 24,
       color: isDark ? "#fff" : "#000",
-      fontFamily: OSBOLD,
+      fontFamily: Fonts.OSBOLD,
     },
     input: {
       color: isDark ? "#fff" : "#000",
@@ -52,7 +48,7 @@ export const getSignupStepsStyles = (isDark: boolean) =>
       borderRadius: 8,
       fontSize: 16,
       marginVertical: 20,
-      fontFamily: OSLIGHT,
+      fontFamily: Fonts.OSLIGHT,
     },
     searchBar: {
       borderWidth: 1,
@@ -62,7 +58,7 @@ export const getSignupStepsStyles = (isDark: boolean) =>
       paddingVertical: 8,
       fontSize: 16,
       color: "#000",
-      fontFamily: OSLIGHT,
+      fontFamily: Fonts.OSLIGHT,
     },
     passwordRow: {
       flexDirection: "row",
@@ -72,7 +68,7 @@ export const getSignupStepsStyles = (isDark: boolean) =>
       marginBottom: 12,
     },
     passwordInput: {
-      fontFamily: OSLIGHT,
+      fontFamily: Fonts.OSLIGHT,
       flex: 1,
       fontSize: 16,
       padding: 20,
@@ -88,7 +84,7 @@ export const getSignupStepsStyles = (isDark: boolean) =>
     },
     buttonText: {
       color: isDark ? "#000" : "#fff",
-      fontFamily: OSREGULAR,
+      fontFamily: Fonts.OSREGULAR,
       fontSize: 16,
     },
     row: {
@@ -104,7 +100,7 @@ export const getSignupStepsStyles = (isDark: boolean) =>
     teamName: {
       marginLeft: 16,
       fontSize: 16,
-      fontFamily: OSREGULAR,
+      fontFamily: Fonts.OSREGULAR,
     },
 
     imageUploadBox: {
@@ -128,7 +124,7 @@ export const getSignupStepsStyles = (isDark: boolean) =>
 
     heading: {
       fontSize: 16,
-      fontFamily: OSMEDIUM,
+      fontFamily: Fonts.OSMEDIUM,
       marginTop: 8,
       paddingBottom: 4,
       borderBottomWidth: 1,
@@ -164,13 +160,13 @@ export const getSignupStepsStyles = (isDark: boolean) =>
     imagePlaceholder: {
       color: isDark ? "#aaa" : "#666",
       textAlign: "center",
-      fontFamily: OSLIGHT,
+      fontFamily: Fonts.OSLIGHT,
       fontSize: 12,
     },
     reviewText: {
       marginVertical: 8,
       color: isDark ? "#eee" : "#333",
-      fontFamily: OSREGULAR,
+      fontFamily: Fonts.OSREGULAR,
     },
     progressBarBackground: {
       height: 2,
@@ -187,7 +183,7 @@ export const getSignupStepsStyles = (isDark: boolean) =>
     skipText: {
       color: isDark ? "#aaa" : "#555",
       fontSize: 16,
-      fontFamily: OSREGULAR,
+      fontFamily: Fonts.OSREGULAR,
     },
     teamCardList: {
       flexDirection: "row",

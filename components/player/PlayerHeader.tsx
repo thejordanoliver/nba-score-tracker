@@ -1,11 +1,5 @@
 import { Image, StyleSheet, Text, View } from "react-native";
-
-const OSEXTRALIGHT = "Oswald_200ExtraLight";
-const OSLIGHT = "Oswald_300Light";
-const OSREGULAR = "Oswald_400Regular";
-const OSMEDIUM = "Oswald_500Medium";
-const OSBOLD = "Oswald_700Bold";
-const OSSEMIBOLD = "Oswald_600SemiBold";
+import { Fonts } from "@/constants/fonts";
 
 type Props = {
   player: {
@@ -125,22 +119,22 @@ export default function PlayerHeader({
         </Text>
 
         <Text style={[styles.playerInfo, {color: isDark?  "#fff" : "#1d1d1d"} ]}>
-          <Text style={{ fontFamily: OSMEDIUM,  color: isDark?  secondaryTextColor : primaryTextColor }}>School: </Text>
+          <Text style={{ fontFamily: Fonts.OSMEDIUM,  color: isDark?  secondaryTextColor : primaryTextColor }}>School: </Text>
           {player.college || "Unknown"}
         </Text>
 
         <Text style={[styles.playerInfo, {color: isDark?  "#fff" : "#1d1d1d"} ]}>
-             <Text style={{ fontFamily: OSMEDIUM,  color: isDark?  secondaryTextColor : primaryTextColor }}>Height: </Text>
+             <Text style={{ fontFamily: Fonts.OSMEDIUM,  color: isDark?  secondaryTextColor : primaryTextColor }}>Height: </Text>
           {player.height ?? "?"}
         </Text>
 
         <Text style={[styles.playerInfo, {color: isDark?  "#fff" : "#1d1d1d"} ]}>
-                <Text style={{ fontFamily: OSMEDIUM,  color: isDark?  secondaryTextColor : primaryTextColor }}>Weight: </Text>
+                <Text style={{ fontFamily: Fonts.OSMEDIUM,  color: isDark?  secondaryTextColor : primaryTextColor }}>Weight: </Text>
           {player.weight ?? "?"} lbs
         </Text>
 
         <Text style={[styles.playerInfo, {color: isDark?  "#fff" : "#1d1d1d"} ]}>
-                   <Text style={{ fontFamily: OSMEDIUM,  color: isDark?  secondaryTextColor : primaryTextColor }}>Birth: </Text>
+                   <Text style={{ fontFamily: Fonts.OSMEDIUM,  color: isDark?  secondaryTextColor : primaryTextColor }}>Birth: </Text>
           {player.birth_date
             ? `${new Date(player.birth_date).toLocaleDateString("en-US", {
                 year: "numeric",
@@ -192,7 +186,7 @@ const styles = StyleSheet.create({
   },
   jersey: {
     fontSize: 36,
-    fontFamily: OSBOLD,
+    fontFamily: Fonts.OSBOLD,
     textAlign: "center",
   },
   infoContainer: {
@@ -200,9 +194,9 @@ const styles = StyleSheet.create({
   },
   name: {
     fontSize: 24,
-    fontFamily: OSBOLD,
+    fontFamily: Fonts.OSBOLD,
   },
   playerInfo: {
-    fontFamily: OSLIGHT,
+    fontFamily: Fonts.OSLIGHT,
   },
 });

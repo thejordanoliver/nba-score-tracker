@@ -1,4 +1,3 @@
-import GameTeamStats from "@/components/game-details/GameTeamStats";
 import { teams } from "@/constants/teams";
 import { useESPNBroadcasts } from "@/hooks/useESPNBroadcasts";
 import { useGameStatistics } from "@/hooks/useGameStatistics";
@@ -21,11 +20,10 @@ import {
   View,
   useColorScheme,
 } from "react-native";
-import TeamInfo from "./TeamInfo";
 import { getStyles } from "../../styles/SLGameCard.styles";
-
-const OSEXTRALIGHT = "Oswald_200ExtraLight";
-const OSBOLD = "Oswald_700Bold";
+import LineScore from "./LineScore";
+import TeamInfo from "./TeamInfo";
+import { Fonts } from "@/constants/fonts";
 
 // === Animated logo ===
 function AnimatedLogo({
@@ -88,9 +86,9 @@ export default function SummerLeagueGamePreviewModal({
   game,
   onClose,
 }: Props) {
-const colorScheme = useColorScheme();
+  const colorScheme = useColorScheme();
   const isDark = colorScheme === "dark";
-  const styles = getStyles(isDark);  // <--- call here
+  const styles = getStyles(isDark); // <--- call here
 
   const sheetRef = useRef<BottomSheetModal>(null);
 
@@ -150,7 +148,7 @@ const colorScheme = useColorScheme();
   const winnerStyle = (won: boolean) =>
     won ? { color: isDark ? "#fff" : "#000" } : {};
 
-  const snapPoints = useMemo(() => ["40%", "50%", "80%"], []);
+  const snapPoints = useMemo(() => ["40%", "50%", "90%"], []);
 
   const formattedDate = new Date(game.date);
   const time = new Date(game.date).toLocaleTimeString([], {
@@ -227,7 +225,7 @@ const colorScheme = useColorScheme();
 
         <BlurView
           intensity={100}
-          tint={isDark ? "dark" : "light"}
+          tint={"systemUltraThinMaterial"}
           style={{
             flex: 1,
             padding: 20,
@@ -260,38 +258,31 @@ const colorScheme = useColorScheme();
             <View style={{ alignItems: "center", gap: 4 }}>
               <Text
                 style={{
-                  fontFamily: OSEXTRALIGHT,
+                  fontFamily: Fonts.OSEXTRALIGHT,
                   fontSize: 14,
                   opacity: 0.8,
-                  color: isDark ? "#ccc" : "#888",
+                  color: isDark ? "#ccc" : "#555",
                 }}
               >
                 Summer League
               </Text>
               {isNotStarted ? (
                 <>
-                  <Text
-                    style={styles.date}
-                  >
-                    {game.time}
-                  </Text>
-                  <Text
-                    style={styles.time}
-                  >
-                    {time}
-                  </Text>
+                  <Text style={styles.date}>{game.time}</Text>
+                  <Text style={styles.time}>{time}</Text>
                 </>
               ) : (
                 <>
-            <Text style={[styles.date, isFinal && styles.finalText]}>
+                  <Text style={[styles.date, isFinal && styles.finalText]}>
                     {period}
                   </Text>
-                    {isLive && clock
-                
-                      ?   <Text style={styles.clock}>{clock}
-                      </Text>
-                      
-                      : <Text style={styles.dateFinal}>{ `${formattedDate.getMonth() + 1}/${formattedDate.getDate()}`} </Text> }
+                  {isLive && clock ? (
+                    <Text style={styles.clock}>{clock}</Text>
+                  ) : (
+                    <Text style={styles.dateFinal}>
+                      {`${formattedDate.getMonth() + 1}/${formattedDate.getDate()}`}{" "}
+                    </Text>
+                  )}
                 </>
               )}
             </View>
@@ -314,7 +305,15 @@ const colorScheme = useColorScheme();
             showsVerticalScrollIndicator={false}
             contentContainerStyle={{ paddingBottom: 80 }}
           >
-            {!statsLoading && gameStats && <GameTeamStats stats={gameStats} />}
+            {game.scores?.home && game.scores?.away && (
+              <LineScore
+                homeScores={game.scores.home}
+                awayScores={game.scores.away}
+                isDark={isDark}
+                homeCode={homeTeamData?.code ?? ""}
+                awayCode={awayTeamData?.code ?? ""}
+              />
+            )}
           </BottomSheetScrollView>
         </BlurView>
       </View>

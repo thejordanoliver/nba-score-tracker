@@ -1,13 +1,25 @@
-import GameLeaders from "@/components/game-details/GameLeaders";
-import GameTeamStats from "@/components/game-details/GameTeamStats";
-import LastFiveGamesSwitcher from "@/components/game-details/LastFiveGames";
-import LineScore from "@/components/game-details/LineScore";
-import TeamLocationSection from "@/components/TeamLocationSection";
-import TeamLocationSkeleton from "@/components/TeamLocationSkeleton";
+import { CustomHeaderTitle } from "@/components/CustomHeaderTitle";
+import {
+  BoxScore,
+  GameInfo,
+  GameLeaders,
+  GameTeamStats,
+  LastFiveGamesSwitcher,
+  LineScore,
+  PredictionBar,
+  TeamLocationSection,
+  TeamRow,
+} from "@/components/GameDetails";
+import GameUniforms from "@/components/GameDetails/GameUniforms";
+import HistoricalOddsCard from "@/components/GameDetails/HistoricalOddsCard";
+import { Fonts } from "@/constants/fonts";
+import { arenaImages, neutralArenas, teams } from "@/constants/teams";
 import { useGameStatistics } from "@/hooks/useGameStatistics";
+import { useHistoricalOdds } from "@/hooks/useHistoricalOdds";
 import { useLastFiveGames } from "@/hooks/useLastFiveGames";
 import { useFetchPlayoffGames } from "@/hooks/usePlayoffSeries";
-import { Game } from "@/types/types";
+import { useGamePrediction } from "@/hooks/usePredictions";
+import { useWeatherForecast } from "@/hooks/useWeather";
 import { useLocalSearchParams, useNavigation } from "expo-router";
 import { goBack } from "expo-router/build/global-state/routing";
 import { useEffect, useLayoutEffect, useMemo, useState } from "react";
@@ -18,34 +30,36 @@ import {
   useColorScheme,
   View,
 } from "react-native";
-import { CustomHeaderTitle } from "../../components/CustomHeaderTitle";
-import { GameInfo, TeamRow } from "../../components/game-details";
-import { teams } from "../../constants/teams";
-import { useWeatherForecast } from "../../hooks/useWeather";
+import HistoricalOddsCardSkeleton from "../../components/GameDetails/HistoricalOddsSkeleton";
 
-const OSEXTRALIGHT = "Oswald_200ExtraLight";
-const OSREGULAR = "Oswald_400Regular";
-const OSMEDIUM = "Oswald_500Medium";
+interface GameOdds {
+  gameId: string | number;
+  homeTeam: string;
+  awayTeam: string;
+  spread: number;
+  odds: number;
+}
 
-type Team = {
-  name: string;
-  code: string;
-  logo: any;
-  logoLight?: any;
-  record?: string;
-  location?: string;
-  arenaImage?: any;
-  arenaName?: string;
-};
-
+interface OddsResponse {
+  games: GameOdds[];
+}
 export default function GameDetailsScreen() {
-  const [isLoading, setIsLoading] = useState(true);
   const { game } = useLocalSearchParams();
   const isDark = useColorScheme() === "dark";
   const navigation = useNavigation();
+  const [isLoading, setIsLoading] = useState(true);
 
   if (typeof game !== "string") return null;
-  const parsedGame: Game = JSON.parse(game);
+
+  let parsedGame: any;
+  try {
+    parsedGame = JSON.parse(game);
+  } catch (e) {
+    console.warn("Failed to parse game:", game);
+    return null;
+  }
+
+  if (!parsedGame || !parsedGame.id) return null;
 
   const {
     home,
@@ -57,7 +71,9 @@ export default function GameDetailsScreen() {
     awayScore,
     period,
     clock,
+    arena,
     linescore,
+    id: gameId,
   } = parsedGame;
 
   const homeTeamData = teams.find(
@@ -69,6 +85,54 @@ export default function GameDetailsScreen() {
       t.name === away.name || t.code === away.name || t.fullName === away.name
   );
   if (!homeTeamData || !awayTeamData) return null;
+
+  const homeTeamIdNum = Number(homeTeamData.id);
+  const awayTeamIdNum = Number(awayTeamData.id);
+
+  const homeColor = homeTeamData.color || "#007A33";
+  const awayColor = awayTeamData.color || "#CE1141";
+
+  const arenaNameFromGame = arena?.name ?? "";
+  const arenaCityFromGame = arena?.city ?? "";
+  const neutralArenaData = neutralArenas[arenaNameFromGame];
+
+  const cleanedArenaName = arenaNameFromGame.replace(/\s*\(.*?\)/, "").trim();
+  const resolvedArenaName = cleanedArenaName || homeTeamData.arenaName;
+  const resolvedArenaCity = arenaCityFromGame || homeTeamData.location;
+  const resolvedArenaAddress =
+    neutralArenaData?.address || homeTeamData.address || "";
+  const resolvedArenaCapacity =
+    neutralArenaData?.arenaCapacity || homeTeamData.arenaCapacity || "";
+  const resolvedArenaImage =
+    neutralArenaData?.arenaImage ||
+    arenaImages[arenaNameFromGame] ||
+    arenaImages[arenaCityFromGame] ||
+    arenaImages[homeTeamData.code] ||
+    homeTeamData.arenaImage;
+
+  const gameDate = new Date(date).toISOString().split("T")[0];
+  const {
+    data: historicalOdds,
+    loading: oddsLoading,
+    error: oddsError,
+  } = useHistoricalOdds({
+    date: gameDate,
+    team1: awayTeamData.code,
+    team2: homeTeamData.code,
+  });
+
+  const lat =
+    neutralArenaData?.latitude ??
+    arena?.latitude ??
+    homeTeamData.latitude ??
+    null;
+  const lon =
+    neutralArenaData?.longitude ??
+    arena?.longitude ??
+    homeTeamData.longitude ??
+    null;
+
+    
 
   const colors = useMemo(
     () => ({
@@ -85,54 +149,64 @@ export default function GameDetailsScreen() {
     [isDark]
   );
 
-  const homeLastGames = useLastFiveGames(Number(homeTeamData.id));
-  const awayLastGames = useLastFiveGames(Number(awayTeamData.id));
+  const season = 2024;
 
-  const { data: gameStats, loading: statsLoading } = useGameStatistics(
-    parsedGame.id
-  );
+  const homeLastGames = useLastFiveGames(homeTeamIdNum);
+  const awayLastGames = useLastFiveGames(awayTeamIdNum);
 
+  const { data: gameStats, loading: statsLoading } = useGameStatistics(gameId);
   const { games: playoffGames } = useFetchPlayoffGames(
-    Number(homeTeamData.id),
-    Number(awayTeamData.id),
-    2024
+    homeTeamIdNum,
+    awayTeamIdNum,
+    season
   );
-
   const {
-    weather,
-    loading: weatherLoading,
-    error: weatherError,
-  } = useWeatherForecast(
-    homeTeamData.latitude ?? null,
-    homeTeamData.longitude ?? null,
-    `${date}T${time}`
-  );
+    data: prediction,
+    loading: predictionLoading,
+    error: predictionError,
+  } = useGamePrediction(homeTeamIdNum, awayTeamIdNum, season);
 
-  const currentPlayoffGame = playoffGames.find((g) => g.id === parsedGame.id);
-  const seriesSummary = currentPlayoffGame?.seriesSummary;
+  const { weather, loading, error } = useWeatherForecast(lat, lon, date);
+
+  const currentPlayoffGame = playoffGames.find((g) => g.id === gameId);
 
   const awayIsWinner =
     status === "Final" && (awayScore ?? 0) > (homeScore ?? 0);
   const homeIsWinner =
     status === "Final" && (homeScore ?? 0) > (awayScore ?? 0);
 
+  // Normalize arena name for comparison
+  const cleanedArenaNameLower = cleanedArenaName.toLowerCase();
+  const homeArenaNameLower = homeTeamData.arenaName.toLowerCase();
+  const awayArenaNameLower = awayTeamData.arenaName.toLowerCase();
+
+  const isNeutralSiteByArena =
+    cleanedArenaNameLower !== "" &&
+    cleanedArenaNameLower !== homeArenaNameLower &&
+    cleanedArenaNameLower !== awayArenaNameLower;
+
+  const isHomeSiteByArena = cleanedArenaNameLower === homeArenaNameLower;
+
+  const headerTitle = isNeutralSiteByArena
+    ? `${awayTeamData.code} vs ${homeTeamData.code}`
+    : isHomeSiteByArena
+      ? `${awayTeamData.code} @ ${homeTeamData.code}`
+      : `${awayTeamData.code} vs ${homeTeamData.code}`;
+
   useLayoutEffect(() => {
     navigation.setOptions({
       header: () => (
-        <CustomHeaderTitle
-          title={`${awayTeamData.code} @ ${homeTeamData.code}`}
-          tabName="Game"
-          onBack={goBack}
-        />
+        <CustomHeaderTitle title={headerTitle} tabName="Game" onBack={goBack} />
       ),
     });
-  }, [navigation, homeTeamData, awayTeamData, isDark]);
+  }, [navigation, headerTitle]);
 
   useEffect(() => {
     const timeout = setTimeout(() => setIsLoading(false), 400);
     return () => clearTimeout(timeout);
   }, []);
 
+  const seriesSummary = currentPlayoffGame?.seriesSummary;
   const getGameNumberLabel = () => {
     if (currentPlayoffGame?.gameNumber)
       return `Game ${currentPlayoffGame.gameNumber}`;
@@ -142,11 +216,10 @@ export default function GameDetailsScreen() {
 
   return (
     <ScrollView
-      contentContainerStyle={[styles.container, { paddingBottom: 100 }]}
+      contentContainerStyle={[styles.container, { paddingBottom: 140 }]}
       style={{ backgroundColor: colors.background }}
     >
       <View style={[styles.teamsContainer, { borderColor: colors.border }]}>
-        {/* Away Team */}
         <TeamRow
           team={{
             id: awayTeamData.id,
@@ -164,7 +237,6 @@ export default function GameDetailsScreen() {
           colors={colors}
         />
 
-        {/* Game Info */}
         <GameInfo
           status={status}
           date={date}
@@ -194,7 +266,7 @@ export default function GameDetailsScreen() {
               <Text
                 style={{
                   color: colors.text,
-                  fontFamily: OSEXTRALIGHT,
+                  fontFamily: Fonts.OSEXTRALIGHT,
                   fontSize: 14,
                   textAlign: "center",
                 }}
@@ -218,7 +290,7 @@ export default function GameDetailsScreen() {
                 <Text
                   style={{
                     color: colors.text,
-                    fontFamily: OSEXTRALIGHT,
+                    fontFamily: Fonts.OSEXTRALIGHT,
                     fontSize: 14,
                     textAlign: "center",
                     flexShrink: 1,
@@ -232,7 +304,6 @@ export default function GameDetailsScreen() {
           </View>
         )}
 
-        {/* Home Team */}
         <TeamRow
           team={{
             id: homeTeamData.id,
@@ -252,16 +323,73 @@ export default function GameDetailsScreen() {
         />
       </View>
 
-      <View style={{ gap: 8, marginTop: 16 }}>
-        {parsedGame.linescore && (
+      <View style={{ gap: 20, marginTop: 20 }}>
+        {oddsLoading ? (
+          <View style={{ marginTop: 20 }}>
+            {[...Array(1)].map((_, i) => (
+              <HistoricalOddsCardSkeleton key={i} />
+            ))}
+          </View>
+        ) : (
+          historicalOdds.length > 0 && (
+            <View style={{ marginTop: 20 }}>
+              {historicalOdds.map((game) => (
+                <HistoricalOddsCard key={game.id} game={game} />
+              ))}
+            </View>
+          )
+        )}
+        {oddsError && (
+          <View style={{ marginTop: 20 }}>
+            <Text style={{ color: "red" }}>
+              Error loading odds: {oddsError}
+            </Text>
+          </View>
+        )}
+
+        {prediction && !predictionLoading && !predictionError && (
+          <View style={{ marginTop: 20 }}>
+            <PredictionBar
+              homeWinProbability={prediction.homeWinProbability * 100}
+              awayWinProbability={prediction.awayWinProbability * 100}
+              homeColor={homeColor}
+              awayColor={awayColor}
+              homeSecondaryColor={homeTeamData.secondaryColor}
+              awaySecondaryColor={awayTeamData.secondaryColor}
+              homeTeamId={homeTeamData.id} // <-- pass team IDs now
+              awayTeamId={awayTeamData.id} // <-- pass team IDs now
+            />
+          </View>
+        )}
+
+        {predictionError && (
+        
+            <Text style={{ color: "red" }}>
+              Prediction error: {predictionError}
+            </Text>
+       
+        )}
+
+       
+        {linescore && (
           <LineScore
-            linescore={parsedGame.linescore}
+            linescore={linescore}
             homeCode={homeTeamData.code}
             awayCode={awayTeamData.code}
           />
         )}
 
-        <GameLeaders gameId={parsedGame.id.toString()} />
+        <GameLeaders
+          gameId={gameId.toString()}
+          awayTeamId={awayTeamIdNum}
+          homeTeamId={homeTeamIdNum}
+        />
+
+        <BoxScore
+          gameId={gameId.toString()}
+          homeTeamId={homeTeamIdNum}
+          awayTeamId={awayTeamIdNum}
+        />
         {!statsLoading && gameStats && <GameTeamStats stats={gameStats} />}
 
         <LastFiveGamesSwitcher
@@ -280,20 +408,22 @@ export default function GameDetailsScreen() {
           }}
         />
 
-        {isLoading ? (
-          <TeamLocationSkeleton />
-        ) : (
-          <TeamLocationSection
-            arenaImage={homeTeamData.arenaImage}
-            arenaName={homeTeamData.arenaName}
-            location={homeTeamData.location}
-            address={homeTeamData.address}
-            arenaCapacity={homeTeamData.arenaCapacity}
-            weather={weather}
-            loading={weatherLoading}
-            error={weatherError}
-          />
-        )}
+         <GameUniforms
+          homeTeamId={homeTeamData.id}
+          awayTeamId={awayTeamData.id}
+        />
+
+
+        <TeamLocationSection
+          arenaImage={resolvedArenaImage}
+          arenaName={resolvedArenaName}
+          location={resolvedArenaCity}
+          address={resolvedArenaAddress}
+          arenaCapacity={resolvedArenaCapacity}
+          weather={weather}
+          loading={loading}
+          error={error}
+        />
       </View>
     </ScrollView>
   );
@@ -311,5 +441,18 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     paddingBottom: 12,
     position: "relative",
+  },
+  playoffSummaryContainer: {
+    marginHorizontal: 12,
+    position: "absolute",
+    top: -16,
+    borderRadius: 6,
+    backgroundColor: "#22222222", // subtle background
+    alignItems: "center",
+  },
+  playoffSummaryText: {
+    fontFamily: Fonts.OSEXTRALIGHT,
+    fontSize: 12,
+    textAlign: "center",
   },
 });

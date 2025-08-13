@@ -1,6 +1,7 @@
 import { ReactNode } from "react";
 import { Image, Text, View } from "react-native";
 import { teams, teamsById } from "../constants/teams";
+
 const OSMEDIUM = "Oswald_500Medium";
 const OSREGULAR = "Oswald_400Regular";
 
@@ -22,7 +23,9 @@ type Props = {
   team: TeamColors;
   teamId?: string;
   teamName?: string;
-  backgroundColor?: string; // add this
+  backgroundColor?: string;
+  textColor?: string; // color for the value text
+  labelColor?: string; // color for the label text
 };
 
 export default function InfoCard({
@@ -34,8 +37,10 @@ export default function InfoCard({
   teamId,
   teamName,
   backgroundColor,
+  textColor,
+  labelColor,
 }: Props) {
-  // Look up full team object if needed
+  // Determine team colors from ID or name
   let teamObj: TeamColors | undefined;
 
   if (teamId && teamsById[teamId]) {
@@ -50,31 +55,32 @@ export default function InfoCard({
 
   if (!teamObj && team.fullName) {
     teamObj = teams.find(
-      (t) => t.fullName.toLowerCase() === team.fullName?.toLowerCase()
+      (t) => t.fullName?.toLowerCase() === team.fullName?.toLowerCase()
     );
   }
 
   if (!teamObj) {
-    teamObj = team; // fallback
+    teamObj = team; // fallback to provided team object
   }
 
-  const textColor = "#fff";
-
+  // Define whether label requires wrapping
   const isConferenceChampionships = label === "Conference Championships";
+
+  // Fallback text colors logic
+  const resolvedLabelColor = labelColor ?? (isDark ? "#fff" : "#000");
+  const resolvedTextColor = textColor ?? (isDark ? "#fff" : "#fff");
 
   return (
     <>
       <Text
         style={{
-          color: isDark ? "#fff" : "#1d1d1d",
+          color: resolvedLabelColor,
           fontFamily: OSMEDIUM,
           fontSize: 20,
           paddingBottom: 4,
           marginBottom: 8,
           borderBottomWidth: 0.5,
-          borderBottomColor: isDark
-            ? "#ccc"
-            : "#444",
+          borderBottomColor: isDark ? "#ccc" : "#444",
         }}
       >
         {label}
@@ -107,10 +113,11 @@ export default function InfoCard({
             <Image
               source={image}
               style={{
-                width: 50,
-                height: 50,
+                width: 54,
+                height: 54,
+                paddingTop: 4,
                 resizeMode: "contain",
-                backgroundColor: isDark ? "#fff" : "#fff", // fallback background color or pass a prop
+                backgroundColor: isDark ? "#444" : "#ddd",
               }}
             />
           </View>
@@ -119,7 +126,7 @@ export default function InfoCard({
           style={{
             fontFamily: OSREGULAR,
             fontSize: 16,
-            color: textColor,
+            color: resolvedTextColor,
             flexShrink: 1,
             flex: 1,
             flexWrap: isConferenceChampionships ? "wrap" : "nowrap",

@@ -10,6 +10,7 @@ export interface Player {
   avatarUrl: string | null;
   player_id: number;
   height: string;
+  active: boolean
 }
 
 interface PlayersResponse {

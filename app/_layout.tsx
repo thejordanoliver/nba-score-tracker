@@ -1,3 +1,6 @@
+import { CustomHeaderTitle } from "@/components/CustomHeaderTitle";
+import FollowersModal from "@/components/Profile/FollowersModal";
+import { useFollowersModalStore } from "@/store/followersModalStore";
 import {
   Oswald_200ExtraLight,
   Oswald_300Light,
@@ -7,6 +10,7 @@ import {
   Oswald_700Bold,
   useFonts,
 } from "@expo-google-fonts/oswald";
+import { BottomSheetModalProvider } from "@gorhom/bottom-sheet";
 import {
   DarkTheme as NavigationDarkTheme,
   DefaultTheme as NavigationLightTheme,
@@ -22,13 +26,8 @@ import {
   useColorScheme,
 } from "react-native";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
-import { BottomSheetModalProvider } from "@gorhom/bottom-sheet";
-
-import { CustomHeaderTitle } from "@/components/CustomHeaderTitle";
 import CustomTabBar from "../components/CustomTabBar";
-
-import FollowersModal from "@/components/profile/FollowersModal"; // <-- Import modal
-import { useFollowersModalStore } from "@/store/followersModalStore"; // <-- Zustand store
+import { PreferencesProvider } from "@/contexts/PreferencesContext";
 
 // Custom themes
 const CustomDarkTheme = {
@@ -45,7 +44,7 @@ const CustomLightTheme = {
   colors: {
     ...NavigationLightTheme.colors,
     background: "#ffffff",
-    text: "#000000",
+    text: "#1d1d1d",
   },
 };
 
@@ -55,13 +54,14 @@ const hiddenRoutes = [
   "/highlights/video",
   "/edit-profile",
   "/edit-favorites",
-  "/signup/success", // hide tab bar on splash screen
+  "/signup/success",
   "/player/",
 ];
 
 export default function RootLayout() {
   const pathname = usePathname();
   const colorScheme = useColorScheme();
+  const isDark = colorScheme === "dark";
 
   const [fontsLoaded] = useFonts({
     Oswald_200ExtraLight,
@@ -72,7 +72,6 @@ export default function RootLayout() {
     Oswald_700Bold,
   });
 
-  // Tab bar visibility and fade animation
   const [visibleTabBar, setVisibleTabBar] = useState(true);
   const opacity = useRef(new Animated.Value(1)).current;
 
@@ -82,14 +81,9 @@ export default function RootLayout() {
     opacity.setValue(shouldHide ? 0 : 1);
   }, [pathname]);
 
-  // Zustand modal state
-  const {
-    isVisible,
-    type,
-    targetUserId,
-    closeModal,
-    currentUserId,
-  } = useFollowersModalStore();
+  // Followers modal (Zustand)
+  const { isVisible, type, targetUserId, closeModal, currentUserId } =
+    useFollowersModalStore();
 
   if (!fontsLoaded) {
     return (
@@ -99,13 +93,10 @@ export default function RootLayout() {
             flex: 1,
             justifyContent: "center",
             alignItems: "center",
-            backgroundColor: colorScheme === "dark" ? "#1d1d1d" : "#ffffff",
+            backgroundColor: isDark ? "#1d1d1d" : "#ffffff",
           }}
         >
-          <ActivityIndicator
-            size="large"
-            color={colorScheme === "dark" ? "#fff" : "#000"}
-          />
+          <ActivityIndicator size="large" color={isDark ? "#fff" : "#000"} />
         </View>
       </GestureHandlerRootView>
     );
@@ -114,14 +105,14 @@ export default function RootLayout() {
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
       <BottomSheetModalProvider>
-        <ThemeProvider
-          value={colorScheme === "dark" ? CustomDarkTheme : CustomLightTheme}
-        >
+        <ThemeProvider value={isDark ? CustomDarkTheme : CustomLightTheme}>
+              <PreferencesProvider>
+
           <Stack
             screenOptions={({ route, navigation }) => {
               const isTabScreen = route.name === "(tabs)";
               const isSplashScreen = route.name === "signup/success";
-              const isProfileScreen = route.name === "profile"; // Adjust if your profile route differs
+              const isProfileScreen = route.name === "profile";
 
               return {
                 headerShown: !isSplashScreen && !isTabScreen,
@@ -136,14 +127,13 @@ export default function RootLayout() {
                     )
                   : undefined,
                 gestureEnabled: !isTabScreen,
-                animation:
-                  isProfileScreen
-                    ? "fade"
-                    : isSplashScreen
+                animation: isProfileScreen
+                  ? "fade"
+                  : isSplashScreen
                     ? "fade"
                     : isTabScreen
-                    ? "none"
-                    : "default",
+                      ? "none"
+                      : "default",
                 gestureDirection: "horizontal",
               };
             }}
@@ -156,9 +146,9 @@ export default function RootLayout() {
             <Stack.Screen name="signup/success" />
           </Stack>
 
-          <StatusBar style={colorScheme === "dark" ? "light" : "dark"} />
+          <StatusBar style={isDark ? "light" : "dark"} />
 
-          {/* Tab bar always mounted, instantly hidden or shown */}
+          {/* Tab Bar */}
           <Animated.View
             style={{
               opacity,
@@ -180,6 +170,8 @@ export default function RootLayout() {
             currentUserId={currentUserId ?? ""}
             targetUserId={targetUserId ?? ""}
           />
+              </PreferencesProvider>
+
         </ThemeProvider>
       </BottomSheetModalProvider>
     </GestureHandlerRootView>

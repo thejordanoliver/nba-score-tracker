@@ -1,6 +1,6 @@
 // ProfileScreen.styles.ts
 import { StyleSheet } from "react-native";
-
+import { Fonts } from "@/constants/fonts";
 const BANNER_HEIGHT = 120;
 const PROFILE_PIC_SIZE = 120;
 
@@ -18,15 +18,11 @@ const theme = (isDark: boolean) => ({
     border: isDark ? "#444" : "#ccc",
     followCount: isDark ? "#fff" : "#1d1d1d",
   },
-  fonts: {
-    bold: "Oswald_500Medium",
-    medium: "Oswald_400Regular",
-    light: "Oswald_300Light",
-  },
+
 });
 
 export const getStyles = (isDark: boolean) => {
-  const { colors, fonts } = theme(isDark);
+  const { colors,  } = theme(isDark);
 
   return StyleSheet.create({
     container: {
@@ -82,12 +78,12 @@ export const getStyles = (isDark: boolean) => {
     },
     fullNameText: {
       fontSize: 20,
-      fontFamily: fonts.bold,
+      fontFamily: Fonts.OSBOLD,
       color: colors.textPrimary,
     },
     usernameText: {
       fontSize: 16,
-      fontFamily: fonts.medium,
+      fontFamily: Fonts.OSMEDIUM,
       color: "gray",
     },
     followContainer: {
@@ -109,14 +105,14 @@ export const getStyles = (isDark: boolean) => {
     followLabel: {
       fontSize: 16,
       color: colors.textSecondary,
-      fontFamily: fonts.medium,
+      fontFamily: Fonts.OSMEDIUM,
     },
     bioText: {
       marginVertical: 20,
       fontSize: 16,
       color: colors.textSecondary,
       lineHeight: 22,
-      fontFamily: fonts.light,
+      fontFamily: Fonts.OSLIGHT,
     },
     editProfileBtn: {
       backgroundColor: colors.inverse,
@@ -130,7 +126,7 @@ export const getStyles = (isDark: boolean) => {
     editProfileText: {
       color: isDark ? "#1d1d1d" : "#fff",
       fontSize: 16,
-      fontFamily: fonts.medium,
+      fontFamily: Fonts.OSMEDIUM,
     },
     favoritesContainer: {
       marginTop: 20,
@@ -153,7 +149,7 @@ export const getStyles = (isDark: boolean) => {
 
     heading: {
       fontSize: 24,
-      fontFamily: fonts.bold,
+      fontFamily: Fonts.OSBOLD,
       color: isDark ? "white" : "#1d1d1d",
     },
     noFavoritesText: {
@@ -182,7 +178,7 @@ export const getStyles = (isDark: boolean) => {
       resizeMode: "contain",
     },
     teamName: {
-      fontFamily: fonts.medium,
+      fontFamily: Fonts.OSMEDIUM,
       color: isDark ? "#fff" : "#fff",
       width: "auto",
     },
@@ -197,7 +193,7 @@ export const getStyles = (isDark: boolean) => {
     editText: {
       color: isDark ? "#1d1d1d" : "#fff",
       fontSize: 20,
-      fontFamily: fonts.medium,
+      fontFamily: Fonts.OSMEDIUM,
     },
     editIcon: {
       marginLeft: 4,
@@ -206,7 +202,7 @@ export const getStyles = (isDark: boolean) => {
 
     sectionTitle: {
       fontSize: 18,
-      fontWeight: "600",
+      fontFamily: Fonts.OSSEMIBOLD,
       marginBottom: 8,
       color: isDark ? "#eee" : "#111",
     },
