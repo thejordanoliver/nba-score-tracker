@@ -5,8 +5,9 @@ import axios from "axios";
 import { formatDistanceToNow } from "date-fns/formatDistanceToNow";
 import { ResizeMode, Video } from "expo-av";
 import { BlurView } from "expo-blur";
+import * as Haptics from "expo-haptics";
 import { useRouter } from "expo-router";
-import { memo, useRef, useState } from "react";
+import { memo, useEffect, useRef, useState } from "react";
 import {
   Alert,
   Animated,
@@ -19,8 +20,6 @@ import {
   View,
 } from "react-native";
 import PostImages from "./PostImages";
-
-const BASE_URL = process.env.EXPO_PUBLIC_API_URL;
 
 export interface Post {
   id: string;
@@ -43,7 +42,6 @@ interface PostItemProps {
   styles: ReturnType<typeof getStyles>;
   token: string | null;
   currentUserId: number | null;
-  likedPosts: Set<string>;
   deletePost: (postId: string) => void;
   editPost: (postId: string, newText: string) => void;
   BASE_URL: string;
@@ -56,7 +54,6 @@ export const PostItem = memo(function PostItem({
   styles,
   token,
   currentUserId,
-  likedPosts,
   deletePost,
   editPost,
   BASE_URL,
@@ -65,9 +62,19 @@ export const PostItem = memo(function PostItem({
   const [isEditing, setIsEditing] = useState(false);
   const [editText, setEditText] = useState(item.text);
   const [dropdownVisible, setDropdownVisible] = useState(false);
-  const [liked, setLiked] = useState<boolean>(likedPosts.has(String(item.id)));
-  const [likeCount, setLikeCount] = useState<number>(item.likes);
   const router = useRouter();
+  const [liked, setLiked] = useState<boolean>(item.liked_by_current_user);
+  const [likeCount, setLikeCount] = useState<number>(item.likes);
+console.log("PostItem render:", {
+  id: item.id,
+  liked_by_current_user: item.liked_by_current_user,
+  likes: item.likes,
+});
+
+  useEffect(() => {
+    setLiked(item.liked_by_current_user);
+    setLikeCount(item.likes);
+  }, [item.liked_by_current_user, item.likes]);
 
   const profileImageUri = item.profile_image
     ? item.profile_image.startsWith("http")
@@ -98,9 +105,17 @@ export const PostItem = memo(function PostItem({
       alert("You must be logged in to like posts.");
       return;
     }
+
     const newLiked = !liked;
     setLiked(newLiked);
     setLikeCount((count) => count + (newLiked ? 1 : -1));
+
+    // 🎉 Add haptics feedback
+    if (newLiked) {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    } else {
+      Haptics.selectionAsync();
+    }
 
     try {
       await axios.patch(
@@ -289,7 +304,7 @@ export const PostItem = memo(function PostItem({
                 borderWidth: 1,
                 borderRadius: 6,
                 padding: 6,
-                height: 200,
+                minHeight: 100,
               },
             ]}
             multiline

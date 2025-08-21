@@ -1,3 +1,4 @@
+import { Fonts } from "@/constants/fonts";
 import { teams } from "@/constants/teams"; // your teams list
 import { useRouter } from "expo-router";
 import React from "react";
@@ -9,8 +10,6 @@ import {
   useColorScheme,
   View,
 } from "react-native";
-import { Fonts } from "@/constants/fonts";
-
 
 export interface PlayerCardProps {
   id: number;
@@ -29,22 +28,20 @@ const getStyles = (isDark: boolean) =>
       alignItems: "center",
       backgroundColor: isDark ? "#2e2e2e" : "#eee",
       borderRadius: 8,
-      paddingHorizontal: 12,
+      paddingHorizontal: 20,
       paddingVertical: 12,
- 
     },
     avatar: {
       width: 50,
       height: 50,
       borderRadius: 30,
-           paddingTop: 4,
-
+      paddingTop: 4,
     },
     avatarPlaceholder: {
       width: 50,
       height: 50,
       borderRadius: 30,
-      backgroundColor: "#888",
+      backgroundColor: isDark ? "#444" : "#888",
       justifyContent: "center",
       alignItems: "center",
     },
@@ -54,7 +51,7 @@ const getStyles = (isDark: boolean) =>
       fontFamily: Fonts.OSBOLD,
     },
     info: {
-      width: "75%",
+      flex: 1,
       flexDirection: "row",
       justifyContent: "space-between",
       alignItems: "center",
@@ -72,13 +69,13 @@ const getStyles = (isDark: boolean) =>
     jerseyNumber: {
       fontSize: 16,
       marginLeft: 6,
-      fontFamily: Fonts.OSLIGHT,
-      color: isDark ? "#ccc" : "#555",
+      fontFamily: Fonts.OSBOLD,
+      color: isDark ? "#fff" : "#1d1d1d",
     },
     position: {
-      fontSize: 14,
-      color: isDark ? "#ccc" : "#555",
-      fontFamily: Fonts.OSLIGHT,
+      fontSize: 16,
+      color: isDark ? "#fff" : "#1d1d1d",
+      fontFamily: Fonts.OSBOLD,
     },
   });
 
@@ -144,12 +141,19 @@ const PlayerCard: React.FC<PlayerCardProps> = ({
           >
             {name}
           </Text>
-
-         
         </View>
-       {typeof jerseyNumber === "string" && /^\d+$/.test(jerseyNumber) && (
-            <Text style={styles.jerseyNumber}>#{jerseyNumber}</Text>
-          )}
+        {typeof jerseyNumber === "string" && /^\d+$/.test(jerseyNumber) && (
+          <Text
+            style={[
+              styles.jerseyNumber,
+              {
+                color: isDark ? "#fff" : teamObj?.color,
+              },
+            ]}
+          >
+            #{jerseyNumber}
+          </Text>
+        )}
       </View>
     </Pressable>
   );

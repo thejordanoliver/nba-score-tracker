@@ -9,7 +9,7 @@ import { useEffect, useState } from "react";
 import { Image, Pressable, Text, useColorScheme, View } from "react-native";
 import { LongPressGestureHandler, State } from "react-native-gesture-handler";
 import TeamPreviewModal from "./../Team/TeamPreviewModal";
-
+import { Fonts } from "@/constants/fonts";
 const API_URL = process.env.EXPO_PUBLIC_API_URL;
 
 type Props = {
@@ -47,43 +47,45 @@ const FavoriteTeamsList = ({
       setModalVisible(false);
     }
   };
-const handleRemoveFavorite = async (teamId: string) => {
-  try {
-    // Update local favorites list immediately
-    const updated = favorites.filter((team) => team.id !== teamId);
-    setFavorites(updated);
-    setModalVisible(false);
-    setPreviewTeam(null);
+  const handleRemoveFavorite = async (teamId: string) => {
+    try {
+      // Update local favorites list immediately
+      const updated = favorites.filter((team) => team.id !== teamId);
+      setFavorites(updated);
+      setModalVisible(false);
+      setPreviewTeam(null);
 
-    // Save updated favorites IDs to AsyncStorage
-    const idsOnly = updated.map((team) => team.id);
-    await AsyncStorage.setItem("favorites", JSON.stringify(idsOnly));
+      // Save updated favorites IDs to AsyncStorage
+      const idsOnly = updated.map((team) => team.id);
+      await AsyncStorage.setItem("favorites", JSON.stringify(idsOnly));
 
-    // Update backend if username available
-    if (username) {
-      try {
-        const response = await axios.patch(`${API_URL}/api/users/${username}/favorites`, {
-          favorites: idsOnly,
-        });
-        console.log("Backend favorites update response:", response.data);
-      } catch (error: unknown) {
-        if (axios.isAxiosError(error)) {
-          console.error("Failed to update favorites on backend:", error.response?.data || error.message);
-        } else if (error instanceof Error) {
-          console.error("Unexpected error:", error.message);
-        } else {
-          console.error("Unknown error:", error);
+      // Update backend if username available
+      if (username) {
+        try {
+          const response = await axios.patch(
+            `${API_URL}/api/users/${username}/favorites`,
+            {
+              favorites: idsOnly,
+            }
+          );
+          console.log("Backend favorites update response:", response.data);
+        } catch (error: unknown) {
+          if (axios.isAxiosError(error)) {
+            console.error(
+              "Failed to update favorites on backend:",
+              error.response?.data || error.message
+            );
+          } else if (error instanceof Error) {
+            console.error("Unexpected error:", error.message);
+          } else {
+            console.error("Unknown error:", error);
+          }
         }
       }
+    } catch (error) {
+      console.error("Error in handleRemoveFavorite:", error);
     }
-  } catch (error) {
-    console.error("Error in handleRemoveFavorite:", error);
-  }
-};
-
-
-
-
+  };
 
   useEffect(() => {
     setFavorites(favoriteTeams);
@@ -91,16 +93,15 @@ const handleRemoveFavorite = async (teamId: string) => {
 
   return (
     <>
-    {previewTeam && (
-  <TeamPreviewModal
-    visible={modalVisible}
-    team={previewTeam}
-    onClose={() => setModalVisible(false)}
-    onGo={handleGoToTeam}
-    onRemove={handleRemoveFavorite}
-  />
-)}
-
+      {previewTeam && (
+        <TeamPreviewModal
+          visible={modalVisible}
+          team={previewTeam}
+          onClose={() => setModalVisible(false)}
+          onGo={handleGoToTeam}
+          onRemove={handleRemoveFavorite}
+        />
+      )}
 
       <View
         style={[
@@ -145,6 +146,7 @@ const handleRemoveFavorite = async (teamId: string) => {
                         marginBottom: isGridView ? 0 : 8,
                         paddingHorizontal: 12,
                         paddingVertical: isGridView ? 20 : 12,
+                        
                       },
                     ]}
                   >

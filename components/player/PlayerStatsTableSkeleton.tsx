@@ -64,7 +64,6 @@ export default function PlayerStatTableSkeleton() {
 const getStyles = (isDark: boolean) =>
   StyleSheet.create({
     container: {
-      marginVertical: 12,
       borderRadius: 4,
       overflow: "hidden",
     },

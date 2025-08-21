@@ -103,9 +103,9 @@ const styles = StyleSheet.create({
     borderRadius: 8,
   },
   avatar: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
+   width: 50,
+    height: 50,
+    borderRadius: 25,
   },
   infoSection: {
     flex: 1,

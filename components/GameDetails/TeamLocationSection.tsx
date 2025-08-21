@@ -73,13 +73,11 @@ const TeamLocationSection: React.FC<Props> = ({
     );
   };
 
-
-const titleCase = (str: string) =>
-  str
-    .split(" ")
-    .map(word => word.charAt(0).toUpperCase() + word.slice(1))
-    .join(" ");
-
+  const titleCase = (str: string) =>
+    str
+      .split(" ")
+      .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+      .join(" ");
 
   return (
     <>
@@ -92,51 +90,21 @@ const titleCase = (str: string) =>
           <View style={styles.container}>
             <Image
               source={arenaImage}
-              style={ styles.arenaImage }
+              style={styles.arenaImage}
               resizeMode="cover"
             />
 
+            <View></View>
+
             <View>
-              
-            </View>
-
-              <View>
-            <View style={styles.textContainer}>
-              {location && (
-                <Text style={[styles.arenaTitle, { color: textColor }]}>
-                  {arenaName}
-                </Text>
-              )}
-
-              {error ? (
-                <Text style={[styles.text, { color: textColor }]}>
-                  Error loading weather: {error}
-                </Text>
-              ) : weather ? (
-                <View style={{ flexDirection: "row", alignItems: "center" }}>
-                  <Image
-                    source={{ uri: weather.icon }}
-                    style={styles.icon}
-                  />
+              <View style={styles.textContainer}>
+                {location && (
                   <Text style={[styles.arenaTitle, { color: textColor }]}>
-                    {weather.tempFahrenheit.toFixed(0)}°F
+                    {arenaName}
                   </Text>
-                </View>
-              ) : null}
+                )}
+              </View>
             </View>
-                         <View style={styles.description}>
-            
-                <Text
-                  style={[styles.subText, { color: textColor, textAlign: "right" }]}
-                >
-               {titleCase(weather?.description ?? "No description available")}
-
-                </Text>
-       </View>
-            </View>
-
-
-      
 
             <View style={styles.addressContainer}>
               <Ionicons name="location" size={20} color={textColor} />
@@ -159,8 +127,6 @@ const titleCase = (str: string) =>
                 </TouchableOpacity>
               )}
             </View>
-       
-
 
             <View style={styles.addressContainer}>
               <Ionicons name="person" size={20} color={textColor} />
@@ -180,11 +146,9 @@ const titleCase = (str: string) =>
 };
 
 const styles = StyleSheet.create({
-  container: {  },
+  container: {},
 
-
-arenaImage : {width: "100%", height: 200, borderRadius: 8},
-
+  arenaImage: { width: "100%", height: 200, borderRadius: 8 },
 
   text: {
     fontFamily: Fonts.OSREGULAR,
@@ -197,7 +161,8 @@ arenaImage : {width: "100%", height: 200, borderRadius: 8},
   },
   arenaTitle: {
     fontFamily: Fonts.OSBOLD,
-    fontSize: 20,
+    fontSize: 24,
+    paddingVertical: 10,
   },
   icon: {
     width: 54,
@@ -205,20 +170,14 @@ arenaImage : {width: "100%", height: 200, borderRadius: 8},
   },
   textContainer: {
     flexDirection: "row",
-    justifyContent: "space-between",
+    justifyContent: "flex-start",
     alignItems: "center",
-    
   },
   addressContainer: {
     flexDirection: "row",
     alignItems: "center",
     marginTop: 12,
   },
-  description : {
-    flex: 1,
-    justifyContent: "flex-end",
-    textAlign: "right"
-  }
 });
 
 export default TeamLocationSection;

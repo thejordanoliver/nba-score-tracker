@@ -1,9 +1,11 @@
 import { CustomHeaderTitle } from "@/components/CustomHeaderTitle";
 import { CommentItem } from "@/components/Forum/CommentItem";
 import { Post, PostItem, getStyles } from "@/components/Forum/PostItem";
+import { Fonts } from "@/constants/fonts";
 import { Ionicons } from "@expo/vector-icons";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import axios from "axios";
+import { BlurView } from "expo-blur";
 import { useLocalSearchParams, useNavigation, useRouter } from "expo-router";
 import { goBack } from "expo-router/build/global-state/routing";
 import { jwtDecode } from "jwt-decode";
@@ -19,14 +21,9 @@ import {
   View,
   useColorScheme,
 } from "react-native";
-import { BlurView } from "expo-blur";
+
 const BASE_URL = process.env.EXPO_PUBLIC_API_URL || "http://localhost:4000";
-const OSEXTRALIGHT = "Oswald_200ExtraLight";
-const OSLIGHT = "Oswald_300Light";
-const OSREGULAR = "Oswald_400Regular";
-const OSMEDIUM = "Oswald_500Medium";
-const OSBOLD = "Oswald_700Bold";
-const OSSEMIBOLD = "Oswald_600SemiBold";
+
 interface Comment {
   id: string;
   text: string;
@@ -99,21 +96,24 @@ export default function CommentThreadScreen() {
 
   // Fetch post + comments
   const fetchThread = async () => {
-    if (!postId) return;
-    setLoading(true);
-    try {
-      const [postRes, commentRes] = await Promise.all([
-        axios.get(`${BASE_URL}/api/forum/post/${postId}`),
-        axios.get(`${BASE_URL}/api/forum/post/${postId}/comments`),
-      ]);
-      setPost(postRes.data.post);
-      setComments(commentRes.data.comments);
-    } catch (err) {
-      console.error("Failed to fetch thread", err);
-    } finally {
-      setLoading(false);
-    }
-  };
+  if (!postId) return;
+  setLoading(true);
+  try {
+    const [postRes, commentRes] = await Promise.all([
+      axios.get(`${BASE_URL}/api/forum/post/${postId}`),
+      axios.get(`${BASE_URL}/api/forum/post/${postId}/comments`),
+    ]);
+    console.log("Fetched post:", postRes.data.post); // ✅ log the post
+    console.log("Fetched comments:", commentRes.data.comments);
+    setPost(postRes.data.post);
+    setComments(commentRes.data.comments);
+  } catch (err) {
+    console.error("Failed to fetch thread", err);
+  } finally {
+    setLoading(false);
+  }
+};
+
 
   useEffect(() => {
     if (postId) {
@@ -151,19 +151,27 @@ export default function CommentThreadScreen() {
     }
   };
   async function editComment(commentId: string, newText: string) {
+    if (!token) {
+      alert("You must be logged in to edit a comment");
+      return;
+    }
+
     try {
       await axios.put(
         `${BASE_URL}/api/forum/post/${postId}/comments/${commentId}`,
+        { text: newText },
         {
-          text: newText,
+          headers: { Authorization: `Bearer ${token}` },
         }
       );
+
       setComments((prevComments) =>
         prevComments.map((comment) =>
           comment.id === commentId ? { ...comment, text: newText } : comment
         )
       );
     } catch (err) {
+      console.error("Failed to edit comment", err);
       alert("Failed to edit comment");
     }
   }
@@ -226,18 +234,18 @@ export default function CommentThreadScreen() {
           )}
           ListHeaderComponent={
             post ? (
-              <PostItem
-                item={post}
-                isDark={isDark}
-                token={token}
-                currentUserId={currentUserId}
-                likedPosts={new Set()}
-                deletePost={deletePost}
-                editPost={() => {}}
-                BASE_URL={BASE_URL}
-                styles={getStyles(isDark)}
-                onImagePress={() => {}}
-              />
+           <PostItem
+  item={post}
+  isDark={isDark}
+  token={token}
+  currentUserId={currentUserId}
+  deletePost={deletePost}
+  editPost={() => {}}
+  BASE_URL={BASE_URL}
+  styles={getStyles(isDark)}
+  onImagePress={() => {}}
+/>
+
             ) : null
           }
           contentContainerStyle={{ paddingBottom: 200 }}
@@ -245,64 +253,63 @@ export default function CommentThreadScreen() {
         />
 
         {/* Input bar positioned at bottom */}
-<BlurView
-  intensity={80}
-  tint={isDark ? "systemUltraThinMaterialDark" : "light"}
-  style={{
-    position: "absolute",
-    bottom: 80,
-    left: 0,
-    right: 0,
-    padding: 12,
-    flexDirection: "row",
-    alignItems: "flex-end",
-   borderTopLeftRadius: 12,
-   borderTopRightRadius: 12
-  }}
->
-  <TextInput
-    placeholder="Write a comment..."
-    value={newComment}
-    onChangeText={setNewComment}
-    multiline
-    onContentSizeChange={(event) => {
-      setInputHeight(event.nativeEvent.contentSize.height);
-    }}
-    style={{
-      color: isDark ? "#fff" : "#000",
-      backgroundColor: isDark ? "#222" : "#f0f0f0",
-      paddingVertical: 10,
-      paddingHorizontal: 16,
-      flex: 1,
-      fontFamily: OSREGULAR,
-      borderTopLeftRadius: 50,
-      borderBottomLeftRadius: 50,
-      maxHeight: 100,
-    }}
-    placeholderTextColor={isDark ? "#888" : "#666"}
-  />
-  <TouchableOpacity
-    onPress={postComment}
-    disabled={submitting}
-    style={{
-      backgroundColor: isDark ? "#fff" : "#1d1d1d",
-      paddingVertical: 10,
-            paddingHorizontal: 16,
+        <BlurView
+          intensity={80}
+          tint={isDark ? "systemUltraThinMaterialDark" : "light"}
+          style={{
+            position: "absolute",
+            bottom: 80,
+            left: 0,
+            right: 0,
+            padding: 12,
+            flexDirection: "row",
+            alignItems: "flex-end",
+            borderTopLeftRadius: 12,
+            borderTopRightRadius: 12,
+          }}
+        >
+          <TextInput
+            placeholder="Write a comment..."
+            value={newComment}
+            onChangeText={setNewComment}
+            multiline
+            onContentSizeChange={(event) => {
+              setInputHeight(event.nativeEvent.contentSize.height);
+            }}
+            style={{
+              color: isDark ? "#fff" : "#000",
+              backgroundColor: isDark ? "#222" : "#f0f0f0",
+              paddingVertical: 10,
+              paddingHorizontal: 16,
+              flex: 1,
+              fontFamily: Fonts.OSREGULAR,
+              borderTopLeftRadius: 50,
+              borderBottomLeftRadius: 50,
+              maxHeight: 100,
+            }}
+            placeholderTextColor={isDark ? "#888" : "#666"}
+          />
+          <TouchableOpacity
+            onPress={postComment}
+            disabled={submitting}
+            style={{
+              backgroundColor: isDark ? "#fff" : "#1d1d1d",
+              paddingVertical: 10,
+              paddingHorizontal: 16,
 
-      borderTopRightRadius: 50,
-      borderBottomRightRadius: 50,
-      justifyContent: "center",
-      alignItems: "center",
-    }}
-  >
-    <Ionicons
-      name="send"
-      color={isDark ? "#1d1d1d" : "#fff"}
-      size={22}
-    />
-  </TouchableOpacity>
-</BlurView>
-
+              borderTopRightRadius: 50,
+              borderBottomRightRadius: 50,
+              justifyContent: "center",
+              alignItems: "center",
+            }}
+          >
+            <Ionicons
+              name="send"
+              color={isDark ? "#1d1d1d" : "#fff"}
+              size={22}
+            />
+          </TouchableOpacity>
+        </BlurView>
       </View>
     </KeyboardAvoidingView>
   );

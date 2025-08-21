@@ -1,61 +1,12 @@
 // useSeasonGames.ts
 
+import { APIGame, TeamRecord } from "@/types/types";
 import axios from "axios";
-import { useEffect, useRef, useState } from "react";
 import rateLimit from "axios-rate-limit";
+import { useEffect, useRef, useState } from "react";
 import { transformGameData } from "../utils/transformGameData";
 
-type APIGame = {
-  id: number;
-  date: { start: string };
-  status: {
-    long: string;
-    short: string;
-    clock?: string;
-  };
-  periods: {
-    current: number;
-    total: number;
-    endOfPeriod: boolean;
-  };
-  teams: {
-    home: {
-      id: number;
-      name: string;
-      logo: string;
-      logoLight: any;
-    };
-    visitors: {
-      id: number;
-      name: string;
-      logo: string;
-      logoLight: any;
-    };
-  };
-  scores: {
-    home: {
-      points: number | null;
-      win?: number;
-      loss?: number;
-      series?: { win: number; loss: number };
-      linescore?: string[];
-    };
-    visitors: {
-      points: number | null;
-      win?: number;
-      loss?: number;
-      series?: { win: number; loss: number };
-      linescore?: string[];
-    };
-  };
-};
 
-
-type TeamRecord = {
-  wins: number;
-  losses: number;
-  record: string;
-};
 
 type TransformedGame = ReturnType<typeof transformGameData>;
 
@@ -147,9 +98,7 @@ const filterGames = (games: APIGame[]): APIGame[] => {
   const now = new Date();
   return games.filter((game) => {
     const gameDate = new Date(game.date.start);
-    return !(
-      game.status.long.toLowerCase() === "scheduled" && gameDate < now
-    );
+    return !(game.status.long.toLowerCase() === "scheduled" && gameDate < now);
   });
 };
 
@@ -208,41 +157,40 @@ export function useSeasonGames(season: string) {
             new Date(game.date.start) >= playoffStartDate &&
             new Date(game.date.start) <= playoffEndDate;
 
-        const enrichedGame = {
-  ...game,
-  isPlayoff,
-  date: {
-    ...game.date,
-    stage: isPlayoff ? 2 : 1,
-  },
-  teams: {
-    home: {
-      ...game.teams.home,
-      name: teamMap[game.teams.home.id] ?? game.teams.home.name,
-      ...homeRecord,
-    },
-    visitors: {
-      ...game.teams.visitors,
-      name: teamMap[game.teams.visitors.id] ?? game.teams.visitors.name,
-      ...visitorRecord,
-    },
-  },
-  scores: {
-    home: {
-      ...game.scores.home,
-    },
-    visitors: {
-      ...game.scores.visitors,
-    },
-  },
-};
-
+          const enrichedGame = {
+            ...game,
+            isPlayoff,
+            date: {
+              ...game.date,
+              stage: isPlayoff ? 2 : 1,
+            },
+            teams: {
+              home: {
+                ...game.teams.home,
+                name: teamMap[game.teams.home.id] ?? game.teams.home.name,
+                ...homeRecord,
+              },
+              visitors: {
+                ...game.teams.visitors,
+                name:
+                  teamMap[game.teams.visitors.id] ?? game.teams.visitors.name,
+                ...visitorRecord,
+              },
+            },
+            scores: {
+              home: {
+                ...game.scores.home,
+              },
+              visitors: {
+                ...game.scores.visitors,
+              },
+            },
+          };
 
           return transformGameData(enrichedGame, standingsMap);
         })
         .sort(
-          (a, b) =>
-            new Date(a.date).getTime() - new Date(b.date).getTime()
+          (a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()
         );
 
       cacheRef.current.set(season, seasonGames);

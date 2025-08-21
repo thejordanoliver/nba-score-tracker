@@ -58,17 +58,14 @@ export default function NewsCardSkeleton() {
       </View>
 
       <View style={styles.details}>
-        {/* Title shimmer */}
-        <View style={styles.shimmerClipper}>
-          <View style={styles.title} />
-          <Animated.View style={[styles.shimmer, styles.titleShimmer, shimmerStyle]} />
-        </View>
-
-        {/* Source shimmer */}
-        <View style={styles.shimmerClipper}>
-          <View style={styles.source} />
-          <Animated.View style={[styles.shimmer, styles.sourceShimmer, shimmerStyle]} />
-        </View>
+       {/* Title shimmer */}
+<View style={[styles.shimmerClipper, styles.title]}>
+  <Animated.View style={[styles.shimmer, { width: '40%', height: '100%' }, shimmerStyle]} />
+</View>
+     {/* Source shimmer */}
+<View style={[styles.shimmerClipper, styles.source]}>
+  <Animated.View style={[styles.shimmer, { width: '40%', height: '100%' }, shimmerStyle]} />
+</View>
       </View>
     </View>
   );

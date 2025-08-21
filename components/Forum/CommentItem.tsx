@@ -24,6 +24,7 @@ interface CommentItemProps {
   currentUserId: string | number;
   editComment: (commentId: string, newText: string) => Promise<void>;
   deleteComment: (commentId: string) => Promise<void>;
+  
 }
 const COLLAPSED_HEIGHT = 60;
 

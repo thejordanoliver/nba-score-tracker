@@ -8,6 +8,8 @@ type Highlight = {
   publishedAt: string;
   thumbnail: string;
   views: number;
+  channelName: string;
+  duration: number;
 };
 
 const BASE_URL = process.env.EXPO_PUBLIC_API_URL;
@@ -129,12 +131,16 @@ export function useHighlights(
 
         const data = response.data;
 
-        const cleanedData = data
-          .filter(item => !/tickets|playstation/i.test(item.title))
-          .map(item => ({
-            ...item,
-            title: toSentenceCasePreserveAcronyms(decodeHTMLEntities(item.title)),
-          }));
+     const cleanedData = data
+  .filter(item => !/tickets|playstation/i.test(item.title))
+  .map(item => ({
+    ...item,
+    title: toSentenceCasePreserveAcronyms(decodeHTMLEntities(item.title)),
+    channelName: item.channelName || "Unknown", // <-- flatten here
+        duration: item.duration, // <-- add this line
+
+  }));
+
 
         setHighlights(cleanedData);
         await AsyncStorage.setItem(cacheKey, JSON.stringify(cleanedData));

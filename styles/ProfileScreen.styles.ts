@@ -1,6 +1,6 @@
 // ProfileScreen.styles.ts
-import { StyleSheet } from "react-native";
 import { Fonts } from "@/constants/fonts";
+import { StyleSheet } from "react-native";
 const BANNER_HEIGHT = 120;
 const PROFILE_PIC_SIZE = 120;
 
@@ -18,11 +18,10 @@ const theme = (isDark: boolean) => ({
     border: isDark ? "#444" : "#ccc",
     followCount: isDark ? "#fff" : "#1d1d1d",
   },
-
 });
 
 export const getStyles = (isDark: boolean) => {
-  const { colors,  } = theme(isDark);
+  const { colors } = theme(isDark);
 
   return StyleSheet.create({
     container: {
@@ -130,7 +129,7 @@ export const getStyles = (isDark: boolean) => {
     },
     favoritesContainer: {
       marginTop: 20,
-      paddingHorizontal: 20,
+      paddingHorizontal: 12,
       paddingBottom: 100,
     },
     favoritesHeader: {
@@ -160,7 +159,7 @@ export const getStyles = (isDark: boolean) => {
     teamGrid: {
       flexDirection: "row",
       flexWrap: "wrap",
-      marginVertical: 8,
+      marginBottom: 8,
     },
 
     teamItem: {
@@ -178,7 +177,7 @@ export const getStyles = (isDark: boolean) => {
       resizeMode: "contain",
     },
     teamName: {
-      fontFamily: Fonts.OSMEDIUM,
+      fontFamily: Fonts.OSREGULAR,
       color: isDark ? "#fff" : "#fff",
       width: "auto",
     },
@@ -211,7 +210,5 @@ export const getStyles = (isDark: boolean) => {
       marginRight: 16,
       width: 80,
     },
-    
   });
-  
 };

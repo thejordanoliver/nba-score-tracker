@@ -102,50 +102,61 @@ const { deleteAccount } = useAuth();
     router.push(`/settings/${screen}`);
   };
 
- 
+const loadProfileData = async () => {
+  try {
+    // Get local cache
+    const local = await AsyncStorage.multiGet([
+      "userId",
+      "username",
+      "fullName",
+      "bio",
+      "profileImage",
+      "bannerImage",
+      "favorites",
+    ]);
+    const cached = Object.fromEntries(local);
 
-  const loadFollowCounts = async (userId: string) => {
-    try {
-      const res = await fetch(`${BASE_URL}/api/users/${userId}`);
+    if (cached.userId) {
+      // Fetch from API
+      const res = await fetch(`${BASE_URL}/api/users/${cached.userId}`);
       const data = await res.json();
+
+      setUsername(data.username ?? cached.username ?? null);
+      setFullName(data.fullName ?? cached.fullName ?? null);
+      setBio(data.bio ?? cached.bio ?? null);
+      setProfileImage(parseImageUrl(data.profileImage ?? cached.profileImage));
+      setBannerImage(parseImageUrl(data.bannerImage ?? cached.bannerImage));
+      setFavorites(
+        data.favorites ??
+          (cached.favorites ? JSON.parse(cached.favorites) : [])
+      );
+
+      // ✅ set follow counts here
       setFollowersCount(data.followersCount ?? 0);
       setFollowingCount(data.followingCount ?? 0);
-    } catch (error) {
-      console.warn("Failed to load follow counts:", error);
+
+      // Update local cache for next time
+      await AsyncStorage.multiSet([
+        ["username", data.username ?? ""],
+        ["fullName", data.fullName ?? ""],
+        ["bio", data.bio ?? ""],
+        ["profileImage", data.profileImage ?? ""],
+        ["bannerImage", data.bannerImage ?? ""],
+        ["favorites", JSON.stringify(data.favorites ?? [])],
+      ]);
     }
-  };
+  } catch (err) {
+    console.warn("Failed to load profile:", err);
+  } finally {
+    setIsLoading(false);
+  }
+};
 
-  const loadProfileData = async () => {
-    try {
-      const keys = [
-        "userId",
-        "username",
-        "fullName",
-        "bio",
-        "profileImage",
-        "bannerImage",
-        "favorites",
-      ];
-      const result = await AsyncStorage.multiGet(keys);
-      const data = Object.fromEntries(result);
+ 
 
-      setUsername(data.username ?? null);
-      setFullName(data.fullName ?? null);
-      setBio(data.bio ?? null);
-      setProfileImage(parseImageUrl(data.profileImage));
-      setBannerImage(parseImageUrl(data.bannerImage));
-      setFavorites(data.favorites ? JSON.parse(data.favorites) : []);
 
-      if (data.userId) {
-        setCurrentUserId(Number(data.userId));
-        await loadFollowCounts(data.userId);
-      }
-    } catch (error) {
-      console.warn("Failed to load profile data:", error);
-    } finally {
-      setIsLoading(false);
-    }
-  };
+
+
 
 const confirmDeleteAccount = async () => {
   try {

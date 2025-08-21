@@ -8,7 +8,7 @@ import {
   useColorScheme,
   View,
 } from "react-native";
-
+import { Fonts } from "@/constants/fonts";
 type Props = {
   item: Team;
   isSelected: boolean;
@@ -159,7 +159,7 @@ const styles = StyleSheet.create({
     borderRadius: 8,
   },
   teamName: {
-    fontFamily: "Oswald_400Regular",
+    fontFamily: Fonts.OSREGULAR,
     fontSize: 12,
     textAlign: "center",
   },

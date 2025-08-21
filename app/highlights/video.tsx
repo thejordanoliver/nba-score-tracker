@@ -140,6 +140,7 @@ export default function HighlightVideoScreen() {
                 title={item.title}
                 thumbnail={item.thumbnail}
                 publishedAt={item.publishedAt}
+                thumbnailHeight={200} // smaller for Up Next
               />
             </View>
           ))}

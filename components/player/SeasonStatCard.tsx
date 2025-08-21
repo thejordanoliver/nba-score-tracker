@@ -55,7 +55,6 @@ export default function SeasonStatCard({
 
   const teamObj = teams.find((t) => String(t.id) === sanitizedTeamId);
 const forceWhiteTextTeams = [
-  "Timberwolves",
   "Heat",
   "Clippers",
   "Rockets",

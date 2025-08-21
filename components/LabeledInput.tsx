@@ -1,6 +1,6 @@
 import React from "react";
 import { View, Text, TextInput, StyleSheet, useColorScheme } from "react-native";
-
+import { Fonts } from "@/constants/fonts";
 type LabeledInputProps = {
   label: string;
   value: string;
@@ -60,14 +60,14 @@ const styles = StyleSheet.create({
     marginTop: 40,
     marginBottom: 20,
     fontSize: 16,
-    fontFamily: "Oswald_400Regular",
+    fontFamily: Fonts.OSREGULAR,
   },
   input: {
     padding: 20,
     borderRadius: 8,
     fontSize: 16,
     marginBottom: 12,
-    fontFamily: "Oswald_300Light",
+    fontFamily: Fonts.OSLIGHT,
   },
   bioInput: {
     height: 100,

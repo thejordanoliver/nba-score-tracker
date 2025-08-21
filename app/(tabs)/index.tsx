@@ -28,6 +28,8 @@ import { useLiveGames } from "../../hooks/useLiveGames";
 import { useNews } from "../../hooks/useNews";
 import { useWeeklyGames } from "../../hooks/useWeeklyGames";
 import { getStyles } from "../../styles/indexStyles";
+import { SafeAreaView } from "react-native";
+import FootballGamesList from "@/components/Football/FootballGamesList";
 
 type Tab = "scores" | "news";
 
@@ -232,10 +234,12 @@ export default function HomeScreen() {
       itemType: "news",
       publishedAt: item.publishedAt ?? item.date ?? new Date().toISOString(),
     }));
-    const taggedHighlights: CombinedItem[] = highlights.map((item) => ({
-      ...item,
-      itemType: "highlight",
-    }));
+const taggedHighlights: CombinedItem[] = highlights.map((item) => ({
+  ...item,
+  itemType: "highlight",
+  publishedAt: item.publishedAt ?? new Date().toISOString(),
+}));
+
 
     const combined = [...taggedNews, ...taggedHighlights];
 
@@ -249,18 +253,16 @@ export default function HomeScreen() {
   }, [news, highlights]);
 
 
-  useEffect(() => {
-  const interval = setInterval(() => {
-    // Auto-refresh only if we're on the scores tab
-    if (selectedTab === "scores") {
-      refreshLiveGames?.();
-      refreshWeeklyGames?.();
-      refreshSummerGames?.();
-    }
-  }, 60_000); // refresh every 60 seconds (adjust as needed)
+//   useEffect(() => {
+//   if (selectedTab !== "scores") return;
+//   const interval = setInterval(() => {
+//     refreshLiveGames?.();
+//     refreshWeeklyGames?.();
+//     refreshSummerGames?.();
+//   }, 60_000);
+//   return () => clearInterval(interval);
+// }, [selectedTab]); // only depend on tab
 
-  return () => clearInterval(interval); // cleanup on unmount
-}, [selectedTab, refreshLiveGames, refreshWeeklyGames, refreshSummerGames]);
 
 
   return (
@@ -303,6 +305,9 @@ export default function HomeScreen() {
           <>
             <Heading>Latest Games</Heading>
             {/* <DummyGameCard /> */}
+              <SafeAreaView style={{ flex: 1 }}>
+      <FootballGamesList date="2025-08-28" />
+    </SafeAreaView>
             {onlySummerLeagueToday ? (
               <SummerGamesList
                 games={filteredSummer}

@@ -343,9 +343,9 @@ const styles = StyleSheet.create({
     marginBottom: 10,
   },
   avatar: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
+    width: 50,
+    height: 50,
+    borderRadius: 25,
     backgroundColor: "#ccc",
     paddingTop: 4
   },
@@ -376,7 +376,7 @@ const styles = StyleSheet.create({
   },
   statText: {
     fontFamily: Fonts.OSREGULAR,
-    fontSize: 12,
+    fontSize: 14,
     color: "#fff",
   },
   teamLogo: {

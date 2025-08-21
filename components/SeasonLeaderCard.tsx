@@ -57,13 +57,12 @@ const getStyles = (isDark: boolean) =>
     },
     name: {
       fontSize: 16,
-      fontFamily: Fonts.OSSEMIBOLD,
+      fontFamily: Fonts.OSBOLD,
       color: isDark ? "#fff" : "#1d1d1d",
     },
     stat: {
       fontSize: 16,
       fontFamily: Fonts.OSBOLD,
-      minWidth: 40,
       textAlign: "right",
       color: isDark ? "#fff" : "#1d1d1d",
     },

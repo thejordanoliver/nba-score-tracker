@@ -272,3 +272,54 @@ export type DBPlayer = {
   nba_start: number;
   nba_pro: number;
 };
+
+export type APIGame = {
+  id: number;
+  date: { start: string };
+  status: {
+    long: string;
+    short: string;
+    clock?: string;
+  };
+  periods: {
+    current: number;
+    total: number;
+    endOfPeriod: boolean;
+  };
+  teams: {
+    home: {
+      id: number;
+      name: string;
+      logo: string;
+      logoLight: any;
+    };
+    visitors: {
+      id: number;
+      name: string;
+      logo: string;
+      logoLight: any;
+    };
+  };
+  scores: {
+    home: {
+      points: number | null;
+      win?: number;
+      loss?: number;
+      series?: { win: number; loss: number };
+      linescore?: string[];
+    };
+    visitors: {
+      points: number | null;
+      win?: number;
+      loss?: number;
+      series?: { win: number; loss: number };
+      linescore?: string[];
+    };
+  };
+};
+
+export type TeamRecord = {
+  wins: number;
+  losses: number;
+  record: string;
+};

@@ -31,7 +31,7 @@ import {
   View,
 } from "react-native";
 import HistoricalOddsCardSkeleton from "../../components/GameDetails/HistoricalOddsSkeleton";
-
+import Weather from "@/components/GameDetails/Weather";
 interface GameOdds {
   gameId: string | number;
   homeTeam: string;
@@ -420,6 +420,12 @@ export default function GameDetailsScreen() {
           location={resolvedArenaCity}
           address={resolvedArenaAddress}
           arenaCapacity={resolvedArenaCapacity}
+          weather={weather}
+          loading={loading}
+          error={error}
+        />
+        <Weather
+          address={resolvedArenaAddress}
           weather={weather}
           loading={loading}
           error={error}

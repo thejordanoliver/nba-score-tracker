@@ -4,6 +4,9 @@ import { useLocalSearchParams, useNavigation } from "expo-router";
 import { useEffect, useLayoutEffect, useState } from "react";
 import { Image, ScrollView, Text, useColorScheme } from "react-native";
 import { getStyles } from "../../styles/NewsArticle.style";
+import FallbackImage from "@/assets/Logos/ThumbnailFallback.png";
+import { Fonts } from "@/constants/fonts";
+
 
 const API_URL = process.env.EXPO_PUBLIC_API_URL;
 
@@ -14,6 +17,7 @@ export default function NewsArticleScreen() {
     title?: string;
     thumbnail?: string;
   }>();
+  const [imageError, setImageError] = useState(false);
 
   const [scrapedContent, setScrapedContent] = useState<string>("");
   const [loadingContent, setLoadingContent] = useState(false);
@@ -64,8 +68,11 @@ export default function NewsArticleScreen() {
         <>
           {title && <Text style={styles.title}>{title}</Text>}
           {thumbnail && (
-            <Image source={{ uri: thumbnail }} style={styles.image} />
-          )}
+ <Image
+          source={imageError || !thumbnail ? FallbackImage : { uri: thumbnail }}
+          onError={() => setImageError(true)}
+          style={styles.image}
+        />          )}
           <Text style={styles.content}>{scrapedContent}</Text>
         </>
       )}

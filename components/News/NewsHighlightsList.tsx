@@ -19,6 +19,8 @@ type HighlightItem = {
   title: string;
   publishedAt: string;
   thumbnail: string;
+  channelName?: string;
+  duration?: string;
 };
 
 type CombinedItem =
@@ -31,6 +33,7 @@ type NewsHighlightsListProps = {
   refreshing: boolean;
   onRefresh: () => void;
 };
+
 
 const NewsHighlightsList: React.FC<NewsHighlightsListProps> = ({
   items,
@@ -85,6 +88,8 @@ const NewsHighlightsList: React.FC<NewsHighlightsListProps> = ({
             title={item.title}
             publishedAt={item.publishedAt}
             thumbnail={item.thumbnail}
+            channelName={item.channelName} // <-- now this is defined
+            duration={item.duration} // <-- add this line
           />
         )
       }

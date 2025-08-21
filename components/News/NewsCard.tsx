@@ -1,4 +1,6 @@
+import { Fonts } from "@/constants/fonts";
 import { useRouter } from "expo-router";
+import { useState } from "react";
 import {
   Image,
   StyleSheet,
@@ -7,8 +9,6 @@ import {
   useColorScheme,
   View,
 } from "react-native";
-import { useState } from "react";
-
 // ✅ Import fallback image
 import FallbackImage from "@/assets/Logos/ThumbnailFallback.png";
 
@@ -70,11 +70,6 @@ const getStyles = (isDark: boolean) =>
       borderWidth: 1,
       borderColor: isDark ? "#3a3a3a" : "#e6e6e6",
       overflow: "hidden",
-      shadowColor: "#000",
-      shadowOpacity: 0.1,
-      shadowOffset: { width: 0, height: 2 },
-      shadowRadius: 6,
-      elevation: 3,
     },
     thumbnail: {
       width: "100%",
@@ -86,15 +81,14 @@ const getStyles = (isDark: boolean) =>
       marginTop: 8,
     },
     title: {
-      fontFamily: "Oswald_700Bold",
+      fontFamily: Fonts.OSBOLD,
       fontSize: 16,
       marginBottom: 4,
       color: isDark ? "#fff" : "#1d1d1d",
     },
     source: {
-      fontFamily: "Oswald_400Regular",
+      fontFamily: Fonts.OSREGULAR,
       fontSize: 12,
-      color: isDark ? "#aaa" : "#666",
-      fontStyle: "italic",
+      color: isDark ? "#aaa" : "#888",
     },
   });
