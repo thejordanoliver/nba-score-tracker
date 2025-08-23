@@ -28,8 +28,6 @@ import { useLiveGames } from "../../hooks/useLiveGames";
 import { useNews } from "../../hooks/useNews";
 import { useWeeklyGames } from "../../hooks/useWeeklyGames";
 import { getStyles } from "../../styles/indexStyles";
-import { SafeAreaView } from "react-native";
-import FootballGamesList from "@/components/Football/FootballGamesList";
 
 type Tab = "scores" | "news";
 
@@ -305,9 +303,7 @@ const taggedHighlights: CombinedItem[] = highlights.map((item) => ({
           <>
             <Heading>Latest Games</Heading>
             {/* <DummyGameCard /> */}
-              <SafeAreaView style={{ flex: 1 }}>
-      <FootballGamesList date="2025-08-28" />
-    </SafeAreaView>
+  
             {onlySummerLeagueToday ? (
               <SummerGamesList
                 games={filteredSummer}
