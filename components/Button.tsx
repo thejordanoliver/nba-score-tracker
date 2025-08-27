@@ -8,7 +8,7 @@ type SaveButtonProps = {
 loading?: boolean;
 };
 
-export default function SaveButton({ onPress, disabled, title = "Save" }: SaveButtonProps) {
+export default function Button({ onPress, disabled, title = "Save" }: SaveButtonProps) {
   const isDark = useColorScheme() === "dark";
 
   return (

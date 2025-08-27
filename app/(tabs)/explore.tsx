@@ -390,7 +390,7 @@ export default function ExplorePage() {
 
 
   return (
-    <View style={[styles.container, isDark && styles.containerDark]}>
+    <View style={[styles.container]}>
       <Animated.View
         style={[
           styles.searchBarWrapper,

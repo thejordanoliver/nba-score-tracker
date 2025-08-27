@@ -113,7 +113,7 @@ export default function FollowersModal({
   }, [users, search]);
 
   // Snap points for BottomSheet
-  const snapPoints = useMemo(() => ["80%", "94%"], []);
+  const snapPoints = useMemo(() => ["60%", "70%", "80%", "94%"], []);
 
   return (
     <BottomSheetModal

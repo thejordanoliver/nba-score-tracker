@@ -1,5 +1,6 @@
 import { CustomHeaderTitle } from "@/components/CustomHeaderTitle";
 import FollowersModal from "@/components/Profile/FollowersModal";
+import { PreferencesProvider } from "@/contexts/PreferencesContext";
 import { useFollowersModalStore } from "@/store/followersModalStore";
 import {
   Oswald_200ExtraLight,
@@ -27,7 +28,6 @@ import {
 } from "react-native";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import CustomTabBar from "../components/CustomTabBar";
-import { PreferencesProvider } from "@/contexts/PreferencesContext";
 
 // Custom themes
 const CustomDarkTheme = {
@@ -55,7 +55,11 @@ const hiddenRoutes = [
   "/edit-profile",
   "/edit-favorites",
   "/signup/success",
+  "/settings/deleteaccountsplash",
   "/player/",
+  "/settings",
+  "/settings/index",
+  "/login",
 ];
 
 export default function RootLayout() {
@@ -106,72 +110,72 @@ export default function RootLayout() {
     <GestureHandlerRootView style={{ flex: 1 }}>
       <BottomSheetModalProvider>
         <ThemeProvider value={isDark ? CustomDarkTheme : CustomLightTheme}>
-              <PreferencesProvider>
+          <PreferencesProvider>
+            <Stack
+              screenOptions={({ route, navigation }) => {
+                const isTabScreen = route.name === "(tabs)";
+                const isSplashScreen = route.name === "signup/success";
+                const isProfileScreen = route.name === "profile";
 
-          <Stack
-            screenOptions={({ route, navigation }) => {
-              const isTabScreen = route.name === "(tabs)";
-              const isSplashScreen = route.name === "signup/success";
-              const isProfileScreen = route.name === "profile";
-
-              return {
-                headerShown: !isSplashScreen && !isTabScreen,
-                header: !isSplashScreen
-                  ? () => (
-                      <CustomHeaderTitle
-                        title={route.name}
-                        onBack={
-                          navigation.canGoBack() ? navigation.goBack : undefined
-                        }
-                      />
-                    )
-                  : undefined,
-                gestureEnabled: !isTabScreen,
-                animation: isProfileScreen
-                  ? "fade"
-                  : isSplashScreen
+                return {
+                  headerShown: !isSplashScreen && !isTabScreen,
+                  header: !isSplashScreen
+                    ? () => (
+                        <CustomHeaderTitle
+                          title={route.name}
+                          onBack={
+                            navigation.canGoBack()
+                              ? navigation.goBack
+                              : undefined
+                          }
+                        />
+                      )
+                    : undefined,
+                  gestureEnabled: !isTabScreen,
+                  animation: isProfileScreen
                     ? "fade"
-                    : isTabScreen
-                      ? "none"
-                      : "default",
-                gestureDirection: "horizontal",
-              };
-            }}
-          >
-            <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-            <Stack.Screen
-              name="+not-found"
-              options={{ title: "Page Not Found" }}
+                    : isSplashScreen
+                      ? "fade"
+                      : isTabScreen
+                        ? "none"
+                        : "default",
+                  gestureDirection: "horizontal",
+                };
+              }}
+            >
+              <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+              <Stack.Screen
+                name="+not-found"
+                options={{ title: "Page Not Found" }}
+              />
+              <Stack.Screen name="signup/success" />
+            </Stack>
+
+            <StatusBar style={isDark ? "light" : "dark"} />
+
+            {/* Tab Bar */}
+            <Animated.View
+              style={{
+                opacity,
+                position: "absolute",
+                left: 0,
+                right: 0,
+                bottom: 0,
+                pointerEvents: visibleTabBar ? "auto" : "none",
+              }}
+            >
+              <CustomTabBar />
+            </Animated.View>
+
+            {/* Global Followers Modal */}
+            <FollowersModal
+              visible={isVisible}
+              onClose={closeModal}
+              type={type}
+              currentUserId={currentUserId ?? ""}
+              targetUserId={targetUserId ?? ""}
             />
-            <Stack.Screen name="signup/success" />
-          </Stack>
-
-          <StatusBar style={isDark ? "light" : "dark"} />
-
-          {/* Tab Bar */}
-          <Animated.View
-            style={{
-              opacity,
-              position: "absolute",
-              left: 0,
-              right: 0,
-              bottom: 0,
-              pointerEvents: visibleTabBar ? "auto" : "none",
-            }}
-          >
-            <CustomTabBar />
-          </Animated.View>
-
-          {/* Global Followers Modal */}
-          <FollowersModal
-            visible={isVisible}
-            onClose={closeModal}
-            type={type}
-            currentUserId={currentUserId ?? ""}
-            targetUserId={targetUserId ?? ""}
-          />
-              </PreferencesProvider>
-
+          </PreferencesProvider>
         </ThemeProvider>
       </BottomSheetModalProvider>
     </GestureHandlerRootView>

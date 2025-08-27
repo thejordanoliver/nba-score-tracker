@@ -50,6 +50,7 @@ const TAB_ROUTE_PARENTS: { [key: string]: string } = {
   "/league": "/league",
   "/explore": "/explore",
   "/profile": "/profile",
+
 };
 
 function getActiveTab(pathname: string): string | null {

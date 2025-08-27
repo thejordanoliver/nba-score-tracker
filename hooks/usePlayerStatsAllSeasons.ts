@@ -1,5 +1,5 @@
-import { useEffect, useState, useRef } from "react";
 import axios from "axios";
+import { useEffect, useState } from "react";
 
 type PlayerStat = {
   game: { date: string };
@@ -22,7 +22,7 @@ type PlayerStat = {
   steals: number;
   turnovers: number;
   blocks: number;
-    plusMinus?: string;
+  plusMinus?: string;
 };
 
 type SeasonStat = {

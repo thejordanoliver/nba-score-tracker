@@ -142,10 +142,10 @@ const getStyles = (isDark: boolean) =>
       justifyContent: "center",
     },
     infoText: {
-      textAlign: "center",
-      color: isDark ? "#aaa" : "#666",
-      marginTop: 20,
-      fontSize: 20,
-      fontFamily: Fonts.OSLIGHT,
+        fontFamily: Fonts.OSLIGHT,
+                     fontSize: 16,
+                     textAlign: "center",
+                     marginTop: 20,
+                     color: isDark ? "#aaa" : "#888"
     },
   });

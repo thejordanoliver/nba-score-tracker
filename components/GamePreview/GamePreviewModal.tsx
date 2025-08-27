@@ -1,4 +1,5 @@
 import GameTeamStats from "@/components/GameDetails/GameTeamStats";
+import { Fonts } from "@/constants/fonts";
 import { teams } from "@/constants/teams";
 import { useESPNBroadcasts } from "@/hooks/useESPNBroadcasts";
 import { useGameStatistics } from "@/hooks/useGameStatistics";
@@ -19,6 +20,7 @@ import { GameLeaders } from "../GameDetails";
 import LineScore from "../GameDetails/LineScore";
 import CenterInfo from "./CenterInfo";
 import TeamInfo from "./TeamInfo";
+
 type Props = {
   visible: boolean;
   game: Game;
@@ -122,7 +124,7 @@ export default function GamePreviewModal({ visible, game, onClose }: Props) {
     teamWins
       ? {
           color: isDark ? "#fff" : "#000",
-          fontFamily: "Oswald_700Bold" as const,
+          fontFamily: Fonts.OSBOLD,
         }
       : {};
 

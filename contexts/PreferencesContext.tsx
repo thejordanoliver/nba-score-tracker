@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useEffect, useState } from "react";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
-type ViewMode = "list" | "grid";
+type ViewMode = "list" | "grid" | "stacked";
 
 type PreferencesContextType = {
   viewMode: ViewMode;
@@ -21,7 +21,7 @@ export const PreferencesProvider: React.FC<{ children: React.ReactNode }> = ({ c
     const loadViewMode = async () => {
       try {
         const stored = await AsyncStorage.getItem(VIEW_MODE_KEY);
-        if (stored === "list" || stored === "grid") {
+        if (stored === "list" || stored === "grid" || stored === "stacked") {
           setViewModeState(stored);
         }
       } catch (e) {
@@ -44,8 +44,14 @@ export const PreferencesProvider: React.FC<{ children: React.ReactNode }> = ({ c
     persistViewMode(mode);
   };
 
+  // Cycle through all 3 modes
   const toggleViewMode = () => {
-    const next = viewMode === "list" ? "grid" : "list";
+    const next =
+      viewMode === "list"
+        ? "grid"
+        : viewMode === "grid"
+        ? "stacked"
+        : "list";
     setViewMode(next);
   };
 

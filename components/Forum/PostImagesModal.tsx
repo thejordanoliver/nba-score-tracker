@@ -148,23 +148,15 @@ export default function PostImagesModal({
             showsHorizontalScrollIndicator={false}
             keyExtractor={(uri, idx) => `${uri}_${idx}`}
             renderItem={({ item }) => (
-<View style={[styles.fullImageWrapper, { height: imageHeight }]}>
-  <View style={styles.imageContainer}>
-    <Image
-      source={{ uri: item }}
-      style={styles.fullImage}
-      resizeMode="contain"
-      onLoad={(event) => {
-        const { width, height } = event.nativeEvent.source;
-        const aspectRatio = height / width;
-        const calculatedHeight = screenWidth * aspectRatio;
-        setImageHeight(calculatedHeight);
-      }}
-    />
-  </View>
-</View>
-
-
+              <View style={styles.fullImageWrapper}>
+                <View style={styles.imageContainer}>
+                  <Image
+                    source={{ uri: item }}
+                    style={styles.fullImage}
+                    resizeMode="contain"
+                  />
+                </View>
+              </View>
             )}
             getItemLayout={(_, index) => ({
               length: screenWidth,
@@ -174,6 +166,7 @@ export default function PostImagesModal({
             initialScrollIndex={initialIndex}
           />
         </Animated.View>
+
         <View style={styles.captionContainer}>
           <View style={styles.captionWrapper}>
             {postText ? (
@@ -211,29 +204,31 @@ function getStyles(isDark: boolean) {
       zIndex: 0,
     },
     galleryWrapper: {
+      flex: 1, // take remaining vertical space between header & caption
       width: screenWidth,
-      overflow: "hidden",
       backgroundColor: "transparent",
     },
+    fullImageWrapper: {
+      width: screenWidth,
+      flex: 1, // make each slide fill available space
+      justifyContent: "center",
+      alignItems: "center",
+      padding: 16,
+    },
     imageContainer: {
+      flex: 1,
       width: "100%",
-      aspectRatio: 1, // optional default, will be updated dynamically
       borderRadius: 16,
       overflow: "hidden",
       backgroundColor: "#000",
       justifyContent: "center",
       alignItems: "center",
     },
-    fullImageWrapper: {
-      width: screenWidth,
-      justifyContent: "center",
-      alignItems: "center",
-      padding: 16,
-    },
+
     fullImage: {
       width: "100%",
       height: "100%",
-      resizeMode: "cover", // use contain to preserve original size/aspect
+      resizeMode: "contain", // contain ensures no stretching
     },
     captionContainer: {
       width: "100%",

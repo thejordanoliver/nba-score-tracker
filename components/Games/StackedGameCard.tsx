@@ -19,7 +19,7 @@ import { teams } from "../../constants/teams";
 import { useFetchPlayoffGames } from "../../hooks/usePlayoffSeries";
 import { Game, Team } from "../../types/types";
 
-export default function GameSquareCard({
+export default function StackedGameCard({
   game,
   isDark,
 }: {
@@ -81,15 +81,29 @@ export default function GameSquareCard({
   const winnerStyle = (teamWins: boolean): TextStyle | undefined =>
     teamWins ? { color: dark ? "#fff" : "#000", fontWeight: "bold" } : {};
 
-  const getLogoSource = (teamData?: Team, teamFallback?: Team) => {
-    const logo = teamData?.logo ?? teamFallback?.logo;
-
+  const getLogoSource = (
+    teamData?: Team & { logoLight?: string; logoDark?: string },
+    teamFallback?: Team
+  ) => {
     const fallbackLogo = require("../../assets/Logos/NBA.png");
 
-    if (!logo) {
-      return fallbackLogo;
+    // Dark/light mode specific logo overrides
+    if (dark && teamData?.logoLight) {
+      return typeof teamData.logoLight === "string"
+        ? { uri: teamData.logoLight }
+        : teamData.logoLight;
+    }
+    if (!dark && teamData?.logoDark) {
+      return typeof teamData.logoDark === "string"
+        ? { uri: teamData.logoDark }
+        : teamData.logoDark;
     }
 
+    // Normal logo resolution
+    const logo = teamData?.logo ?? teamFallback?.logo;
+    if (!logo) return fallbackLogo;
+
+    if (typeof logo === "number") return logo; // require() asset
     if (typeof logo === "string") {
       const lowerLogo = logo.toLowerCase();
       if (
@@ -102,12 +116,13 @@ export default function GameSquareCard({
       return { uri: logo };
     }
 
-    if (dark && teamData?.logoLight) {
-      return teamData.logoLight;
-    }
-
-    return logo;
+    return fallbackLogo;
   };
+
+  const logoSrc = getLogoSource(awayTeamData, awayTeam);
+  if (!logoSrc) {
+    console.warn("away logo source is undefined", awayTeamData, awayTeam);
+  }
 
   const { broadcasts } = useESPNBroadcasts();
 
@@ -161,6 +176,11 @@ export default function GameSquareCard({
 
     return record ?? "-";
   }
+
+  if (!game) {
+    console.warn("StackedGameCard received no game prop");
+  }
+
   return (
     <TouchableOpacity
       activeOpacity={0.85}
@@ -193,7 +213,7 @@ export default function GameSquareCard({
                 <Text
                   style={[styles.teamName, { color: dark ? "#000" : "#000" }]}
                 >
-                  {awayTeamData?.code ?? awayTeam.code ?? awayTeam.name}
+                  {awayTeamData?.name ?? awayTeam.code ?? awayTeam.fullName}
                 </Text>
               </View>
               {/* Away score or record */}
@@ -226,7 +246,7 @@ export default function GameSquareCard({
                 <Text
                   style={[styles.teamName, { color: dark ? "#000" : "#000" }]}
                 >
-                  {homeTeamData?.code ?? homeTeam.code ?? homeTeam.name}
+                  {homeTeamData?.name ?? homeTeam.code ?? homeTeam.fullName}
                 </Text>
               </View>
               <Text
@@ -253,9 +273,11 @@ export default function GameSquareCard({
             ) : isFinal ? (
               <>
                 <Text style={styles.finalText}>Final</Text>
-                <Text style={[styles.dateFinal, { color: "#000" }]}>
+                <Text
+                  style={[styles.dateFinal, { color: "rgba(0, 0, 0, .5)" }]}
+                >
                   {new Date(game.date).toLocaleDateString("en-US", {
-                    month: "numeric",
+                    month: "short",
                     day: "numeric",
                   })}
                 </Text>
@@ -264,7 +286,7 @@ export default function GameSquareCard({
               <>
                 <Text style={[styles.date, { color: "#000" }]}>
                   {new Date(game.date).toLocaleDateString("en-US", {
-                    month: "numeric",
+                    month: "short",
                     day: "numeric",
                   })}
                 </Text>
@@ -308,22 +330,19 @@ export default function GameSquareCard({
                 </Text>
               </>
             ) : null}
+            {broadcastNetworks && (
+              <Text
+                style={[
+                  styles.broadcast,
+                  {
+                    color: "rgba(0, 0, 0, .5)",
+                  },
+                ]}
+              >
+                {broadcastNetworks}
+              </Text>
+            )}
           </View>
-          {broadcastNetworks && (
-            <Text
-              style={[
-                styles.broadcast,
-                {
-                  color: "#000",
-                  position: "absolute",
-                  top: 2,
-                  left: 12,
-                },
-              ]}
-            >
-              {broadcastNetworks}
-            </Text>
-          )}
           {(gameNumberLabel || seriesSummary || holidayLabel) && (
             <View
               style={{
@@ -347,8 +366,8 @@ export default function GameSquareCard({
                   <Text
                     style={{
                       color: "#000",
-                      fontFamily: Fonts.OSEXTRALIGHT,
-                      fontSize: 8,
+                      fontFamily: Fonts.OSLIGHT,
+                      fontSize: 10,
                       maxWidth: 50,
                       textAlign: "center",
                       opacity: 0.8,
@@ -371,9 +390,9 @@ export default function GameSquareCard({
                 {seriesSummary && (
                   <Text
                     style={{
-                      color: dark ? "#000" : "#000",
-                      fontFamily: Fonts.OSEXTRALIGHT,
-                      fontSize: 8,
+                      color: "#000",
+                      fontFamily: Fonts.OSLIGHT,
+                      fontSize: 10,
                       textAlign: "center",
                       maxWidth: 180,
                       opacity: 0.8,
@@ -405,7 +424,7 @@ export default function GameSquareCard({
                 <Text
                   style={[styles.teamName, { color: dark ? "#fff" : "#000" }]}
                 >
-                  {awayTeamData?.code ?? awayTeam.code ?? awayTeam.name}
+                  {awayTeamData?.name ?? awayTeam.code ?? awayTeam.fullName}
                 </Text>
               </View>
               {/* Away score or record */}
@@ -438,7 +457,7 @@ export default function GameSquareCard({
                 <Text
                   style={[styles.teamName, { color: dark ? "#fff" : "#000" }]}
                 >
-                  {homeTeamData?.code ?? homeTeam.code ?? homeTeam.name}
+                  {homeTeamData?.name ?? homeTeam.code ?? homeTeam.fullName}
                 </Text>
               </View>
               <Text
@@ -467,7 +486,7 @@ export default function GameSquareCard({
                 <Text style={styles.finalText}>Final</Text>
                 <Text style={[styles.dateFinal]}>
                   {new Date(game.date).toLocaleDateString("en-US", {
-                    month: "numeric",
+                    month: "short",
                     day: "numeric",
                   })}
                 </Text>
@@ -484,7 +503,7 @@ export default function GameSquareCard({
                   ]}
                 >
                   {new Date(game.date).toLocaleDateString("en-US", {
-                    month: "numeric",
+                    month: "short",
                     day: "numeric",
                   })}
                 </Text>
@@ -542,30 +561,19 @@ export default function GameSquareCard({
                 ) : null}
               </>
             ) : null}
+            {broadcastNetworks && (
+              <Text style={styles.broadcast}>{broadcastNetworks}</Text>
+            )}
           </View>
-          {broadcastNetworks && (
-            <Text
-              style={[
-                styles.broadcast,
-                {
-                  color: dark ? "#fff" : "#000",
-                  position: "absolute",
-                  top: 2,
-                  left: 12,
-                },
-              ]}
-            >
-              {broadcastNetworks}
-            </Text>
-          )}
+
           {(gameNumberLabel || seriesSummary || holidayLabel) && (
             <View
               style={{
                 alignItems: "center",
                 justifyContent: "center",
                 position: "absolute",
-                left: 12,
-                bottom: 8,
+                paddingLeft: 12,
+                bottom: 4,
               }}
             >
               <View
@@ -647,13 +655,13 @@ export const getStyles = (dark: boolean) =>
   StyleSheet.create({
     card: {
       flexDirection: "row",
-      width: "100%",
-      height: 120,
+      flex: 1,
+      height: 100,
       backgroundColor: dark ? "#2e2e2e" : "#eee",
       justifyContent: "space-between",
       borderRadius: 12,
       paddingHorizontal: 8,
-      paddingVertical: 16,
+      paddingVertical: 12,
     },
     cardWrapper: {
       flexDirection: "column",
@@ -661,7 +669,8 @@ export const getStyles = (dark: boolean) =>
       borderRightColor: dark ? "#444" : "#888",
       borderRightWidth: 0.5,
       paddingRight: 12,
-      gap: 8,
+      gap: 4,
+      flex: 1,
     },
     teamSection: {
       flexDirection: "row",
@@ -669,29 +678,29 @@ export const getStyles = (dark: boolean) =>
       alignItems: "center",
       gap: 4,
     },
-
     teamWrapper: {
       flexDirection: "row",
       justifyContent: "flex-start",
       alignItems: "center",
       gap: 8,
       width: 80,
+      flex: 1,
     },
 
     logo: {
-      width: 28,
-      height: 28,
+      width: 24,
+      height: 24,
       resizeMode: "contain",
     },
     teamName: {
-      fontSize: 16,
+      fontSize: 18,
       fontFamily: Fonts.OSBOLD,
       flexShrink: 1,
       color: dark ? "#fff" : "#1d1d1d",
       textAlign: "left",
     },
     teamScore: {
-      fontSize: 16,
+      fontSize: 18,
       fontFamily: Fonts.OSBOLD,
       textAlign: "right",
       color: dark ? "#aaa" : "#888",
@@ -709,7 +718,7 @@ export const getStyles = (dark: boolean) =>
       alignItems: "center",
       justifyContent: "center",
       minHeight: 30,
-      width: 40,
+      width: 100,
     },
     finalText: {
       fontFamily: Fonts.OSMEDIUM,
@@ -743,10 +752,10 @@ export const getStyles = (dark: boolean) =>
       color: dark ? "#ff4444" : "#cc0000",
     },
     broadcast: {
-      fontSize: 10,
+      fontSize: 12,
       fontFamily: Fonts.OSREGULAR,
       textAlign: "center",
       marginTop: 4,
-      color: dark ? "#fff" : "#1d1d1d",
+      color: dark ? "rgba(255,255,255, .5)" : "rgba(0, 0, 0, .5)",
     },
   });

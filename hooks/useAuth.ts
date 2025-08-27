@@ -123,12 +123,10 @@ export function useAuth() {
 
   const logout = async () => {
     try {
-      // Remove user-specific preferences like view mode
       if (user?.id) {
         await AsyncStorage.removeItem(`@view_mode_preference_${user.id}`);
       }
 
-      // Clear all storage including tokens and user info
       await AsyncStorage.clear();
 
       setUser(null);
@@ -138,7 +136,10 @@ export function useAuth() {
     }
   };
 
-  const deleteAccount = async () => {
+  /**
+   * Delete account with password confirmation
+   */
+  const deleteAccount = async (password: string) => {
     try {
       const username = await AsyncStorage.getItem("username");
       if (!username) throw new Error("No user found");
@@ -146,10 +147,13 @@ export function useAuth() {
       const res = await fetch(`${BASE_URL}/api/delete-account`, {
         method: "DELETE",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ username }),
+        body: JSON.stringify({ username, password }), // 👈 send both
       });
 
-      if (!res.ok) throw new Error("Failed to delete account");
+      if (!res.ok) {
+        const errText = await res.text();
+        throw new Error(errText || "Failed to delete account");
+      }
 
       await AsyncStorage.clear();
       setUser(null);

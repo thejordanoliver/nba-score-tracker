@@ -24,7 +24,6 @@ interface CommentItemProps {
   currentUserId: string | number;
   editComment: (commentId: string, newText: string) => Promise<void>;
   deleteComment: (commentId: string) => Promise<void>;
-  
 }
 const COLLAPSED_HEIGHT = 60;
 
@@ -177,22 +176,23 @@ export const CommentItem = ({
             <>
               {/* Editing UI unchanged */}
               <TextInput
-                style={[
-                  styles.text,
-                  {
-                    borderWidth: 1,
-                    borderColor: isDark ? "#fff" : "#ccc",
-                    borderRadius: 6,
-                    padding: 6,
-                    marginVertical: 12,
-                    fontSize: 14,
-                    color: isDark ? "#eee" : "#000",
-                  },
-                ]}
+                style={{
+                  backgroundColor: isDark ? "#2e2e2e" : "#eee", // must be non-transparent
+                  color: isDark ? "#fff" : "#000",
+                  fontSize: 14,
+                  fontFamily: Fonts.OSLIGHT,
+                  paddingVertical: 12,
+                  paddingHorizontal: 6,
+                  borderRadius: 6,
+                  marginVertical: 12,
+                }}
                 multiline
                 value={editText}
                 onChangeText={setEditText}
+                cursorColor={isDark ? "#00ff00" : "#008800"} // bright color to test
+                selectionColor={isDark ? "#fff" : "#1d1d1d"} // also highlights selected text
               />
+
               <View style={{ flexDirection: "row", marginBottom: 8 }}>
                 <TouchableOpacity
                   onPress={onSaveEdit}

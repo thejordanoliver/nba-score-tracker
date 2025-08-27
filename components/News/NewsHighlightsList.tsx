@@ -1,10 +1,10 @@
 // components/NewsHighlightsList.tsx
+import { Fonts } from "@/constants/fonts";
 import React from "react";
 import { FlatList, Text, useColorScheme, View } from "react-native";
 import HighlightCard from "./HighlightCard";
 import NewsCard from "./NewsCard";
 import NewsCardSkeleton from "./NewsCardSkeleton";
-
 type NewsItem = {
   id: string;
   title: string;
@@ -33,7 +33,6 @@ type NewsHighlightsListProps = {
   refreshing: boolean;
   onRefresh: () => void;
 };
-
 
 const NewsHighlightsList: React.FC<NewsHighlightsListProps> = ({
   items,
@@ -96,9 +95,11 @@ const NewsHighlightsList: React.FC<NewsHighlightsListProps> = ({
       ListEmptyComponent={
         <Text
           style={{
+            fontFamily: Fonts.OSLIGHT,
+            fontSize: 16,
             textAlign: "center",
             marginTop: 20,
-            color: isDark ? "#aaa" : "#999",
+            color: isDark ? "#aaa" : "#888",
           }}
         >
           No news or highlights found.

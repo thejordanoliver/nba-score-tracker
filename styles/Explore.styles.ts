@@ -5,11 +5,8 @@ export const styles = StyleSheet.create({
   container: {
     flex: 1,
     padding: 16,
-    backgroundColor: "#fff",
   },
-  containerDark: {
-    backgroundColor: "#1d1d1d",
-  },
+
   searchBarWrapper: {
     overflow: "hidden",
   },

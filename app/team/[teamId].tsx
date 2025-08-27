@@ -34,6 +34,8 @@ import useDbPlayersByTeam from "../../hooks/useDbPlayersByTeam";
 import { useTeamGames } from "../../hooks/useTeamGames";
 import { useTeamNews } from "../../hooks/useTeamNews";
 import { style } from "../../styles/TeamDetails.styles";
+import PagerView from "react-native-pager-view";
+import { Fonts } from "@/constants/fonts";
 
 export default function TeamDetailScreen() {
   const navigation = useNavigation();
@@ -51,6 +53,12 @@ export default function TeamDetailScreen() {
   const underlineX = useRef(new Animated.Value(0)).current;
   const underlineWidth = useRef(new Animated.Value(0)).current;
   const tabMeasurements = useRef<{ x: number; width: number }[]>([]);
+
+  // map tabs to page index
+  const tabToIndex = (tab: (typeof tabs)[number]) => tabs.indexOf(tab);
+  const indexToTab = (index: number) => tabs[index];
+  const pagerRef = useRef<PagerView>(null);
+
   const team = useMemo(
     () => teams.find((t) => t.id === teamIdNum.toString()),
     [teamIdNum]
@@ -61,13 +69,11 @@ export default function TeamDetailScreen() {
 
     try {
       if (selectedTab === "schedule") {
-        await new Promise((resolve) => setTimeout(resolve, 300)); // Optional short delay
+        await new Promise((resolve) => setTimeout(resolve, 300));
       }
-
       if (selectedTab === "news") {
         await refreshNews();
       }
-
       if (selectedTab === "roster") {
         await refreshPlayers();
       }
@@ -88,10 +94,10 @@ export default function TeamDetailScreen() {
     articles: newsArticles,
     loading: newsLoading,
     error: newsError,
-    refreshNews, // <- now available
+    refreshNews,
   } = useTeamNews(team?.fullName ?? "");
 
-  const combinedNewsItems = React.useMemo(() => {
+  const combinedNewsItems = useMemo(() => {
     return newsArticles.map((article) => ({
       ...article,
       itemType: "news" as const,
@@ -198,7 +204,7 @@ export default function TeamDetailScreen() {
         );
         if (index >= 0 && scrollViewRef.current) {
           scrollViewRef.current.scrollTo({
-            x: index * 70, // match snap interval
+            x: index * 70,
             animated: true,
           });
         }
@@ -237,30 +243,11 @@ export default function TeamDetailScreen() {
     });
   }, [selectedDate, teamGames]);
 
-  const hasFutureGames = teamGames.some((game: any) => {
-    const gameDate = new Date(game.date);
-    return (
-      gameDate.getFullYear() > (selectedDate?.getFullYear() ?? 0) ||
-      (gameDate.getFullYear() === (selectedDate?.getFullYear() ?? 0) &&
-        gameDate.getMonth() > (selectedDate?.getMonth() ?? 0))
-    );
-  });
-
-  const changeDateByMonths = (months: number) => {
-    if (!selectedDate) return;
-    setSelectedDate((prevDate) => {
-      if (!prevDate || (months > 0 && !hasFutureGames)) return prevDate;
-      const newDate = new Date(prevDate);
-      newDate.setMonth(newDate.getMonth() + months);
-      return newDate;
-    });
-  };
-
   const playersForRosterStats = players.map((p) => {
     const [first_name, ...rest] = p.name.split(" ");
     const last_name = rest.join(" ");
     return {
-      player_id: p.id, // <-- add this here
+      player_id: p.id,
       first_name,
       last_name,
       jersey_number: p.jersey_number,
@@ -287,6 +274,8 @@ export default function TeamDetailScreen() {
 
   const handleTabPress = (tab: (typeof tabs)[number]) => {
     setSelectedTab(tab);
+    pagerRef.current?.setPage(tabToIndex(tab));
+
     const index = tabs.indexOf(tab);
     if (tabMeasurements.current[index]) {
       Animated.parallel([
@@ -315,9 +304,17 @@ export default function TeamDetailScreen() {
   return (
     <View style={styles.container}>
       <TabBar tabs={tabs} selected={selectedTab} onTabPress={handleTabPress} />
-
-      {selectedTab === "schedule" && (
-        <>
+      <PagerView
+        ref={pagerRef}
+        style={{ flex: 1 }}
+        initialPage={tabToIndex(selectedTab)}
+        onPageSelected={(e) => {
+          const index = e.nativeEvent.position;
+          setSelectedTab(indexToTab(index));
+        }}
+      >
+        {/* Schedule Page */}
+        <View key="schedule" style={{ flex: 1 }}>
           <View style={styles.monthSelector}>
             <ScrollView
               ref={scrollViewRef}
@@ -374,68 +371,101 @@ export default function TeamDetailScreen() {
             onRefresh={handleRefresh}
             expectedCount={filteredGames.length}
           />
-        </>
-      )}
+        </View>
 
-      {selectedTab === "news" && (
-        <NewsHighlightsList
-          items={combinedNewsItems}
-          loading={newsLoading}
-          refreshing={refreshing}
-          onRefresh={handleRefresh}
-        />
-      )}
+        {/* News Page */}
+        <View key="news" style={{ flex: 1 }}>
+          <NewsHighlightsList
+            items={combinedNewsItems}
+            loading={newsLoading}
+            refreshing={refreshing}
+            onRefresh={handleRefresh}
+          />
+        </View>
 
-      {selectedTab === "roster" && (
-        <TeamPlayerList
-          players={players}
-          loading={playersLoading}
-          error={playersError}
-          refreshing={refreshing}
-          onRefresh={handleRefresh}
-          teamFullName={team.fullName}
-          teamColor={team.color}
-          isDark={isDark}
-        />
-      )}
-
-      {selectedTab === "stats" && (
-        <ScrollView
-          contentContainerStyle={{ paddingBottom: 100 }}
-          refreshControl={
-            <RefreshControl
+        {/* Roster Page */}
+        <View key="roster" style={{ flex: 1 }}>
+          {playersError ? (
+            <Text
+              style={{
+                fontFamily: Fonts.OSLIGHT,
+                fontSize: 16,
+                textAlign: "center",
+                marginTop: 20,
+                color: isDark ? "#aaa" : "#888",
+              }}
+            >
+              {playersError}
+            </Text>
+          ) : (
+            <TeamPlayerList
+              players={players}
+              loading={playersLoading}
+              error={playersError}
               refreshing={refreshing}
               onRefresh={handleRefresh}
-              tintColor={team.color}
+              teamFullName={team.fullName}
+              teamColor={team.color}
+              isDark={isDark}
             />
-          }
-        >
-          <View>
-            {rosterStatsLoading ? (
-              <ActivityIndicator size="large" style={{ marginTop: 20 }} />
-            ) : rosterStatsError ? (
-              <Text
-                style={[styles.text, { textAlign: "center", marginTop: 20 }]}
-              >
-                {rosterStatsError.message}
-              </Text>
-            ) : rosterStats.length === 0 ? (
-              <Text
-                style={[styles.text, { textAlign: "center", marginTop: 20 }]}
-              >
-                No player stats available.
-              </Text>
-            ) : (
-              <RosterStats
-                rosterStats={rosterStats}
-                playersDb={playersForRosterStats}
-                teamId={teamId as string} // ✅ must be provided here
+          )}
+        </View>
+
+        {/* Stats Page */}
+        <View key="stats" style={{ flex: 1 }}>
+          <ScrollView
+            contentContainerStyle={{ paddingBottom: 100 }}
+            refreshControl={
+              <RefreshControl
+                refreshing={refreshing}
+                onRefresh={handleRefresh}
+                tintColor={team.color}
               />
-            )}
-          </View>
-        </ScrollView>
-      )}
-      {selectedTab === "forum" && <TeamForum teamId={teamId as string} />}
+            }
+          >
+            <View>
+              {rosterStatsLoading ? (
+                <ActivityIndicator size="large" style={{ marginTop: 20 }} />
+              ) : rosterStatsError ? (
+                <Text
+                  style={{
+                    fontFamily: Fonts.OSLIGHT,
+                    fontSize: 16,
+                    textAlign: "center",
+                    marginTop: 20,
+                    color: isDark ? "#aaa" : "#888",
+                  }}
+                >
+                  {rosterStatsError.message}
+                </Text>
+              ) : rosterStats.length === 0 ? (
+                <Text
+                  style={{
+                    fontFamily: Fonts.OSLIGHT,
+                    fontSize: 16,
+                    textAlign: "center",
+                    marginTop: 20,
+                    color: isDark ? "#aaa" : "#888",
+                  }}
+                >
+                  No player stats available.
+                </Text>
+              ) : (
+                <RosterStats
+                  rosterStats={rosterStats}
+                  playersDb={playersForRosterStats}
+                  teamId={teamId as string}
+                />
+              )}
+            </View>
+          </ScrollView>
+        </View>
+
+        {/* Forum Page */}
+        <View key="forum" style={{ flex: 1 }}>
+          <TeamForum teamId={teamId as string} />
+        </View>
+      </PagerView>
     </View>
   );
 }

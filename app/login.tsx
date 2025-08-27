@@ -96,7 +96,7 @@ export default function LoginScreen() {
 
 const handleLogin = async () => {
   const trimmedUsername = username?.trim().toLowerCase();
-  if (!trimmedUsername || password.length < 8) {
+  if (!trimmedUsername || password.length < 4) {
     Alert.alert(
       "Invalid credentials",
       "Please enter a valid username and password (min 8 chars)."

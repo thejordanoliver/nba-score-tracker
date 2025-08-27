@@ -15,6 +15,9 @@ import SummerLeagueGamePreviewModal from "../summer-league/SummerLeagueGamePrevi
 import type { summerGame } from "../../types/types";
 import SummerLeagueGameSquareCard from "../../components/summer-league/SummerGameSquareCard";
 import { usePreferences } from "@/contexts/PreferencesContext";
+import SummerLeagueStackedGameCard from "./SummerLeagueStackedGameCard";
+import { Fonts } from "@/constants/fonts";
+
 
 type Props = {
   games: summerGame[];
@@ -49,20 +52,29 @@ const SummerGamesList: React.FC<Props> = ({
       key={item.id}
       minDurationMs={300}
       onHandlerStateChange={({ nativeEvent }) => {
-        if (nativeEvent.state === State.ACTIVE) {
-          handleLongPress(item);
-        }
+        if (nativeEvent.state === State.ACTIVE) handleLongPress(item);
       }}
     >
-      <View style={viewMode === "grid" ? styles.gridItem : undefined}>
+      <View
+        style={
+          viewMode === "grid"
+            ? styles.gridItem
+            : viewMode === "stacked"
+              ? styles.stackedItem
+              : undefined
+        }
+      >
         {viewMode === "list" ? (
           <SummerLeagueGameCard game={item} isDark={isDark} />
-        ) : (
+        ) : viewMode === "grid" ? (
           <SummerLeagueGameSquareCard game={item} isDark={isDark} />
+        ) : (
+          <SummerLeagueStackedGameCard game={item} isDark={isDark} /> // new stacked card
         )}
       </View>
     </LongPressGestureHandler>
   );
+
 
   if (loading) {
     const skeletonCount = games.length > 0 ? games.length : expectedCount ?? 4;
@@ -118,20 +130,32 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingBottom: 100,
   },
-  contentContainer: {
-    paddingBottom: 100,
-    paddingHorizontal: 16,
+  skeletonGridWrapper: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    justifyContent: "space-between",
     paddingTop: 10,
+    paddingHorizontal: 12,
+    paddingBottom: 100,
+    gap: 12,
+  },
+  contentContainer: {
+    paddingTop: 10,
+    paddingBottom: 100,
+    paddingHorizontal: 12,
+    gap: 12,
   },
   emptyText: {
     textAlign: "center",
     marginTop: 20,
     fontSize: 20,
-    fontFamily: "Oswald_300Light",
+    fontFamily: Fonts.OSLIGHT,
   },
   gridItem: {
-    width: "48%", // Not 50% to account for margin space between items
-    marginBottom: 16,
+    width: "48%",
+  },
+  stackedItem: {
+    width: "100%", // full width for stacked layout
   },
 });
 

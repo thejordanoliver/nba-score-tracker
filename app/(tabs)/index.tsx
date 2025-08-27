@@ -28,7 +28,7 @@ import { useLiveGames } from "../../hooks/useLiveGames";
 import { useNews } from "../../hooks/useNews";
 import { useWeeklyGames } from "../../hooks/useWeeklyGames";
 import { getStyles } from "../../styles/indexStyles";
-
+import StackedGameCard from "@/components/Games/StackedGameCard";
 type Tab = "scores" | "news";
 
 type NewsItem = {
@@ -63,6 +63,22 @@ function mapSummerGameToGame(g: summerGame): Game {
     period: g.period !== undefined ? String(g.period) : undefined,
   };
 }
+
+  const isTodayOrTomorrow = (dateString: string) => {
+    const gameDate = new Date(dateString);
+    const now = new Date();
+    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const tomorrow = new Date(
+      now.getFullYear(),
+      now.getMonth(),
+      now.getDate() + 1
+    );
+    return (
+      (gameDate >= today && gameDate < new Date(today.getTime() + 86400000)) ||
+      (gameDate >= tomorrow &&
+        gameDate < new Date(tomorrow.getTime() + 86400000))
+    );
+  };
 
 export default function HomeScreen() {
   const {
@@ -189,21 +205,7 @@ export default function HomeScreen() {
 
   const styles = getStyles(isDark);
 
-  const isTodayOrTomorrow = (dateString: string) => {
-    const gameDate = new Date(dateString);
-    const now = new Date();
-    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-    const tomorrow = new Date(
-      now.getFullYear(),
-      now.getMonth(),
-      now.getDate() + 1
-    );
-    return (
-      (gameDate >= today && gameDate < new Date(today.getTime() + 86400000)) ||
-      (gameDate >= tomorrow &&
-        gameDate < new Date(tomorrow.getTime() + 86400000))
-    );
-  };
+
 
   const filteredLive = liveGames.filter((g) => isTodayOrTomorrow(g.date));
   const filteredWeekly = weeklyGames.filter((g) => isTodayOrTomorrow(g.date));
@@ -251,15 +253,13 @@ const taggedHighlights: CombinedItem[] = highlights.map((item) => ({
   }, [news, highlights]);
 
 
-//   useEffect(() => {
+// useEffect(() => {
 //   if (selectedTab !== "scores") return;
 //   const interval = setInterval(() => {
 //     refreshLiveGames?.();
-//     refreshWeeklyGames?.();
-//     refreshSummerGames?.();
-//   }, 60_000);
+//   }, 100_000);
 //   return () => clearInterval(interval);
-// }, [selectedTab]); // only depend on tab
+// }, [selectedTab, refreshLiveGames]);
 
 
 
@@ -302,20 +302,15 @@ const taggedHighlights: CombinedItem[] = highlights.map((item) => ({
         {selectedTab === "scores" ? (
           <>
             <Heading>Latest Games</Heading>
-            {/* <DummyGameCard /> */}
-  
+           
             {onlySummerLeagueToday ? (
               <SummerGamesList
                 games={filteredSummer}
                 loading={summerLoading}
                 refreshing={refreshing}
                 onRefresh={handleRefresh}
+                
               />
-            ) : combinedGames.length === 0 &&
-              !weeklyGamesLoading &&
-              !liveGamesLoading &&
-              !summerLoading ? (
-              <Text style={styles.emptyText}>No games today or tomorrow.</Text>
             ) : (
               <GamesList
                 games={combinedGames}
@@ -324,6 +319,7 @@ const taggedHighlights: CombinedItem[] = highlights.map((item) => ({
                 }
                 refreshing={refreshing}
                 onRefresh={handleRefresh}
+                day={"todayTomorrow"}
               />
             )}
           </>

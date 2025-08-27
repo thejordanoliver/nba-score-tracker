@@ -1,7 +1,7 @@
+import Button from "@/components/Button"; // adjust path if needed
 import { CustomHeaderTitle } from "@/components/CustomHeaderTitle";
 import LabeledInput from "@/components/LabeledInput";
 import ProfileBanner from "@/components/Profile/ProfileBanner";
-import SaveButton from "@/components/SaveButton"; // adjust path if needed
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import * as ImagePicker from "expo-image-picker";
 import { useNavigation, useRouter } from "expo-router";
@@ -223,7 +223,7 @@ export default function EditProfileScreen() {
               multiline
             />
 
-            <SaveButton onPress={handleSave} />
+            <Button onPress={handleSave} />
           </View>
         </View>
       </ScrollView>

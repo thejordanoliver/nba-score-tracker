@@ -9,6 +9,8 @@ import {
   useColorScheme,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
+import { Fonts } from "@/constants/fonts";
+
 
 type SignInFormProps = {
   username: string;
@@ -20,8 +22,7 @@ type SignInFormProps = {
   onSubmit: () => void;
 };
 
-const OSLIGHT = "Oswald_300Light";
-const OSREGULAR = "Oswald_400Regular";
+
 
 export default function SignInForm({
   username,
@@ -87,7 +88,7 @@ const getStyles = (isDark: boolean) =>
       borderRadius: 8,
       fontSize: 16,
       marginVertical: 20,
-      fontFamily: OSLIGHT,
+      fontFamily: Fonts.OSLIGHT,
     },
     passwordRow: {
       flexDirection: "row",
@@ -97,7 +98,7 @@ const getStyles = (isDark: boolean) =>
       marginBottom: 12,
     },
     passwordInput: {
-      fontFamily: OSLIGHT,
+      fontFamily: Fonts.OSLIGHT,
       flex: 1,
       fontSize: 16,
       padding: 20,
@@ -113,7 +114,7 @@ const getStyles = (isDark: boolean) =>
     },
     buttonText: {
       color: isDark ? "#000" : "#fff",
-      fontFamily: OSREGULAR,
+      fontFamily: Fonts.OSREGULAR,
       fontSize: 16,
     },
   });

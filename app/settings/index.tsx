@@ -1,5 +1,6 @@
 import ConfirmModal from "@/components/ConfirmModal";
 import { CustomHeaderTitle } from "@/components/CustomHeaderTitle";
+import { Fonts } from "@/constants/fonts";
 import { useAuth } from "@/hooks/useAuth";
 import { Ionicons } from "@expo/vector-icons";
 import AsyncStorage from "@react-native-async-storage/async-storage";
@@ -12,10 +13,10 @@ import {
   ScrollView,
   StyleSheet,
   Text,
+  TextInput,
   useColorScheme,
   View,
 } from "react-native";
-
 const { height: SCREEN_HEIGHT } = Dimensions.get("window");
 
 type SettingsScreenProps = {
@@ -30,6 +31,8 @@ export default function SettingsScreen() {
   const colorScheme = useColorScheme();
   const isDark = colorScheme === "dark";
   const navigation = useNavigation();
+  const [password, setPassword] = useState("");
+  const styles = getStyles(isDark);
 
   const signOut = async () => {
     try {
@@ -42,12 +45,16 @@ export default function SettingsScreen() {
 
   const confirmDeleteAccount = async () => {
     try {
-      await deleteAccount();
-      router.replace("/login");
-    } catch (error) {
-      alert("Failed to delete account.");
-    } finally {
+      if (!password.trim()) {
+        alert("Please enter your password.");
+        return;
+      }
+      await deleteAccount(password); // backend call
       setShowDeleteModal(false);
+      setPassword("");
+      router.replace("/settings/deleteaccountsplash");
+    } catch (error) {
+      alert("Failed to delete account. Check your password and try again.");
     }
   };
 
@@ -130,22 +137,28 @@ export default function SettingsScreen() {
         </Pressable>
 
         <Pressable
-          style={[styles.dangerButton,   {
+          style={[
+            styles.dangerButton,
+            {
               borderBottomColor: isDark
                 ? "rgba(255,255,255,0.2)"
                 : "rgba(120, 120, 120, 0.5)",
-            },]}
+            },
+          ]}
           onPress={() => setShowSignOutModal(true)}
         >
           <Text style={[styles.dangerText]}>Sign Out</Text>
         </Pressable>
 
         <Pressable
-          style={[styles.dangerButton,   {
+          style={[
+            styles.dangerButton,
+            {
               borderBottomColor: isDark
                 ? "rgba(255,255,255,0.2)"
                 : "rgba(120, 120, 120, 0.5)",
-            },]}
+            },
+          ]}
           onPress={() => setShowDeleteModal(true)}
         >
           <Text style={styles.dangerText}>Delete Account</Text>
@@ -167,50 +180,79 @@ export default function SettingsScreen() {
       <ConfirmModal
         visible={showDeleteModal}
         title="Delete Account"
-        message="This action cannot be undone. Are you sure you want to delete your account?"
+        message="This action cannot be undone. Please enter your password to confirm deletion."
         confirmText="Delete"
         cancelText="Cancel"
         onConfirm={confirmDeleteAccount}
-        onCancel={() => setShowDeleteModal(false)}
-      />
+        onCancel={() => {
+          setShowDeleteModal(false);
+          setPassword("");
+        }}
+      >
+        <TextInput
+          placeholder="Current Password"
+          placeholderTextColor="#888"
+          secureTextEntry
+          value={password}
+          onChangeText={setPassword}
+          style={[
+            styles.input,
+            {
+              color: isDark ? "#fff" : "#000",
+              borderColor: isDark ? "#444" : "#ccc",
+            },
+          ]}
+        />
+      </ConfirmModal>
     </View>
   );
 }
 
-export const styles = StyleSheet.create({
-  screen: {
-    flex: 1,
-    position: "relative",
-  },
-  scrollContent: {
-    paddingHorizontal: 20,
-    paddingTop: 20,
-    paddingBottom: 40,
-  },
-  optionButton: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    paddingVertical: 16,
-    borderBottomWidth: 1,
-  },
-  optionText: {
-    fontSize: 18,
-    fontFamily: "Oswald_400Regular",
-  },
-  dangerButton: {
-    paddingVertical: 16,
-    justifyContent: "space-between",
-    borderBottomWidth: 1,
-  },
-  dangerText: {
-    color: "#e53935",
-    fontWeight: "600",
-    fontSize: 18,
-    fontFamily: "Oswald_500Medium",
-  },
-  closeButton: {
-    position: "absolute",
-    top: 24,
-    right: 15,
-  },
-});
+export const getStyles = (isDark: boolean) =>
+  StyleSheet.create({
+    screen: {
+      flex: 1,
+      position: "relative",
+    },
+    scrollContent: {
+      paddingHorizontal: 20,
+      paddingTop: 20,
+      paddingBottom: 40,
+    },
+    optionButton: {
+      flexDirection: "row",
+      justifyContent: "space-between",
+      paddingVertical: 16,
+      borderBottomWidth: 1,
+    },
+    optionText: {
+      fontSize: 18,
+      fontFamily: Fonts.OSREGULAR,
+    },
+    dangerButton: {
+      paddingVertical: 16,
+      justifyContent: "space-between",
+      borderBottomWidth: 1,
+    },
+    dangerText: {
+      color: "#e53935",
+      fontWeight: "600",
+      fontSize: 18,
+      fontFamily: Fonts.OSMEDIUM,
+    },
+    closeButton: {
+      position: "absolute",
+      top: 24,
+      right: 15,
+    },
+    input: {
+      color: isDark ? "#fff" : "#000",
+      backgroundColor: isDark ? "#222" : "#eee",
+      padding: 20,
+      borderRadius: 8,
+      fontSize: 16,
+      marginVertical: 12,
+      fontFamily: Fonts.OSLIGHT,
+      width: "100%",
+    },
+  });

@@ -1,3 +1,4 @@
+import { Fonts } from "@/constants/fonts";
 import { teamsById } from "@/constants/teams"; // adjust path as needed
 import { PlayerInfo, PlayerStats, Props } from "@/types/types";
 import { router } from "expo-router";
@@ -399,7 +400,7 @@ const styles = StyleSheet.create({
     flexDirection: "row",
   },
   cardLabel: {
-    fontFamily: "Oswald_600SemiBold",
+    fontFamily: Fonts.OSSEMIBOLD,
     fontSize: 20,
     marginBottom: 4,
   },
@@ -414,14 +415,14 @@ const styles = StyleSheet.create({
   },
 
   cardName: {
-    fontFamily: "Oswald_600SemiBold",
+    fontFamily: Fonts.OSSEMIBOLD,
     fontSize: 14,
     marginTop: 4,
     textAlign: "center",
   },
   cardValue: {
     fontSize: 24,
-    fontFamily: "Oswald_700Bold",
+    fontFamily: Fonts.OSBOLD,
   },
   avatar: {
     width: 60,
@@ -444,7 +445,7 @@ const styles = StyleSheet.create({
   },
   cellName: {
     width: NAME_COLUMN_WIDTH,
-    fontFamily: "Oswald_600SemiBold",
+    fontFamily: Fonts.OSSEMIBOLD,
     fontSize: 13,
     paddingRight: 8,
     textAlign: "left",

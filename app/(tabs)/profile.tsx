@@ -8,6 +8,7 @@ import ProfileBanner from "@/components/Profile/ProfileBanner";
 import ProfileHeader from "@/components/Profile/ProfileHeader";
 import { SkeletonProfileScreen } from "@/components/SkeletonProfileScreen";
 import { teams } from "@/constants/teams";
+import { useAuth } from "@/hooks/useAuth";
 import { useFollowersModalStore } from "@/store/followersModalStore";
 import { useSettingsModalStore } from "@/store/settingsModalStore";
 import { getStyles } from "@/styles/ProfileScreen.styles";
@@ -20,11 +21,10 @@ import {
   ScrollView,
   View,
   useColorScheme,
-  useWindowDimensions,
+  useWindowDimensions, Text,
 } from "react-native";
-import SettingsScreen from "@/app/settings"; // adjust path if needed
-import { useAuth } from "@/hooks/useAuth";
-
+import Button from "@/components/Button";
+import { Fonts } from "@/constants/fonts";  
 const BASE_URL = process.env.EXPO_PUBLIC_API_URL?.replace(/\/$/, "") ?? "";
 
 function parseImageUrl(url: string | null | undefined): string | null {
@@ -41,7 +41,7 @@ export default function ProfileScreen() {
   const totalGap = columnGap * (numColumns - 1);
   const availableWidth = screenWidth - horizontalPadding - totalGap;
   const itemWidth = availableWidth / numColumns;
-const { deleteAccount } = useAuth();
+  const { deleteAccount } = useAuth();
   const { id } = useLocalSearchParams();
   const [isLoading, setIsLoading] = useState(true);
   const [currentUserId, setCurrentUserId] = useState<number | null>(null);
@@ -57,7 +57,7 @@ const { deleteAccount } = useAuth();
   const [followingCount, setFollowingCount] = useState<number>(0);
   const [isGridView, setIsGridView] = useState(true);
   const fadeAnim = useRef(new Animated.Value(1)).current;
-
+  const [password, setPassword] = useState("");
   const navigation = useNavigation();
   const router = useRouter();
   const colorScheme = useColorScheme();
@@ -102,84 +102,74 @@ const { deleteAccount } = useAuth();
     router.push(`/settings/${screen}`);
   };
 
-const loadProfileData = async () => {
-  try {
-    // Get local cache
-    const local = await AsyncStorage.multiGet([
-      "userId",
-      "username",
-      "fullName",
-      "bio",
-      "profileImage",
-      "bannerImage",
-      "favorites",
-    ]);
-    const cached = Object.fromEntries(local);
-
-    if (cached.userId) {
-      // Fetch from API
-      const res = await fetch(`${BASE_URL}/api/users/${cached.userId}`);
+  const loadFollowCounts = async (userId: string) => {
+    try {
+      const res = await fetch(`${BASE_URL}/api/users/${userId}`);
       const data = await res.json();
-
-      setUsername(data.username ?? cached.username ?? null);
-      setFullName(data.fullName ?? cached.fullName ?? null);
-      setBio(data.bio ?? cached.bio ?? null);
-      setProfileImage(parseImageUrl(data.profileImage ?? cached.profileImage));
-      setBannerImage(parseImageUrl(data.bannerImage ?? cached.bannerImage));
-      setFavorites(
-        data.favorites ??
-          (cached.favorites ? JSON.parse(cached.favorites) : [])
-      );
-
-      // ✅ set follow counts here
       setFollowersCount(data.followersCount ?? 0);
       setFollowingCount(data.followingCount ?? 0);
-
-      // Update local cache for next time
-      await AsyncStorage.multiSet([
-        ["username", data.username ?? ""],
-        ["fullName", data.fullName ?? ""],
-        ["bio", data.bio ?? ""],
-        ["profileImage", data.profileImage ?? ""],
-        ["bannerImage", data.bannerImage ?? ""],
-        ["favorites", JSON.stringify(data.favorites ?? [])],
-      ]);
+    } catch (error) {
+      console.warn("Failed to load follow counts:", error);
     }
-  } catch (err) {
-    console.warn("Failed to load profile:", err);
-  } finally {
-    setIsLoading(false);
-  }
-};
+  };
 
- 
+  const loadProfileData = async () => {
+    try {
+      const keys = [
+        "userId",
+        "username",
+        "fullName",
+        "bio",
+        "profileImage",
+        "bannerImage",
+        "favorites",
+      ];
+      const result = await AsyncStorage.multiGet(keys);
+      const data = Object.fromEntries(result);
 
+      setUsername(data.username ?? null);
+      setFullName(data.fullName ?? null);
+      setBio(data.bio ?? null);
+      setProfileImage(parseImageUrl(data.profileImage));
+      setBannerImage(parseImageUrl(data.bannerImage));
+      setFavorites(data.favorites ? JSON.parse(data.favorites) : []);
 
+      if (data.userId) {
+        setCurrentUserId(Number(data.userId));
+        await loadFollowCounts(data.userId);
+      }
+    } catch (error) {
+      console.warn("Failed to load profile data:", error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
+  const confirmDeleteAccount = async () => {
+    try {
+      if (!password.trim()) {
+        alert("Please enter your password.");
+        return;
+      }
+      await deleteAccount(password); // backend call
+      setShowDeleteModal(false);
+      setPassword("");
+      router.replace("/settings/deleteaccountsplash");
+    } catch (error) {
+      alert("Failed to delete account. Check your password and try again.");
+    }
+  };
 
-
-const confirmDeleteAccount = async () => {
-  try {
-    await deleteAccount();
-    // After delete, redirect to login
-    router.replace("/login");
-  } catch (error) {
-    alert("Failed to delete account.");
-  } finally {
-    setShowDeleteModal(false);
-  }
-};
-
-const signOut = async () => {
-  try {
-    await AsyncStorage.clear();
-    router.replace("/login");
-  } catch (error) {
-    console.warn("Failed to sign out:", error);
-  } finally {
-    setShowSignOutModal(false);
-  }
-};
+  const signOut = async () => {
+    try {
+      await AsyncStorage.clear();
+      router.replace("/login");
+    } catch (error) {
+      console.warn("Failed to sign out:", error);
+    } finally {
+      setShowSignOutModal(false);
+    }
+  };
 
   useFocusEffect(
     useCallback(() => {
@@ -187,12 +177,12 @@ const signOut = async () => {
 
       const initialize = async () => {
         if (shouldRestore && targetUserId) {
+          clearRestore(); // ✅ clear first
           openModal(
             type,
             targetUserId,
             currentUserId ? String(currentUserId) : undefined
           );
-          clearRestore();
         }
 
         if (isVisible || !isActive) return;
@@ -226,18 +216,20 @@ const signOut = async () => {
     ])
   );
 
-useLayoutEffect(() => {
-  navigation.setOptions({
-    header: () => (
-      <CustomHeaderTitle
-        title={`@${username}`}
-        tabName="Profile"
-        onLogout={() => setShowSignOutModal(true)}
-        onSettings={() => router.push("/settings")} // ← this is the fix
-      />
-    ),
-  });
-}, [navigation, username, isDark]);
+ 
+
+  useLayoutEffect(() => {
+    navigation.setOptions({
+      header: () => (
+        <CustomHeaderTitle
+          title={`@${username}`}
+          tabName="Profile"
+          onLogout={() => setShowSignOutModal(true)}
+          onSettings={() => router.push("/settings")} // ← this is the fix
+        />
+      ),
+    });
+  }, [navigation, username, isDark]);
 
   const favoriteTeams = teams.filter((team) => favorites.includes(team.id));
   const styles = getStyles(isDark);
@@ -255,6 +247,8 @@ useLayoutEffect(() => {
       openModal("following", String(currentUserId), String(currentUserId));
     }
   };
+
+
 
   return (
     <>
@@ -317,15 +311,14 @@ useLayoutEffect(() => {
       />
 
       <ConfirmModal
-      visible={showDeleteModal}
-      title="Delete Account"
-      message="This action cannot be undone. Are you sure you want to delete your account?"
-      confirmText="Delete"
-      cancelText="Cancel"
-      onConfirm={confirmDeleteAccount}
-      onCancel={() => setShowDeleteModal(false)}
-    />
-
+        visible={showDeleteModal}
+        title="Delete Account"
+        message="This action cannot be undone. Are you sure you want to delete your account?"
+        confirmText="Delete"
+        cancelText="Cancel"
+        onConfirm={confirmDeleteAccount}
+        onCancel={() => setShowDeleteModal(false)}
+      />
     </>
   );
 }

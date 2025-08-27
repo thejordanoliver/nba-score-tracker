@@ -79,7 +79,7 @@ export default function UserProfileScreen() {
     clearRestore,
   } = useFollowersModalStore();
 
-  // Load current user ID from AsyncStorage (your logged in user)
+  // Load current user ID from AsyncStorage
   useEffect(() => {
     (async () => {
       try {
@@ -91,7 +91,7 @@ export default function UserProfileScreen() {
     })();
   }, []);
 
-  // Fetch other user profile data from API
+  // Fetch user profile data
   const fetchUserData = useCallback(async () => {
     if (!userId || currentUserId === null) return;
     setIsLoading(true);
@@ -101,7 +101,6 @@ export default function UserProfileScreen() {
       );
       if (!res.ok) throw new Error("Failed to fetch user");
       const data = await res.json();
-      console.log("Fetched user data:", data);
 
       setUsername(data.username ?? null);
       setFullName(data.fullName ?? null);
@@ -111,8 +110,6 @@ export default function UserProfileScreen() {
       setFollowersCount(data.followersCount ?? data.followers_count ?? 0);
       setFollowingCount(data.followingCount ?? data.following_count ?? 0);
       setFavorites(Array.isArray(data.favorites) ? data.favorites : []);
-
-      // If API returns current user's following status for this user
       if (typeof data.isFollowing === "boolean") {
         setIsFollowing(data.isFollowing);
       }
@@ -131,35 +128,35 @@ export default function UserProfileScreen() {
     }
   }, [userId, currentUserId]);
 
-  // Reload profile and restore modal if needed on focus
-  useFocusEffect(
-    useCallback(() => {
-      if (shouldRestore && targetUserId) {
-        openModal(
-          type,
-          targetUserId,
-          currentUserId ? String(currentUserId) : undefined
-        );
-        clearRestore();
-      }
+ // Restore modal + reload on screen focus
+useFocusEffect(
+  useCallback(() => {
+    if (shouldRestore && targetUserId) {
+      clearRestore(); // clear before opening
+      openModal(
+        type,
+        targetUserId,
+        currentUserId ? String(currentUserId) : undefined
+      );
+    }
 
-      // ✅ always re-fetch when currentUserId is available
-      if (!isVisible && currentUserId !== null) {
-        fetchUserData();
-      }
-    }, [
-      shouldRestore,
-      targetUserId,
-      type,
-      isVisible,
-      currentUserId,
-      openModal,
-      clearRestore,
-      fetchUserData,
-    ])
-  );
+    // ✅ Only fetch on screen focus, not when modal closes
+    if (currentUserId !== null) {
+      fetchUserData();
+    }
+  }, [
+    shouldRestore,
+    targetUserId,
+    type,
+    currentUserId, // ✅ removed isVisible
+    openModal,
+    clearRestore,
+    fetchUserData,
+  ])
+);
 
-  // Navigation header with back button & username
+
+  // Navigation header
   useLayoutEffect(() => {
     navigation.setOptions({
       header: () => (
@@ -172,7 +169,7 @@ export default function UserProfileScreen() {
     });
   }, [navigation, username, router]);
 
-  // Toggle favorite teams view with fade animation
+  // Toggle favorite teams grid/list
   const toggleFavoriteTeamsView = () => {
     Animated.timing(fadeAnim, {
       toValue: 0,
@@ -188,21 +185,17 @@ export default function UserProfileScreen() {
     });
   };
 
-  // Follow/unfollow toggle handler
+  // Follow/unfollow handler
   const handleToggleFollow = async () => {
     if (followLoading || currentUserId === null || !userId) return;
 
-    // Optimistically update UI before API call
-    const previousIsFollowing = isFollowing;
-    const previousFollowersCount = followersCount;
+    const prevFollowing = isFollowing;
+    const prevCount = followersCount;
+    const newFollowing = !prevFollowing;
+    const newCount = newFollowing ? prevCount + 1 : Math.max(prevCount - 1, 0);
 
-    const newIsFollowing = !previousIsFollowing;
-    const newFollowersCount = newIsFollowing
-      ? previousFollowersCount + 1
-      : Math.max(previousFollowersCount - 1, 0);
-
-    setIsFollowing(newIsFollowing);
-    setFollowersCount(newFollowersCount);
+    setIsFollowing(newFollowing);
+    setFollowersCount(newCount);
     setFollowLoading(true);
 
     try {
@@ -213,20 +206,16 @@ export default function UserProfileScreen() {
       });
       if (!res.ok) throw new Error("Failed to toggle follow");
       const data = await res.json();
-
-      // Confirm with server response, in case it differs
       setIsFollowing(data.isFollowing);
       setFollowersCount((count) =>
         data.isFollowing
-          ? Math.max(count, newFollowersCount)
-          : Math.min(count, newFollowersCount)
+          ? Math.max(count, newCount)
+          : Math.min(count, newCount)
       );
-    } catch (error) {
-      console.error("Failed to toggle follow:", error);
-
-      // Rollback to previous state on failure
-      setIsFollowing(previousIsFollowing);
-      setFollowersCount(previousFollowersCount);
+    } catch (err) {
+      console.error("Failed to toggle follow:", err);
+      setIsFollowing(prevFollowing);
+      setFollowersCount(prevCount);
     } finally {
       setFollowLoading(false);
     }
@@ -314,15 +303,7 @@ export default function UserProfileScreen() {
         </View>
       </ScrollView>
 
-      {targetUserId && currentUserId && (
-        <FollowersModal
-          visible={isVisible}
-          onClose={closeModal}
-          type={type}
-          targetUserId={String(targetUserId)}
-          currentUserId={String(currentUserId)}
-        />
-      )}
+      
     </>
   );
 }

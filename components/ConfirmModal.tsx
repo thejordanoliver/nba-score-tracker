@@ -1,29 +1,27 @@
+import { Fonts } from "@/constants/fonts";
 import { BlurView } from "expo-blur";
+import { useEffect, useState } from "react";
 import {
+  KeyboardAvoidingView,
+  Platform,
   Pressable,
+  ScrollView,
   StyleSheet,
   Text,
   useColorScheme,
   View,
 } from "react-native";
 import Modal from "react-native-modal";
-import { useState, useEffect } from "react";
-
-const OSEXTRALIGHT = "Oswald_200ExtraLight";
-const OSLIGHT = "Oswald_300Light";
-const OSREGULAR = "Oswald_400Regular";
-const OSMEDIUM = "Oswald_500Medium";
-const OSBOLD = "Oswald_700Bold";
-const OSSEMIBOLD = "Oswald_600SemiBold";
 
 type ConfirmModalProps = {
   visible: boolean;
-  title?: string;
-  message?: string;
+  title: string;
+  message: string;
+  confirmText: string;
+  cancelText: string;
+  onConfirm: () => void | Promise<void>;
   onCancel: () => void;
-  onConfirm: () => void;
-  confirmText?: string;
-  cancelText?: string;
+  children?: React.ReactNode; // 👈 allow children
 };
 
 export default function ConfirmModal({
@@ -34,6 +32,7 @@ export default function ConfirmModal({
   onConfirm,
   confirmText = "Yes",
   cancelText = "Cancel",
+  children, // 👈 accept children
 }: ConfirmModalProps) {
   const isDark = useColorScheme() === "dark";
 
@@ -77,7 +76,7 @@ export default function ConfirmModal({
 
     title: {
       fontSize: 28,
-      fontFamily: OSBOLD,
+      fontFamily: Fonts.OSBOLD,
       color: isDark ? "#fff" : "#000",
       textAlign: "center",
     },
@@ -86,7 +85,7 @@ export default function ConfirmModal({
       color: isDark ? "#ddd" : "#333",
       marginBottom: 20,
       textAlign: "center",
-      fontFamily: OSREGULAR,
+      fontFamily: Fonts.OSREGULAR,
     },
     buttonRow: {
       width: "100%",
@@ -105,13 +104,13 @@ export default function ConfirmModal({
     },
     cancelText: {
       color: isDark ? "#ddd" : "#333",
-      fontFamily: OSBOLD,
+      fontFamily: Fonts.OSBOLD,
       textAlign: "center",
       fontSize: 16,
     },
     confirmText: {
       color: "#fff",
-      fontFamily: OSBOLD,
+      fontFamily: Fonts.OSBOLD,
       textAlign: "center",
       fontSize: 16,
     },
@@ -136,45 +135,65 @@ export default function ConfirmModal({
       backdropOpacity={0.5}
       style={{ justifyContent: "flex-end", margin: 0 }}
     >
-      <View
-        style={{
-          paddingHorizontal: 16,
-          paddingBottom: 16,
-          width: "100%",
-          minHeight: 360,
-        }}
+      <KeyboardAvoidingView
+        behavior={Platform.OS === "ios" ? "padding" : undefined}
+        keyboardVerticalOffset={Platform.OS === "ios" ? 0 : 0}
+        style={{ flex: 1 }}
       >
-        <View style={styles.container}>
-          <BlurView
-            intensity={80}
-            tint={isDark ? "dark" : "light"}
-            style={StyleSheet.absoluteFill}
-          />
+        <ScrollView
+          contentContainerStyle={{
+            flexGrow: 1,
+            justifyContent: "flex-end", // 👈 keeps it bottom-aligned
+          }}
+          keyboardShouldPersistTaps="handled"
+        >
+          <View
+            style={{
+              paddingHorizontal: 16,
+              paddingBottom: 16,
+              width: "100%",
+              minHeight: 360,
+            }}
+          >
+            <View style={styles.container}>
+              <BlurView
+                intensity={80}
+                tint={isDark ? "dark" : "light"}
+                style={StyleSheet.absoluteFill}
+              />
 
-          {/* Drag Indicator */}
-          <View style={styles.dragIndicator} />
+              {/* Drag Indicator */}
+              <View style={styles.dragIndicator} />
 
-          {/* Content */}
-          <View style={styles.content}>
-            <Text style={styles.title}>{title}</Text>
-            <Text style={styles.message}>{message}</Text>
-            <View style={styles.buttonRow}>
-              <Pressable
-                onPress={onCancel}
-                style={[styles.button, styles.cancelButton]}
-              >
-                <Text style={styles.cancelText}>{cancelText}</Text>
-              </Pressable>
-              <Pressable
-                onPress={onConfirm}
-                style={[styles.button, styles.confirmButton]}
-              >
-                <Text style={styles.confirmText}>{confirmText}</Text>
-              </Pressable>
+              {/* Content */}
+              <View style={styles.content}>
+                <Text style={styles.title}>{title}</Text>
+                <Text style={styles.message}>{message}</Text>
+                {children && (
+                  <View style={{ marginBottom: 15, width: "100%" }}>
+                    {children}
+                  </View>
+                )}
+
+                <View style={styles.buttonRow}>
+                  <Pressable
+                    onPress={onCancel}
+                    style={[styles.button, styles.cancelButton]}
+                  >
+                    <Text style={styles.cancelText}>{cancelText}</Text>
+                  </Pressable>
+                  <Pressable
+                    onPress={onConfirm}
+                    style={[styles.button, styles.confirmButton]}
+                  >
+                    <Text style={styles.confirmText}>{confirmText}</Text>
+                  </Pressable>
+                </View>
+              </View>
             </View>
           </View>
-        </View>
-      </View>
+        </ScrollView>
+      </KeyboardAvoidingView>
     </Modal>
   );
 }

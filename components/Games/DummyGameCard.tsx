@@ -15,6 +15,11 @@ import GamePreviewModal from "../GamePreview/GamePreviewModal";
 import GameCard from "./GameCard";
 import GameSquareCard from "./GameSquareCard";
 
+type DummyGameCardProps = {
+  isDark?: boolean;
+  style?: object; // allow passing style if you use it like in grid mode
+};
+
 export default function DummyGameCard() {
   const colorScheme = useColorScheme();
   const isDark = colorScheme === "dark";
@@ -118,7 +123,7 @@ export default function DummyGameCard() {
       status: "In Progress",
       clock: "0:05",
       periods: {
-        current: 6,
+        current: 3,
         total: 4,
         endOfPeriod: false,
       },
@@ -152,15 +157,15 @@ export default function DummyGameCard() {
   ];
 
   const renderGameCard = (game: Game) => (
-    <LongPressGestureHandler
-      key={game.id}
-      minDurationMs={300}
-      onHandlerStateChange={({ nativeEvent }) => {
-        if (nativeEvent.state === State.ACTIVE) {
-          handleLongPress(game);
-        }
-      }}
-    >
+    // <LongPressGestureHandler
+    //   key={game.id}
+    //   minDurationMs={300}
+    //   onHandlerStateChange={({ nativeEvent }) => {
+    //     if (nativeEvent.state === State.ACTIVE) {
+    //       handleLongPress(game);
+    //     }
+    //   }}
+    // >
       <View style={viewMode === "grid" ? styles.gridItem : undefined}>
         {viewMode === "list" ? (
           <GameCard game={game} isDark={isDark} />
@@ -168,7 +173,7 @@ export default function DummyGameCard() {
           <GameSquareCard game={game} isDark={isDark} />
         )}
       </View>
-    </LongPressGestureHandler>
+    // {/* </LongPressGestureHandler> */}
   );
 
   return (
@@ -195,7 +200,7 @@ export default function DummyGameCard() {
 
 const styles = StyleSheet.create({
   container: {
-    padding: 16,
+    paddingVertical: 12,
     gap: 12,
   },
   gridContainer: {

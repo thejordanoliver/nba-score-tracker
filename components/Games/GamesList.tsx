@@ -10,13 +10,15 @@ import GameCard from "./GameCard";
 import GameCardSkeleton from "./GameCardSkeleton";
 import GameSquareCard from "./GameSquareCard"; // import square card
 import GameSquareCardSkeleton from "./GameSquareCardSkeleton";
+import StackedGameCard from "./StackedGameCard";
 
 type GamesListProps = {
   games: Game[];
   loading: boolean;
   refreshing: boolean;
   onRefresh: () => void;
-  expectedCount?: number; // Optional for fallback
+  expectedCount?: number;
+  day?: "todayTomorrow";
 };
 
 const GamesList: React.FC<GamesListProps> = ({
@@ -25,6 +27,7 @@ const GamesList: React.FC<GamesListProps> = ({
   refreshing,
   onRefresh,
   expectedCount,
+  day,
 }) => {
   const colorScheme = useColorScheme();
   const isDark = colorScheme === "dark";
@@ -32,8 +35,7 @@ const GamesList: React.FC<GamesListProps> = ({
   const [previewGame, setPreviewGame] = useState<Game | null>(null);
   const [modalVisible, setModalVisible] = useState(false);
 
-  // New state for view mode
-  const { viewMode, toggleViewMode } = usePreferences(); // use global
+  const { viewMode, toggleViewMode } = usePreferences(); // global view mode
 
   const handleLongPress = (game: Game) => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
@@ -46,16 +48,24 @@ const GamesList: React.FC<GamesListProps> = ({
       key={item.id}
       minDurationMs={300}
       onHandlerStateChange={({ nativeEvent }) => {
-        if (nativeEvent.state === State.ACTIVE) {
-          handleLongPress(item);
-        }
+        if (nativeEvent.state === State.ACTIVE) handleLongPress(item);
       }}
     >
-      <View style={viewMode === "grid" ? styles.gridItem : undefined}>
+      <View
+        style={
+          viewMode === "grid"
+            ? styles.gridItem
+            : viewMode === "stacked"
+              ? styles.stackedItem
+              : undefined
+        }
+      >
         {viewMode === "list" ? (
           <GameCard game={item} isDark={isDark} />
-        ) : (
+        ) : viewMode === "grid" ? (
           <GameSquareCard game={item} isDark={isDark} />
+        ) : (
+          <StackedGameCard game={item} isDark={isDark} /> // new stacked card
         )}
       </View>
     </LongPressGestureHandler>
@@ -72,12 +82,23 @@ const GamesList: React.FC<GamesListProps> = ({
           ))}
         </View>
       );
-    } else {
-      // grid mode
+    } else if (viewMode === "grid") {
       return (
         <View style={styles.skeletonGridWrapper}>
           {Array.from({ length: skeletonCount }).map((_, index) => (
             <GameSquareCardSkeleton key={index} style={styles.gridItem} />
+          ))}
+        </View>
+      );
+    } else {
+      // stacked skeleton fallback
+      return (
+        <View style={styles.skeletonWrapper}>
+          {Array.from({ length: skeletonCount }).map((_, index) => (
+            <View key={index} style={{ marginBottom: 12 }}>
+              {/* Replace with a dedicated Stacked skeleton if you have one */}
+              <GameCardSkeleton />
+            </View>
           ))}
         </View>
       );
@@ -100,9 +121,15 @@ const GamesList: React.FC<GamesListProps> = ({
         contentContainerStyle={styles.contentContainer}
         showsVerticalScrollIndicator={false}
         ListEmptyComponent={
-          <Text style={[styles.emptyText, { color: isDark ? "#aaa" : "#888" }]}>
-            No games found for this date.
-          </Text>
+          <View style={{ marginTop: 10 }}>
+            <Text
+              style={[styles.emptyText, { color: isDark ? "#aaa" : "#888" }]}
+            >
+              {day === "todayTomorrow"
+                ? "No games found for today or tomorrow."
+                : "No games found on this date."}
+            </Text>
+          </View>
         }
       />
 
@@ -145,7 +172,10 @@ const styles = StyleSheet.create({
     fontFamily: Fonts.OSLIGHT,
   },
   gridItem: {
-    width: "48%", // Same as your actual grid items
+    width: "48%",
+  },
+  stackedItem: {
+    width: "100%", // full width for stacked layout
   },
 });
 

@@ -82,12 +82,12 @@ export default function TabBar<T extends string>({
       Animated.parallel([
         Animated.timing(underlineX, {
           toValue: x,
-          duration: 200,
+          duration: 150,
           useNativeDriver: false,
         }),
         Animated.timing(underlineWidth, {
           toValue: textMeasurement.width,
-          duration: 200,
+          duration: 150,
           useNativeDriver: false,
         }),
       ]).start();

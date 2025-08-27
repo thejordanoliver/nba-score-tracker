@@ -1,13 +1,26 @@
+import { CustomHeaderTitle } from "@/components/CustomHeaderTitle";
 import { Fonts } from "@/constants/fonts";
-import { useRouter } from "expo-router";
-import { useEffect, useRef } from "react";
+import { useNavigation, useRouter } from "expo-router";
+import { useEffect, useLayoutEffect, useRef } from "react";
 import { Animated, StyleSheet, useColorScheme } from "react-native";
-export default function SignupSuccessScreen() {
+
+
+
+
+export default function DeleteAccountSplashScreen() {
   const router = useRouter();
   const isDark = useColorScheme() === "dark";
-
+  const navigation = useNavigation();
   const screenFade = useRef(new Animated.Value(0)).current;
   const textFade = useRef(new Animated.Value(0)).current;
+
+
+  
+  useLayoutEffect(() => {
+    navigation.setOptions({
+      header: () => <CustomHeaderTitle title="" />,
+    });
+  }, [navigation, isDark]);
 
   useEffect(() => {
     // Step 1: Fade in screen
@@ -36,7 +49,7 @@ export default function SignupSuccessScreen() {
               useNativeDriver: true,
             }),
           ]).start(() => {
-            router.replace("/(tabs)/profile");
+            router.replace("/");
           });
         }, 5000);
       });
@@ -59,11 +72,17 @@ export default function SignupSuccessScreen() {
           { color: isDark ? "#fff" : "#1d1d1d", opacity: textFade },
         ]}
       >
-        You're All Set!
+        We hate to see you go
       </Animated.Text>
     </Animated.View>
   );
 }
+
+export const options = {
+  // Make the screen fade in instead of slide
+  animation: "fade",
+  gestureEnabled: false, // optional: disable swipe back
+};
 
 const styles = StyleSheet.create({
   container: {
@@ -72,7 +91,9 @@ const styles = StyleSheet.create({
     justifyContent: "center",
   },
   text: {
-    fontSize: 32,
+    fontSize: 28,
     fontFamily: Fonts.OSBOLD,
+    textAlign: "center",
+    paddingHorizontal: 20,
   },
 });
