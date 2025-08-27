@@ -686,7 +686,6 @@ export const getStyles = (dark: boolean) =>
       width: 80,
       flex: 1,
     },
-
     logo: {
       width: 24,
       height: 24,

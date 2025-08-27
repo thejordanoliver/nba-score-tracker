@@ -67,27 +67,27 @@ export default function StackedGameCardSkeleton() {
   return (
     <View style={styles.card}>
       {/* Away Team */}
-   <View style={styles.cardWrapper}>
+      <View style={styles.cardWrapper}>
         <View style={styles.teamSection}>
           <View style={styles.teamWrapper}>
             <Skeleton style={styles.logoSkeleton} shimmerWidth={40} />
             <Skeleton style={styles.nameSkeleton} shimmerWidth={80} />
           </View>
-        <Skeleton style={styles.scoreSkeleton} shimmerWidth={40} />
-      </View>
-
-      {/* Spacer */}
-      <View style={{ height: 8 }} />
-
-      {/* Home Team */}
-      <View style={styles.teamSection}>
-        <View style={styles.teamWrapper}>
-          <Skeleton style={styles.logoSkeleton} shimmerWidth={40} />
-          <Skeleton style={styles.nameSkeleton} shimmerWidth={80} />
+          <Skeleton style={styles.scoreSkeleton} shimmerWidth={40} />
         </View>
-        <Skeleton style={styles.scoreSkeleton} shimmerWidth={40} />
+
+        {/* Spacer */}
+        <View style={{ height: 8 }} />
+
+        {/* Home Team */}
+        <View style={styles.teamSection}>
+          <View style={styles.teamWrapper}>
+            <Skeleton style={styles.logoSkeleton} shimmerWidth={40} />
+            <Skeleton style={styles.nameSkeleton} shimmerWidth={80} />
+          </View>
+          <Skeleton style={styles.scoreSkeleton} shimmerWidth={40} />
+        </View>
       </View>
-</View>
       {/* Game Info */}
       <View style={styles.info}>
         <Skeleton style={styles.dateSkeleton} shimmerWidth={60} />
@@ -108,8 +108,9 @@ const getStyles = (isDark: boolean) =>
       justifyContent: "space-between",
       minHeight: 100,
     },
-     cardWrapper: {
+    cardWrapper: {
       flexDirection: "column",
+      borderRightColor: isDark ? "#444" : "#888",
       justifyContent: "center",
       borderRightWidth: 0.5,
       paddingRight: 12,
