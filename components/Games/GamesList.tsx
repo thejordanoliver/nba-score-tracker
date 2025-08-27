@@ -11,6 +11,7 @@ import GameCardSkeleton from "./GameCardSkeleton";
 import GameSquareCard from "./GameSquareCard"; // import square card
 import GameSquareCardSkeleton from "./GameSquareCardSkeleton";
 import StackedGameCard from "./StackedGameCard";
+import StackedGameCardSkeleton from "./StackedGameCardSkeleton";
 
 type GamesListProps = {
   games: Game[];
@@ -74,6 +75,7 @@ const GamesList: React.FC<GamesListProps> = ({
   if (loading) {
     const skeletonCount =
       games.length > 0 ? games.length : (expectedCount ?? 4);
+
     if (viewMode === "list") {
       return (
         <View style={styles.skeletonWrapper}>
@@ -96,8 +98,7 @@ const GamesList: React.FC<GamesListProps> = ({
         <View style={styles.skeletonWrapper}>
           {Array.from({ length: skeletonCount }).map((_, index) => (
             <View key={index} style={{ marginBottom: 12 }}>
-              {/* Replace with a dedicated Stacked skeleton if you have one */}
-              <GameCardSkeleton />
+              <StackedGameCardSkeleton />
             </View>
           ))}
         </View>
