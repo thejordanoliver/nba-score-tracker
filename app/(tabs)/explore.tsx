@@ -1,4 +1,5 @@
-import HeadingThree from "@/components/Headings/HeadingThree";
+import EmptyState from "@/components/Explore/EmptyState";
+import SearchResultsList from "@/components/Explore/SearchResultsList";
 import players from "@/constants/players";
 import { teamsById } from "@/constants/teams";
 import { styles } from "@/styles/Explore.styles";
@@ -10,49 +11,20 @@ import { Image } from "expo-image";
 import { useRouter } from "expo-router";
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import {
-  ActivityIndicator,
   Animated,
   Easing,
-  FlatList,
   Pressable,
   Text,
-  TextInput,
   useColorScheme,
   View,
 } from "react-native";
 import { CustomHeaderTitle } from "../../components/CustomHeaderTitle";
-import TabBar from "../../components/TabBar";
+import SearchBar from "../../components/Explore/SearchBar";
+import type { ResultItem, PlayerResult, TeamResult, UserResult } from "@/types/types";
 
 const API_URL = process.env.EXPO_PUBLIC_API_URL;
 const RECENT_SEARCHES_KEY = "recentSearches";
 
-type PlayerResult = {
-  id: number;
-  player_id: number;
-  name: string;
-  avatarUrl: string;
-  position: string;
-  team_id: number;
-  type: "player";
-};
-
-type TeamResult = {
-  id: number;
-  name: string;
-  nickname: string;
-  city: string;
-  logo_filename: string;
-  type: "team";
-};
-
-type UserResult = {
-  id: number;
-  username: string;
-  profileImageUrl: string;
-  type: "user";
-};
-
-type ResultItem = PlayerResult | TeamResult | UserResult;
 
 const tabs = ["All", "Teams", "Players", "Accounts"] as const;
 
@@ -180,12 +152,6 @@ export default function ExplorePage() {
     }
   };
 
-  useEffect(() => {
-    AsyncStorage.removeItem(RECENT_SEARCHES_KEY).then(() =>
-      console.log("Cleared corrupted recentSearches")
-    );
-  }, []);
-
   const saveToRecentSearches = async (item: ResultItem) => {
     if (!item || typeof item !== "object" || !item.type || !(item as any).id) {
       console.warn("Invalid item passed to saveToRecentSearches:", item);
@@ -267,212 +233,151 @@ export default function ExplorePage() {
     }
   };
 
- const renderItem = ({ item }: { item: ResultItem }) => {
-  if (item.type === "team") {
-    const localTeam = teamsById[item.id.toString()];
-    const logoSource = isDark
-      ? localTeam?.logoLight || localTeam?.logo
-      : localTeam?.logo;
+  const renderItem = ({ item }: { item: ResultItem }) => {
+    if (item.type === "team") {
+      const localTeam = teamsById[item.id.toString()];
+      const logoSource = isDark
+        ? localTeam?.logoLight || localTeam?.logo
+        : localTeam?.logo;
 
-    return (
-      <View style={styles.itemRow}>
-        <Pressable
-          onPress={() => handleSelectItem(item)}
-          style={[styles.itemContainer, isDark && styles.itemContainerDark]}
-        >
-          <View style={styles.teamRow}>
-            {logoSource && (
-              <Image
-                source={logoSource}
-                style={styles.teamLogo}
-                resizeMode="contain"
+      return (
+        <View style={styles.itemRow}>
+          <Pressable
+            onPress={() => handleSelectItem(item)}
+            style={[styles.itemContainer, isDark && styles.itemContainerDark]}
+          >
+            <View style={styles.teamRow}>
+              {logoSource && (
+                <Image
+                  source={logoSource}
+                  style={styles.teamLogo}
+                  resizeMode="contain"
+                />
+              )}
+              <Text style={[styles.teamName, isDark && styles.textDark]}>
+                {localTeam?.fullName}
+              </Text>
+            </View>
+          </Pressable>
+          {query.length === 0 && (
+            <Pressable onPress={() => deleteRecentSearch(item)}>
+              <Ionicons
+                name="close"
+                size={20}
+                color={isDark ? "#ccc" : "#333"}
               />
-            )}
-            <Text style={[styles.teamName, isDark && styles.textDark]}>
-              {localTeam?.fullName}
-            </Text>
-          </View>
-        </Pressable>
-        {query.length === 0 && (
-          <Pressable onPress={() => deleteRecentSearch(item)}>
-            <Ionicons
-              name="close"
-              size={20}
-              color={isDark ? "#ccc" : "#333"}
-            />
-          </Pressable>
-        )}
-      </View>
-    );
-  }
+            </Pressable>
+          )}
+        </View>
+      );
+    }
 
-  if (item.type === "player") {
-    const avatarUrl = item.avatarUrl?.trim()
-      ? item.avatarUrl
-      : players[item.name];
-    const localTeam = teamsById[item.team_id?.toString()];
+    if (item.type === "player") {
+      const avatarUrl = item.avatarUrl?.trim()
+        ? item.avatarUrl
+        : players[item.name];
+      const localTeam = teamsById[item.team_id?.toString()];
 
-    return (
-      <View style={styles.itemRow}>
-        <Pressable
-          onPress={() => handleSelectItem(item)}
-          style={[styles.itemContainer, isDark && styles.itemContainerDark]}
-        >
-          <View style={styles.playerRow}>
-            <Image
-              source={{ uri: avatarUrl }}
-              style={styles.avatar}
-              resizeMode="cover"
-            />
-            <View style={styles.playerInfo}>
-              <Text style={[styles.playerName, isDark && styles.textDark]}>
-                {item.name}
-              </Text>
-           <Text style={[styles.playerTeam, isDark && styles.textDark]}>
-  {localTeam?.fullName || "Free Agent"}
-</Text>
-
+      return (
+        <View style={styles.itemRow}>
+          <Pressable
+            onPress={() => handleSelectItem(item)}
+            style={[styles.itemContainer, isDark && styles.itemContainerDark]}
+          >
+            <View style={styles.playerRow}>
+              <Image
+                source={{ uri: avatarUrl }}
+                style={styles.avatar}
+                resizeMode="cover"
+              />
+              <View style={styles.playerInfo}>
+                <Text style={[styles.playerName, isDark && styles.textDark]}>
+                  {item.name}
+                </Text>
+                <Text style={[styles.playerTeam, isDark && styles.textDark]}>
+                  {localTeam?.fullName || "Free Agent"}
+                </Text>
+              </View>
             </View>
-          </View>
-        </Pressable>
-        {query.length === 0 && (
-          <Pressable onPress={() => deleteRecentSearch(item)}>
-            <Ionicons
-              name="close"
-              size={20}
-              color={isDark ? "#ccc" : "#333"}
-            />
           </Pressable>
-        )}
-      </View>
-    );
-  }
+          {query.length === 0 && (
+            <Pressable onPress={() => deleteRecentSearch(item)}>
+              <Ionicons
+                name="close"
+                size={20}
+                color={isDark ? "#ccc" : "#333"}
+              />
+            </Pressable>
+          )}
+        </View>
+      );
+    }
 
-  if (item.type === "user") {
-    const profileImageUrl = item.profileImageUrl.startsWith("http")
-      ? item.profileImageUrl
-      : `${API_URL}${item.profileImageUrl}`;
+    if (item.type === "user") {
+      const profileImageUrl = item.profileImageUrl.startsWith("http")
+        ? item.profileImageUrl
+        : `${API_URL}${item.profileImageUrl}`;
 
-    return (
-      <View style={styles.itemRow}>
-        <Pressable
-          onPress={() => handleSelectItem(item)}
-          style={[styles.itemContainer, isDark && styles.itemContainerDark]}
-        >
-          <View style={styles.userRow}>
-            <Image
-              source={{ uri: profileImageUrl }}
-              style={styles.avatar}
-              resizeMode="cover"
-            />
-            <View style={styles.userInfo}>
-              <Text style={[styles.userName, isDark && styles.textDark]}>
-                {item.username}
-              </Text>
+      return (
+        <View style={styles.itemRow}>
+          <Pressable
+            onPress={() => handleSelectItem(item)}
+            style={[styles.itemContainer, isDark && styles.itemContainerDark]}
+          >
+            <View style={styles.userRow}>
+              <Image
+                source={{ uri: profileImageUrl }}
+                style={styles.avatar}
+                resizeMode="cover"
+              />
+              <View style={styles.userInfo}>
+                <Text style={[styles.userName, isDark && styles.textDark]}>
+                  {item.username}
+                </Text>
+              </View>
             </View>
-          </View>
-        </Pressable>
-        {query.length === 0 && (
-          <Pressable onPress={() => deleteRecentSearch(item)}>
-            <Ionicons
-              name="close"
-              size={20}
-              color={isDark ? "#ccc" : "#333"}
-            />
           </Pressable>
-        )}
-      </View>
-    );
-  }
+          {query.length === 0 && (
+            <Pressable onPress={() => deleteRecentSearch(item)}>
+              <Ionicons
+                name="close"
+                size={20}
+                color={isDark ? "#ccc" : "#333"}
+              />
+            </Pressable>
+          )}
+        </View>
+      );
+    }
 
-  return null;
-};
-
+    return null;
+  };
 
   return (
     <View style={[styles.container]}>
-      <Animated.View
-        style={[
-          styles.searchBarWrapper,
-          {
-            width: inputAnim.interpolate({
-              inputRange: [0, 1],
-              outputRange: ["0%", "100%"],
-            }),
-            height: inputAnim.interpolate({
-              inputRange: [0, 1],
-              outputRange: [0, 50],
-            }),
-            opacity: inputAnim,
-            marginBottom: inputAnim.interpolate({
-              inputRange: [0, 1],
-              outputRange: [0, 8],
-            }),
-          },
-        ]}
-      >
-        <TextInput
-          placeholder="Search..."
-          placeholderTextColor={isDark ? "#888" : "#aaa"}
-          style={[styles.searchInput, isDark && styles.searchInputDark]}
-          value={query}
-          onChangeText={setQuery}
-          autoCapitalize="none"
-          onFocus={() => setIsFocused(true)}
-          onBlur={() => {
-            if (query.trim().length === 0) setIsFocused(false);
-          }}
-        />
-      </Animated.View>
+      <SearchBar
+        value={query}
+        onChangeText={setQuery}
+        visible={searchVisible}
+        onFocus={() => setIsFocused(true)}
+        onBlur={() => {
+          if (query.trim().length === 0) setIsFocused(false);
+        }}
+        tabs={[...tabs]} // spread to convert readonly tuple to mutable string[]
+        selectedTab={selectedTab}
+        onTabPress={(tab) => setSelectedTab(tab as typeof selectedTab)}
+      />
 
-      {searchVisible && (
-        <TabBar
-          tabs={tabs}
-          selected={selectedTab}
-          onTabPress={setSelectedTab}
-          style={{ marginBottom: 12 }}
-        />
-      )}
+      {!searchVisible && <EmptyState />}
 
-      {!searchVisible && (
-        <View style={styles.centerPrompt}>
-          <Image
-            source={require("../../assets/Logos/NBA.png")}
-            style={styles.nbaLogo}
-            resizeMode="contain"
-          />
-          <Text style={[styles.promptText, isDark && styles.textDark]}>
-            Search for players and teams
-          </Text>
-        </View>
-      )}
-
-      {loading && (
-        <ActivityIndicator size="large" color={isDark ? "white" : "black"} />
-      )}
-
-      {error && (
-        <Text style={[styles.errorText, isDark && styles.errorTextDark]}>
-          {error}
-        </Text>
-      )}
-
-      {!loading && filteredResults.length === 0 && query.length > 0 && (
-        <Text style={[styles.emptyText, isDark && styles.textDark]}>
-          No results found.
-        </Text>
-      )}
-      {searchVisible && query.length === 0 && recentSearches.length > 0 && (
-        <HeadingThree>Recents</HeadingThree>
-      )}
-      {searchVisible && !loading && filteredResults.length > 0 && (
-        <FlatList
-          data={filteredResults}
-          keyExtractor={getItemKey}
-          renderItem={renderItem}
-          contentContainerStyle={{ paddingBottom: 100 }}
-        />
-      )}
+      <SearchResultsList
+        data={filteredResults.length ? filteredResults : recentSearches}
+        loading={loading}
+        error={error}
+        onSelect={handleSelectItem}
+        onDelete={deleteRecentSearch}
+        query={query}
+      />
     </View>
   );
 }

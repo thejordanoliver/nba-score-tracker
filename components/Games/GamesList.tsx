@@ -8,10 +8,11 @@ import type { Game } from "../../types/types";
 import GamePreviewModal from "../GamePreview/GamePreviewModal";
 import GameCard from "./GameCard";
 import GameCardSkeleton from "./GameCardSkeleton";
-import GameSquareCard from "./GameSquareCard"; // import square card
+import GameSquareCard from "./GameSquareCard";
 import GameSquareCardSkeleton from "./GameSquareCardSkeleton";
 import StackedGameCard from "./StackedGameCard";
 import StackedGameCardSkeleton from "./StackedGameCardSkeleton";
+
 
 type GamesListProps = {
   games: Game[];
@@ -36,7 +37,7 @@ const GamesList: React.FC<GamesListProps> = ({
   const [previewGame, setPreviewGame] = useState<Game | null>(null);
   const [modalVisible, setModalVisible] = useState(false);
 
-  const { viewMode, toggleViewMode } = usePreferences(); // global view mode
+  const { viewMode } = usePreferences(); // global view mode
 
   const handleLongPress = (game: Game) => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
@@ -57,8 +58,8 @@ const GamesList: React.FC<GamesListProps> = ({
           viewMode === "grid"
             ? styles.gridItem
             : viewMode === "stacked"
-              ? styles.stackedItem
-              : undefined
+            ? styles.stackedItem
+            : undefined
         }
       >
         {viewMode === "list" ? (
@@ -66,15 +67,14 @@ const GamesList: React.FC<GamesListProps> = ({
         ) : viewMode === "grid" ? (
           <GameSquareCard game={item} isDark={isDark} />
         ) : (
-          <StackedGameCard game={item} isDark={isDark} /> // new stacked card
+          <StackedGameCard game={item} isDark={isDark} />
         )}
       </View>
     </LongPressGestureHandler>
   );
 
   if (loading) {
-    const skeletonCount =
-      games.length > 0 ? games.length : (expectedCount ?? 4);
+    const skeletonCount = games.length > 0 ? games.length : expectedCount ?? 4;
 
     if (viewMode === "list") {
       return (
@@ -92,18 +92,16 @@ const GamesList: React.FC<GamesListProps> = ({
           ))}
         </View>
       );
-    } else {
-      // stacked skeleton fallback
-      return (
-        <View style={styles.skeletonWrapper}>
-          {Array.from({ length: skeletonCount }).map((_, index) => (
-            <View key={index} style={{ marginBottom: 12 }}>
-              <StackedGameCardSkeleton />
-            </View>
-          ))}
-        </View>
-      );
-    }
+  } else {
+  return (
+    <View style={styles.skeletonWrapper}>
+      {Array.from({ length: skeletonCount }).map((_, index) => (
+        <StackedGameCardSkeleton key={index} />
+      ))}
+    </View>
+  );
+}
+
   }
 
   return (
@@ -124,7 +122,10 @@ const GamesList: React.FC<GamesListProps> = ({
         ListEmptyComponent={
           <View style={{ marginTop: 10 }}>
             <Text
-              style={[styles.emptyText, { color: isDark ? "#aaa" : "#888" }]}
+              style={[
+                styles.emptyText,
+                { color: isDark ? "#aaa" : "#888" },
+              ]}
             >
               {day === "todayTomorrow"
                 ? "No games found for today or tomorrow."
@@ -133,7 +134,6 @@ const GamesList: React.FC<GamesListProps> = ({
           </View>
         }
       />
-
       {modalVisible && previewGame && (
         <GamePreviewModal
           visible={modalVisible}

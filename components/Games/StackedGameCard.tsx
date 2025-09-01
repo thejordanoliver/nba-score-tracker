@@ -656,7 +656,7 @@ export const getStyles = (dark: boolean) =>
     card: {
       flexDirection: "row",
       flex: 1,
-      height: 100,
+      height: 110,
       backgroundColor: dark ? "#2e2e2e" : "#eee",
       justifyContent: "space-between",
       borderRadius: 12,
@@ -693,7 +693,7 @@ export const getStyles = (dark: boolean) =>
     },
     teamName: {
       fontSize: 18,
-      fontFamily: Fonts.OSBOLD,
+      fontFamily: Fonts.OSREGULAR,
       flexShrink: 1,
       color: dark ? "#fff" : "#1d1d1d",
       textAlign: "left",

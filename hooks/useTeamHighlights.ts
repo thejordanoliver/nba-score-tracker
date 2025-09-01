@@ -1,6 +1,7 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import axios from "axios";
 import { useEffect, useState } from "react";
+import { useHighlights } from "./useHighlights";
 
 type Highlight = {
   videoId: string;
@@ -102,58 +103,9 @@ function toSentenceCasePreserveAcronyms(str: string): string {
   return words.filter(Boolean).join(" ");
 }
 
-export function useHighlights(
-  query = "NBA highlights OR game highlights OR full highlights OR best plays OR top plays",
-  maxResults = 50
-) {
-  const [highlights, setHighlights] = useState<Highlight[]>([]);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+export function useTeamHighlights(teamName: string, maxResults = 30) {
+  // Guard for empty teamName
+  const query = teamName ? `${teamName} highlights` : "NBA highlights";
 
-  const cacheKey = `cachedHighlights-${query}-${maxResults}`;
-
-  useEffect(() => {
-    const fetchHighlights = async () => {
-      setLoading(true);
-      setError(null);
-
-      try {
-        const cached = await AsyncStorage.getItem(cacheKey);
-        if (cached) {
-          const cachedData: Highlight[] = JSON.parse(cached);
-          setHighlights(cachedData);
-          setLoading(false);
-        }
-
-        const response = await axios.get<Highlight[]>(`${BASE_URL}/api/highlights`, {
-          params: { query, maxResults },
-        });
-
-        const data = response.data;
-
-     const cleanedData = data
-  .filter(item => !/tickets|playstation/i.test(item.title))
-  .map(item => ({
-    ...item,
-    title: toSentenceCasePreserveAcronyms(decodeHTMLEntities(item.title)),
-    channelName: item.channelName || "Unknown", // <-- flatten here
-        duration: item.duration, // <-- add this line
-
-  }));
-
-
-        setHighlights(cleanedData);
-        await AsyncStorage.setItem(cacheKey, JSON.stringify(cleanedData));
-      } catch (err: any) {
-        setError(err.message);
-        if (!highlights.length) setHighlights([]);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchHighlights();
-  }, [query, maxResults]);
-
-  return { highlights, loading, error };
+  return useHighlights(query, maxResults);
 }

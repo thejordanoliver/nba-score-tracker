@@ -34,31 +34,29 @@ export const styles = StyleSheet.create({
     borderBottomColor: "#333",
   },
   teamName: {
-    fontSize: 18,
-    fontFamily: Fonts.OSSEMIBOLD,
+ fontSize: 16,
+  fontFamily: Fonts.OSLIGHT,
   },
   playerRow: {
     flexDirection: "row",
     alignItems: "center",
   },
   avatar: {
-    width: 48,
-    height: 48,
+    width: 36,
+    height: 36,
     borderRadius: 24,
     marginRight: 12,
     backgroundColor: "#888",
   },
-  playerInfo: {
-   
-  },
+  playerInfo: {},
   playerName: {
-    fontSize: 18,
-    fontFamily: Fonts.OSSEMIBOLD,
+   fontSize: 16,
+  fontFamily: Fonts.OSLIGHT,
   },
   playerTeam: {
-    fontSize: 14,
+    fontSize: 16,
+  fontFamily: Fonts.OSLIGHT,
     color: "#555",
-    fontFamily: Fonts.OSLIGHT,
     opacity: 0.5,
   },
   textDark: {
@@ -99,8 +97,8 @@ export const styles = StyleSheet.create({
     alignItems: "center",
   },
   teamLogo: {
-    width: 48,
-    height: 48,
+    width: 36,
+    height: 36,
     marginRight: 12,
   },
 
@@ -109,12 +107,10 @@ export const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "space-between",
   },
-  userInfo: {
-   
-  },
+  userInfo: {},
   userName: {
-    fontSize: 18,
-    fontFamily: Fonts.OSSEMIBOLD,
+    fontSize: 16,
+    fontFamily: Fonts.OSLIGHT,
   },
 
   itemRow: {

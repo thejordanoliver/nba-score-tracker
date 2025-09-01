@@ -22,13 +22,19 @@ type Props = {
   gameId: string;
   awayTeamId: number;
   homeTeamId: number;
+  lighter?: boolean; // new prop to force lighter colors
 };
 
-export default function GameLeaders({ gameId, awayTeamId, homeTeamId  }: Props) {
+export default function GameLeaders({
+  gameId,
+  awayTeamId,
+  homeTeamId,
+  lighter,
+}: Props) {
   const { data, isLoading, isError } = useGameLeaders(
     gameId,
     awayTeamId,
-    homeTeamId,
+    homeTeamId
   );
 
   const colorScheme = useColorScheme();
@@ -36,36 +42,41 @@ export default function GameLeaders({ gameId, awayTeamId, homeTeamId  }: Props) 
   const [selectedCategory, setSelectedCategory] = useState<Category>("points");
   const tabWidth = SCREEN_WIDTH / STAT_CATEGORIES.length;
 
-  // Move useMemo here, always called
-const topPlayers = useMemo(() => {
-  if (!data) return [];
+  // Memoized top players
+  const topPlayers = useMemo(() => {
+    if (!data) return [];
 
-  const getTopPlayerPerTeam = (category: Category) => {
-    const validPlayers = data.filter((p) => p.player && p[category] !== null);
-    const teams = [...new Set(validPlayers.map((p) => p.team.id))];
-    return teams.map((teamId) => {
-      const playersFromTeam = validPlayers.filter((p) => p.team.id === teamId);
-      return playersFromTeam.sort((a, b) => b[category]! - a[category]!)[0];
+    const getTopPlayerPerTeam = (category: Category) => {
+      const validPlayers = data.filter((p) => p.player && p[category] !== null);
+      const teams = [...new Set(validPlayers.map((p) => p.team.id))];
+      return teams.map((teamId) => {
+        const playersFromTeam = validPlayers.filter(
+          (p) => p.team.id === teamId
+        );
+        return playersFromTeam.sort((a, b) => b[category]! - a[category]!)[0];
+      });
+    };
+
+    const players = getTopPlayerPerTeam(selectedCategory);
+
+    // Sort so away team players first, then home team players
+    return players.sort((a, b) => {
+      if (a.team.id === awayTeamId) return -1;
+      if (b.team.id === awayTeamId) return 1;
+      if (a.team.id === homeTeamId) return -1;
+      if (b.team.id === homeTeamId) return 1;
+      return 0;
     });
-  };
+  }, [data, selectedCategory, awayTeamId, homeTeamId]);
 
-  const players = getTopPlayerPerTeam(selectedCategory);
-
-  // Sort so away team players first, then home team players
-  return players.sort((a, b) => {
-    if (a.team.id === awayTeamId) return -1;
-    if (b.team.id === awayTeamId) return 1;
-    if (a.team.id === homeTeamId) return -1;
-    if (b.team.id === homeTeamId) return 1;
-    return 0;
-  });
-}, [data, selectedCategory, awayTeamId, homeTeamId]);
-
+  const textColor = lighter ? "#fff" : isDark ? "#fff" : "#1d1d1d";
+  const subTextColor = lighter ? "#ccc" : isDark ? "#888" : "#555";
+  const borderColor = lighter ? "#aaa" : isDark ? "#888" : "#888";
 
   if (isLoading) {
     return (
       <View style={styles.container}>
-        <HeadingTwo>Game Leaders</HeadingTwo>
+        <HeadingTwo lighter>Game Leaders</HeadingTwo>
         <GameLeadersSkeleton />
       </View>
     );
@@ -73,38 +84,33 @@ const topPlayers = useMemo(() => {
 
   return (
     <View style={styles.container}>
-      <HeadingTwo>Game Leaders</HeadingTwo>
-      {/* Use FixedWidthTabBar instead of manual tabs */}
+      <HeadingTwo lighter={lighter}>Game Leaders</HeadingTwo>
+
       <View style={{ paddingHorizontal: 12 }}>
-        <FixedWidthTabBar
-          tabs={STAT_CATEGORIES}
-          selected={selectedCategory}
-          onTabPress={setSelectedCategory}
-          containerStyle={{
-            width: tabWidth * STAT_CATEGORIES.length,
-            alignSelf: "center",
-          }}
-          renderLabel={(tab, isSelected) => (
-            <Text
-              style={{
-                fontFamily: Fonts.OSMEDIUM,
-                fontSize: 14,
-                color: isSelected
-                  ? isDark
-                    ? "#fff"
-                    : "#000"
-                  : isDark
-                    ? "#888"
-                    : "#555",
-              }}
-            >
-              {tab.charAt(0).toUpperCase() + tab.slice(1)}
-            </Text>
-          )}
-        />
+       <FixedWidthTabBar
+  tabs={STAT_CATEGORIES}
+  selected={selectedCategory}
+  onTabPress={setSelectedCategory}
+  lighter={lighter} // <-- forward the prop here
+  containerStyle={{
+    width: tabWidth * STAT_CATEGORIES.length,
+    alignSelf: "center",
+  }}
+  renderLabel={(tab, isSelected) => (
+    <Text
+      style={{
+        fontFamily: Fonts.OSMEDIUM,
+        fontSize: 14,
+        color: isSelected ? textColor : subTextColor,
+      }}
+    >
+      {tab.charAt(0).toUpperCase() + tab.slice(1)}
+    </Text>
+  )}
+/>
+
       </View>
 
-      {/* Player Cards */}
       {topPlayers.map((player, idx) => {
         const p = player.localPlayer;
         const team = teamsById[player.team.id];
@@ -114,23 +120,17 @@ const topPlayers = useMemo(() => {
             key={idx}
             style={[
               styles.card,
-              {
-                borderBottomWidth: 1,
-                borderBottomColor: isDark ? "#888" : "#888",
-              },
+              { borderBottomWidth: 1, borderBottomColor: borderColor },
             ]}
           >
             <Image source={{ uri: p?.headshot_url }} style={styles.avatar} />
             <View style={styles.infoSection}>
               <View style={styles.nameRow}>
-                <Text style={[styles.playerName, isDark && { color: "#fff" }]}>
+                <Text style={[styles.playerName, { color: textColor }]}>
                   {p?.first_name} {p?.last_name}
                 </Text>
-                <Text
-                  style={[styles.jersey, { color: isDark ? "#888" : "#888" }]}
-                >
-                  {" "}
-                  #{player.localPlayer.jersey_number ?? "(NA)"}
+                <Text style={[styles.jersey, { color: subTextColor }]}>
+                  #{p?.jersey_number ?? "(NA)"}
                 </Text>
               </View>
 
@@ -138,56 +138,26 @@ const topPlayers = useMemo(() => {
                 {selectedCategory === "points" && (
                   <>
                     <View style={styles.statBlock}>
-                      <Text
-                        style={[
-                          styles.statLabel,
-                          { color: isDark ? "#888" : "#888" },
-                        ]}
-                      >
+                      <Text style={[styles.statLabel, { color: subTextColor }]}>
                         PTS
                       </Text>
-                      <Text
-                        style={[
-                          styles.statText,
-                          { color: isDark ? "#fff" : "#1d1d1d" },
-                        ]}
-                      >
+                      <Text style={[styles.statText, { color: textColor }]}>
                         {player.points ?? "-"}
                       </Text>
                     </View>
                     <View style={styles.statBlock}>
-                      <Text
-                        style={[
-                          styles.statLabel,
-                          { color: isDark ? "#888" : "#888" },
-                        ]}
-                      >
+                      <Text style={[styles.statLabel, { color: subTextColor }]}>
                         FG
                       </Text>
-                      <Text
-                        style={[
-                          styles.statText,
-                          { color: isDark ? "#fff" : "#1d1d1d" },
-                        ]}
-                      >
+                      <Text style={[styles.statText, { color: textColor }]}>
                         {player.fgm ?? "-"}/{player.fga ?? "-"}
                       </Text>
                     </View>
                     <View style={styles.statBlock}>
-                      <Text
-                        style={[
-                          styles.statLabel,
-                          { color: isDark ? "#888" : "#888" },
-                        ]}
-                      >
+                      <Text style={[styles.statLabel, { color: subTextColor }]}>
                         3PT
                       </Text>
-                      <Text
-                        style={[
-                          styles.statText,
-                          { color: isDark ? "#fff" : "#1d1d1d" },
-                        ]}
-                      >
+                      <Text style={[styles.statText, { color: textColor }]}>
                         {player.tpm ?? "-"}/{player.tpa ?? "-"}
                       </Text>
                     </View>
@@ -197,56 +167,26 @@ const topPlayers = useMemo(() => {
                 {selectedCategory === "rebounds" && (
                   <>
                     <View style={styles.statBlock}>
-                      <Text
-                        style={[
-                          styles.statLabel,
-                          { color: isDark ? "#888" : "#888" },
-                        ]}
-                      >
+                      <Text style={[styles.statLabel, { color: subTextColor }]}>
                         REB
                       </Text>
-                      <Text
-                        style={[
-                          styles.statText,
-                          { color: isDark ? "#fff" : "#1d1d1d" },
-                        ]}
-                      >
+                      <Text style={[styles.statText, { color: textColor }]}>
                         {player.totReb ?? "-"}
                       </Text>
                     </View>
                     <View style={styles.statBlock}>
-                      <Text
-                        style={[
-                          styles.statLabel,
-                          { color: isDark ? "#888" : "#888" },
-                        ]}
-                      >
+                      <Text style={[styles.statLabel, { color: subTextColor }]}>
                         DREB
                       </Text>
-                      <Text
-                        style={[
-                          styles.statText,
-                          { color: isDark ? "#fff" : "#1d1d1d" },
-                        ]}
-                      >
+                      <Text style={[styles.statText, { color: textColor }]}>
                         {player.defReb ?? "-"}
                       </Text>
                     </View>
                     <View style={styles.statBlock}>
-                      <Text
-                        style={[
-                          styles.statLabel,
-                          { color: isDark ? "#888" : "#888" },
-                        ]}
-                      >
+                      <Text style={[styles.statLabel, { color: subTextColor }]}>
                         OREB
                       </Text>
-                      <Text
-                        style={[
-                          styles.statText,
-                          { color: isDark ? "#fff" : "#1d1d1d" },
-                        ]}
-                      >
+                      <Text style={[styles.statText, { color: textColor }]}>
                         {player.offReb ?? "-"}
                       </Text>
                     </View>
@@ -256,56 +196,26 @@ const topPlayers = useMemo(() => {
                 {selectedCategory === "assists" && (
                   <>
                     <View style={styles.statBlock}>
-                      <Text
-                        style={[
-                          styles.statLabel,
-                          { color: isDark ? "#888" : "#888" },
-                        ]}
-                      >
+                      <Text style={[styles.statLabel, { color: subTextColor }]}>
                         AST
                       </Text>
-                      <Text
-                        style={[
-                          styles.statText,
-                          { color: isDark ? "#fff" : "#1d1d1d" },
-                        ]}
-                      >
+                      <Text style={[styles.statText, { color: textColor }]}>
                         {player.assists ?? "-"}
                       </Text>
                     </View>
                     <View style={styles.statBlock}>
-                      <Text
-                        style={[
-                          styles.statLabel,
-                          { color: isDark ? "#888" : "#888" },
-                        ]}
-                      >
+                      <Text style={[styles.statLabel, { color: subTextColor }]}>
                         TO
                       </Text>
-                      <Text
-                        style={[
-                          styles.statText,
-                          { color: isDark ? "#fff" : "#1d1d1d" },
-                        ]}
-                      >
+                      <Text style={[styles.statText, { color: textColor }]}>
                         {player.turnovers ?? "-"}
                       </Text>
                     </View>
                     <View style={styles.statBlock}>
-                      <Text
-                        style={[
-                          styles.statLabel,
-                          { color: isDark ? "#888" : "#888" },
-                        ]}
-                      >
+                      <Text style={[styles.statLabel, { color: subTextColor }]}>
                         MIN
                       </Text>
-                      <Text
-                        style={[
-                          styles.statText,
-                          { color: isDark ? "#fff" : "#1d1d1d" },
-                        ]}
-                      >
+                      <Text style={[styles.statText, { color: textColor }]}>
                         {player.min ?? "-"}
                       </Text>
                     </View>
@@ -313,8 +223,15 @@ const topPlayers = useMemo(() => {
                 )}
               </View>
             </View>
+
             <Image
-              source={isDark ? team.logoLight || team.logo : team?.logo}
+              source={
+                lighter
+                  ? team.logoLight || team.logo
+                  : isDark
+                    ? team.logoLight || team.logo
+                    : team.logo
+              }
               style={styles.teamLogo}
               resizeMode="contain"
             />
@@ -347,7 +264,7 @@ const styles = StyleSheet.create({
     height: 50,
     borderRadius: 25,
     backgroundColor: "#ccc",
-    paddingTop: 4
+    paddingTop: 4,
   },
   infoSection: {
     flex: 1,

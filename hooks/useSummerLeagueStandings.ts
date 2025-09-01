@@ -49,8 +49,9 @@ export function useSummerLeagueStandings() {
         axios.get(`${API_URL}/api/standings/utah`, { headers }),
       ]);
 
-      const mainTeams: Standing[] = mainRes.data.response[0];
-      const utahTeams: Standing[] = utahRes.data.response[0];
+   const mainTeams: Standing[] = mainRes.data.response;
+const utahTeams: Standing[] = utahRes.data.response;
+
 
       const map = new Map<string, string>();
 

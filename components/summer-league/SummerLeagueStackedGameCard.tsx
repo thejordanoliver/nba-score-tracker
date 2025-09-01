@@ -357,7 +357,7 @@ export const getStyles = (dark: boolean) =>
     },
     teamName: {
       fontSize: 18,
-      fontFamily: Fonts.OSBOLD,
+      fontFamily: Fonts.OSREGULAR,
       flexShrink: 1,
       color: dark ? "#fff" : "#1d1d1d",
       textAlign: "left",

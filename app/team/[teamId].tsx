@@ -36,6 +36,7 @@ import { useTeamNews } from "../../hooks/useTeamNews";
 import { style } from "../../styles/TeamDetails.styles";
 import PagerView from "react-native-pager-view";
 import { Fonts } from "@/constants/fonts";
+import { useTeamHighlights } from "@/hooks/useTeamHighlights";
 
 export default function TeamDetailScreen() {
   const navigation = useNavigation();
@@ -90,6 +91,12 @@ export default function TeamDetailScreen() {
     error: gamesError,
   } = useTeamGames(teamIdNum.toString());
 
+
+const {
+  highlights: teamHighlights,
+  loading: highlightsLoading,
+  error: highlightsError,
+} = useTeamHighlights(team?.fullName ?? "", 30);
   const {
     articles: newsArticles,
     loading: newsLoading,
@@ -103,6 +110,32 @@ export default function TeamDetailScreen() {
       itemType: "news" as const,
     }));
   }, [newsArticles]);
+
+  const combinedNewsAndHighlights = useMemo(() => {
+  const taggedNews = newsArticles.map((item) => ({
+    ...item,
+    itemType: "news" as const,
+publishedAt: item.publishedAt ?? new Date().toISOString(),
+  }));
+
+ const taggedHighlights = teamHighlights.map((item) => ({
+  ...item,
+  itemType: "highlight" as const,
+  publishedAt: item.publishedAt ?? new Date().toISOString(),
+  duration: String(item.duration), // ✅ fix type mismatch
+}));
+
+  const combined = [...taggedNews, ...taggedHighlights];
+
+  combined.sort((a, b) => {
+    const aDate = a.publishedAt ? new Date(a.publishedAt).getTime() : 0;
+    const bDate = b.publishedAt ? new Date(b.publishedAt).getTime() : 0;
+    return bDate - aDate;
+  });
+
+  return combined;
+}, [newsArticles, teamHighlights]);
+
 
   const setArticles = useNewsStore((state) => state.setArticles);
 
@@ -374,14 +407,16 @@ export default function TeamDetailScreen() {
         </View>
 
         {/* News Page */}
-        <View key="news" style={{ flex: 1 }}>
-          <NewsHighlightsList
-            items={combinedNewsItems}
-            loading={newsLoading}
-            refreshing={refreshing}
-            onRefresh={handleRefresh}
-          />
-        </View>
+       <View key="news" style={{ flex: 1 }}>
+ 
+    <NewsHighlightsList
+      items={combinedNewsAndHighlights}
+      loading={newsLoading || highlightsLoading}
+      refreshing={refreshing}
+      onRefresh={handleRefresh}
+    />
+
+</View>
 
         {/* Roster Page */}
         <View key="roster" style={{ flex: 1 }}>

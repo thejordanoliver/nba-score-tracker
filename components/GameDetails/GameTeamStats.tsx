@@ -1,3 +1,4 @@
+import { Fonts } from "@/constants/fonts";
 import { teamsById } from "@/constants/teams";
 import { useEffect, useRef, useState } from "react";
 import {
@@ -11,13 +12,6 @@ import {
   View,
 } from "react-native";
 import HeadingTwo from "../Headings/HeadingTwo";
-
-const OSEXTRALIGHT = "Oswald_200ExtraLight";
-const OSLIGHT = "Oswald_300Light";
-const OSMEDIUM = "Oswald_500Medium";
-const OSREGULAR = "Oswald_400Regular";
-const OSBOLD = "Oswald_700Bold";
-const OSSEMIBOLD = "Oswald_600SemiBold";
 
 const COLLAPSED_ROWS = 5;
 const ROW_HEIGHT = 64;
@@ -46,7 +40,13 @@ const STAT_KEYS = [
   { key: "plusMinus", label: "Plus/Minus" },
 ];
 
-export default function GameTeamStats({ stats }: { stats: any[] }) {
+export default function GameTeamStats({
+  stats,
+  lighter,
+}: {
+  stats: any[];
+  lighter?: boolean;
+}) {
   const isDark = useColorScheme() === "dark";
   if (!stats || stats.length < 2) return null;
 
@@ -63,8 +63,8 @@ export default function GameTeamStats({ stats }: { stats: any[] }) {
 
   const teamDataA = teamsById[teamA.team.id];
   const teamDataB = teamsById[teamB.team.id];
-  const dividerColor = isDark ? "#888" : "#888";
-
+  const textColor = lighter ? "#fff" : isDark ? "#fff" : "#000";
+  const dividerColor = lighter ? "#fff" : isDark ? "#888" : "#888";
   const getTeamBarColor = (team: any) => {
     const darkTeams = [
       "MEM",
@@ -82,7 +82,9 @@ export default function GameTeamStats({ stats }: { stats: any[] }) {
       "UTA",
       "ATL",
       "NYK",
-      "LAC", "SAC", "WAS"
+      "LAC",
+      "SAC",
+      "WAS",
     ];
     const isDarkTeam = darkTeams.includes(team?.code);
     if (isDark && isDarkTeam && team?.secondaryColor) {
@@ -104,8 +106,8 @@ export default function GameTeamStats({ stats }: { stats: any[] }) {
 
   return (
     <View>
-      <HeadingTwo>Game Stats</HeadingTwo>
-      <View style={styles.logosRow}>
+      <HeadingTwo lighter={lighter}>Game Stats</HeadingTwo>
+      <View style={[styles.logosRow, { borderColor: dividerColor }]}>
         <View style={styles.teamContainer}>
           <Image
             source={
@@ -113,12 +115,7 @@ export default function GameTeamStats({ stats }: { stats: any[] }) {
             }
             style={styles.logo}
           />
-          <Text
-            style={[
-              styles.teamLabel,
-              { color: isDark ? "#fff" : "#1d1d1d", marginLeft: 4 },
-            ]}
-          >
+          <Text style={[styles.teamLabel, { color: textColor, marginLeft: 4 }]}>
             {teamDataB.code}
           </Text>
         </View>
@@ -130,17 +127,12 @@ export default function GameTeamStats({ stats }: { stats: any[] }) {
             }
             style={styles.logo}
           />
-          <Text
-            style={[
-              styles.teamLabel,
-              { color: isDark ? "#fff" : "#1d1d1d", marginLeft: 4 },
-            ]}
-          >
+          <Text style={[styles.teamLabel, { color: textColor }]}>
             {teamDataA.code}
           </Text>
         </View>
       </View>
-      <ScrollView style={styles.container}>
+      <ScrollView style={[styles.container, { borderColor: dividerColor }]}>
         <Animated.View style={{ maxHeight: heightAnim, overflow: "hidden" }}>
           {STAT_KEYS.map(({ key, label }) => {
             const rawValueA = statA[key];
@@ -161,21 +153,11 @@ export default function GameTeamStats({ stats }: { stats: any[] }) {
                     { backgroundColor: dividerColor },
                   ]}
                 />
-                <Text
-                  style={[
-                    styles.statLabel,
-                    { color: isDark ? "#fff" : "#000" },
-                  ]}
-                >
+                <Text style={[styles.statLabel, { color: textColor }]}>
                   {label}
                 </Text>
                 <View style={styles.row}>
-                  <Text
-                    style={[
-                      styles.barText,
-                      { color: isDark ? "#fff" : "#000" },
-                    ]}
-                  >
+                  <Text style={[styles.barText, { color: textColor }]}>
                     {["fgp", "ftp", "tpp"].includes(key)
                       ? `${valueB}%`
                       : valueB}
@@ -203,12 +185,7 @@ export default function GameTeamStats({ stats }: { stats: any[] }) {
                       ]}
                     />
                   </View>
-                  <Text
-                    style={[
-                      styles.barText,
-                      { color: isDark ? "#fff" : "#000" },
-                    ]}
-                  >
+                  <Text style={[styles.barText, { color: textColor }]}>
                     {["fgp", "ftp", "tpp"].includes(key)
                       ? `${valueA}%`
                       : valueA}
@@ -226,13 +203,13 @@ export default function GameTeamStats({ stats }: { stats: any[] }) {
             justifyContent: "center",
             alignItems: "center",
             borderTopWidth: 1,
-            borderColor: "#888",
+            borderColor: dividerColor,
           }}
         >
           <Text
             style={{
-              color: isDark ? "#ccc" : "#333",
-              fontFamily: OSMEDIUM,
+              color: textColor,
+              fontFamily: Fonts.OSMEDIUM,
               fontSize: 14,
             }}
           >
@@ -248,7 +225,6 @@ const styles = StyleSheet.create({
   container: {
     borderLeftWidth: 1,
     borderRightWidth: 1,
-    borderColor: "#888",
     borderBottomWidth: 1,
     borderBottomRightRadius: 12,
     borderBottomLeftRadius: 12,
@@ -279,7 +255,7 @@ const styles = StyleSheet.create({
     resizeMode: "contain",
   },
   teamLabel: {
-    fontFamily: OSMEDIUM,
+    fontFamily: Fonts.OSMEDIUM,
     fontSize: 16,
   },
   statSection: {
@@ -291,7 +267,7 @@ const styles = StyleSheet.create({
     width: "100%",
   },
   statLabel: {
-    fontFamily: OSREGULAR,
+    fontFamily: Fonts.OSREGULAR,
     fontSize: 12,
     textAlign: "center",
     marginTop: 8,
@@ -317,7 +293,7 @@ const styles = StyleSheet.create({
     borderRadius: 100,
   },
   barText: {
-    fontFamily: OSSEMIBOLD,
+    fontFamily: Fonts.OSSEMIBOLD,
     fontSize: 14,
     textAlign: "center",
   },

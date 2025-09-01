@@ -239,8 +239,8 @@ const apiKey = process.env.EXPO_PUBLIC_RAPIDAPI_KEY;
         axios.get(`${API_URL}/api/summer-league/utah/games`, { headers }),
       ]);
 
-      const mainGames: ApiGame[] = mainRes.data;
-      const utahGames: ApiGame[] = utahRes.data;
+    const mainGames: ApiGame[] = Array.isArray(mainRes.data) ? mainRes.data : [];
+const utahGames: ApiGame[] = Array.isArray(utahRes.data) ? utahRes.data : [];
 
       const allGames = [...mainGames, ...utahGames];
       const transformed = transformGames(allGames);

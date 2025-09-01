@@ -324,7 +324,7 @@ export default function GameDetailsScreen() {
       </View>
 
       <View style={{ gap: 20, marginTop: 20 }}>
-        {oddsLoading ? (
+        {/* {oddsLoading ? (
           <View style={{ marginTop: 20 }}>
             {[...Array(1)].map((_, i) => (
               <HistoricalOddsCardSkeleton key={i} />
@@ -345,7 +345,7 @@ export default function GameDetailsScreen() {
               Error loading odds: {oddsError}
             </Text>
           </View>
-        )}
+        )} */}
 
         {prediction && !predictionLoading && !predictionError && (
           <View style={{ marginTop: 20 }}>

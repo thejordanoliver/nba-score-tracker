@@ -189,7 +189,7 @@ export default function CenterInfo({
               style={{
                 fontSize: 12,
                 fontFamily: Fonts.OSLIGHT,
-                color: isDark ? "#ccc" : "#333",
+                color: "#ccc",
               }}
             >
               {gameNumberLabel}
@@ -201,7 +201,7 @@ export default function CenterInfo({
               style={{
                 height: 12,
                 width: 0.5,
-                backgroundColor: isDark ? "#ccc" : "#444",
+                backgroundColor: "#ccc",
                 marginHorizontal: 8,
               }}
             />
@@ -212,7 +212,7 @@ export default function CenterInfo({
               style={{
                 fontSize: 12,
                 fontFamily: Fonts.OSLIGHT,
-                color: isDark ? "#ccc" : "#333",
+                color: "#ccc",
               }}
             >
               {seriesSummary}
@@ -226,7 +226,7 @@ export default function CenterInfo({
           style={{
             fontSize: 20,
             fontFamily: Fonts.OSBOLD,
-            color: isDark ? "#ff5555" : "#cc0000",
+            color: "#ff5555",
             marginTop: 6,
           }}
         >
@@ -237,7 +237,7 @@ export default function CenterInfo({
           style={{
             fontSize: 20,
             fontFamily: Fonts.OSBOLD,
-            color: isDark ? "#ff5555" : "#cc0000",
+            color: "#ff5555",
             marginTop: 6,
           }}
         >
@@ -251,7 +251,7 @@ export default function CenterInfo({
             style={{
               fontSize: 18,
               fontFamily: Fonts.OSMEDIUM,
-              color: isDark ? "#fff" : "#000",
+
               marginTop: 4,
             }}
           >
@@ -269,7 +269,7 @@ export default function CenterInfo({
               style={{
                 fontSize: 20,
                 fontFamily: Fonts.OSMEDIUM,
-                color: isDark ? "#ff4444" : "#cc0000",
+                color: "#ff4444",
               }}
             >
               {clock}
@@ -283,7 +283,7 @@ export default function CenterInfo({
               style={{
                 fontSize: 16,
                 fontFamily: Fonts.OSREGULAR,
-                color: isDark ? "#fff" : "#000",
+                color: "#fff",
                 marginTop: 6,
               }}
             >
@@ -295,7 +295,7 @@ export default function CenterInfo({
                 style={{
                   fontSize: 14,
                   fontFamily: Fonts.OSLIGHT,
-                  color: isDark ? "#ccc" : "#555",
+                  color: "#ccc",
                   marginTop: 2,
                 }}
               >
@@ -311,7 +311,7 @@ export default function CenterInfo({
           style={{
             fontSize: 12,
             fontFamily: Fonts.OSREGULAR,
-            color: isDark ? "#aaa" : "#444",
+            color: "#aaa",
             marginTop: 4,
             textAlign: "center",
           }}

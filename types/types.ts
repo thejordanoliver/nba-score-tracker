@@ -323,3 +323,32 @@ export type TeamRecord = {
   losses: number;
   record: string;
 };
+
+export type PlayerResult = {
+  id: number;
+  player_id: number;
+  name: string;
+  avatarUrl: string;
+  position: string;
+  team_id: number;
+  type: "player";
+};
+
+export type TeamResult = {
+  id: number;
+  name: string;
+  nickname: string;
+  city: string;
+  logo_filename: string;
+  type: "team";
+};
+
+export type UserResult = {
+  id: number;
+  username: string;
+  profileImageUrl: string;
+  type: "user";
+};
+
+
+export type ResultItem = PlayerResult | TeamResult | UserResult;

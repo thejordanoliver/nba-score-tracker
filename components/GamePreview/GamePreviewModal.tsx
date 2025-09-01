@@ -173,7 +173,7 @@ export default function GamePreviewModal({ visible, game, onClose }: Props) {
         top: 0,
       }}
       handleIndicatorStyle={{
-        backgroundColor: isDark ? "#888" : "#444",
+        backgroundColor: "#888" ,
         width: 36,
         height: 4,
         borderRadius: 2,
@@ -213,7 +213,7 @@ export default function GamePreviewModal({ visible, game, onClose }: Props) {
 
         <BlurView
           intensity={100}
-          tint={"systemUltraThinMaterial"}
+          tint={"systemUltraThinMaterialDark"}
           style={{
             flex: 1,
             padding: 20,
@@ -291,6 +291,7 @@ export default function GamePreviewModal({ visible, game, onClose }: Props) {
                     linescore={game.linescore}
                     homeCode={homeCode}
                     awayCode={awayCode}
+                    lighter={true}
                   />
                 </View>
               )}
@@ -301,12 +302,13 @@ export default function GamePreviewModal({ visible, game, onClose }: Props) {
                     gameId={game.id.toString()}
                     homeTeamId={homeId}
                     awayTeamId={awayId}
+                    lighter={true}
                   />
                 </View>
               )}
 
               {!statsLoading && gameStats && (
-                <GameTeamStats stats={gameStats} />
+                <GameTeamStats stats={gameStats} lighter={true} />
               )}
             </BottomSheetScrollView>
           </View>

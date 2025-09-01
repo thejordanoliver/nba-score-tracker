@@ -10,17 +10,23 @@ type Props = {
   };
   homeCode: string;
   awayCode: string;
+  lighter?: boolean; // new prop to force lighter colors
 };
 
-export default function LineScore({ linescore, homeCode, awayCode }: Props) {
+export default function LineScore({
+  linescore,
+  homeCode,
+  awayCode,
+  lighter,
+}: Props) {
   if (!linescore || !linescore.home || !linescore.away) return null;
 
-
   const isDark = useColorScheme() === "dark";
-  const textColor = isDark ? "#fff" : "#000";
-  const borderColor = isDark ? "#333" : "#888";
-  const dividerColor = isDark ? "#888" : "#888";
+  const textColor = lighter ? "#ccc" : isDark ? "#fff" : "#000";
 
+  const borderColor = lighter ? "#aaa" : isDark ? "#333" : "#888";
+
+  const dividerColor = lighter ? "#bbb" : isDark ? "#888" : "#888";
   const total = (scores: string[]) =>
     scores.reduce((acc, val) => acc + parseInt(val || "0", 10), 0);
 
@@ -36,7 +42,7 @@ export default function LineScore({ linescore, homeCode, awayCode }: Props) {
 
   return (
     <>
-      <HeadingTwo>Score Summary</HeadingTwo>
+      <HeadingTwo lighter={lighter}>Score Summary</HeadingTwo>
       <View style={[styles.container, { borderColor }]}>
         {/* Header */}
         <View style={styles.row}>
