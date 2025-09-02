@@ -28,7 +28,11 @@ import { useLiveGames } from "../../hooks/useLiveGames";
 import { useNews } from "../../hooks/useNews";
 import { useWeeklyGames } from "../../hooks/useWeeklyGames";
 import { getStyles } from "../../styles/indexStyles";
-import StackedGameCard from "@/components/Games/StackedGameCard";
+import NFLGamesList from "@/components/NFL/NFLGamesList";
+
+
+
+
 type Tab = "scores" | "news";
 
 type NewsItem = {
@@ -302,7 +306,7 @@ const taggedHighlights: CombinedItem[] = highlights.map((item) => ({
         {selectedTab === "scores" ? (
           <>
             <Heading>Latest Games</Heading>
-           
+           <NFLGamesList/>
             {onlySummerLeagueToday ? (
               <SummerGamesList
                 games={filteredSummer}
