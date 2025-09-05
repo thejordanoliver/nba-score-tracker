@@ -1,5 +1,5 @@
 // components/NFLGameCard.tsx
-import { getNFLTeamsLogo, getTeamName } from "@/constants/teamsNFL";
+import { getNFLTeamsLogo, getTeamName, getTeamInfo } from "@/constants/teamsNFL";
 import { useNFLStandings } from "@/hooks/useNFLStandings";
 import { getStyles } from "@/styles/GameCard.styles";
 import { useRouter } from "expo-router";
@@ -25,32 +25,49 @@ function NFLGameCard({ game, isDark }: Props) {
   const router = useRouter();
   const { standings } = useNFLStandings();
 
-  // Memoize team info
+  // Away team
   const awayTeam = useMemo(() => {
     const id = game.teams?.away?.id ?? "";
+    const teamName = getTeamName(id);
+    const teamInfo = getTeamInfo(id);
+
+    const teamRecord = standings.find(
+      (t) =>
+        t.name.toLowerCase().trim() ===
+        teamInfo?.name.toLowerCase().trim()
+    );
+
     return {
       logo: getNFLTeamsLogo(id, dark),
-      name: getTeamName(id),
-      record:
-        standings.find((t) => t.id === id)?.won !== undefined
-          ? `${standings.find((t) => t.id === id)?.won}-${standings.find((t) => t.id === id)?.lost}`
-          : "0-0",
+      name: teamName,
+      record: teamRecord
+        ? `${teamRecord.won}-${teamRecord.lost}`
+        : "0-0",
     };
   }, [game.teams?.away?.id, standings, dark]);
 
+  // Home team
   const homeTeam = useMemo(() => {
     const id = game.teams?.home?.id ?? "";
+    const teamName = getTeamName(id);
+    const teamInfo = getTeamInfo(id);
+
+    const teamRecord = standings.find(
+      (t) =>
+        t.name.toLowerCase().trim() ===
+        teamInfo?.name.toLowerCase().trim()
+    );
+
     return {
       logo: getNFLTeamsLogo(id, dark),
-      name: getTeamName(id),
-      record:
-        standings.find((t) => t.id === id)?.won !== undefined
-          ? `${standings.find((t) => t.id === id)?.won}-${standings.find((t) => t.id === id)?.lost}`
-          : "0-0",
+      name: teamName,
+      record: teamRecord
+        ? `${teamRecord.won}-${teamRecord.lost}`
+        : "0-0",
     };
   }, [game.teams?.home?.id, standings, dark]);
 
-  // Memoize game status
+  // Game status
   const status = useMemo(() => {
     const long = game.game.status.long;
     const live =
@@ -106,17 +123,9 @@ function NFLGameCard({ game, isDark }: Props) {
 
         let isWinner = false;
 
-        if (status.isFinal) {
+        if (status.isFinal || status.isLive) {
           if (homeScore === awayScore) {
-            // Tie → both full opacity
-            isWinner = true;
-          } else {
-            isWinner = isHome ? homeScore > awayScore : awayScore > homeScore;
-          }
-        } else if (status.isLive) {
-          if (homeScore === awayScore) {
-            // Tie in-progress → both full opacity
-            isWinner = true;
+            isWinner = true; // tie → both full opacity
           } else {
             isWinner = isHome ? homeScore > awayScore : awayScore > homeScore;
           }
@@ -232,5 +241,4 @@ function NFLGameCard({ game, isDark }: Props) {
   );
 }
 
-// Memoize the entire component
 export default memo(NFLGameCard);

@@ -51,6 +51,7 @@ export type NFLTeam = {
     flag: string;
   };
   nickname: string;
+  color?: string;
 };
 
 export const teams: NFLTeam[] = [
@@ -70,6 +71,7 @@ export const teams: NFLTeam[] = [
       flag: "https://media.api-sports.io/flags/us.svg",
     },
     nickname: "Raiders",
+    color: "#000000",
   },
   {
     id: 2,
@@ -87,6 +89,7 @@ export const teams: NFLTeam[] = [
       flag: "https://media.api-sports.io/flags/us.svg",
     },
     nickname: "Jaguars",
+    color: "#101820",
   },
   {
     id: 3,
@@ -104,6 +107,7 @@ export const teams: NFLTeam[] = [
       flag: "https://media.api-sports.io/flags/us.svg",
     },
     nickname: "Patriots",
+    color: "#002244",
   },
   {
     id: 4,
@@ -122,6 +126,7 @@ export const teams: NFLTeam[] = [
       flag: "https://media.api-sports.io/flags/us.svg",
     },
     nickname: "Giants",
+    color: "#0B2265",
   },
   {
     id: 5,
@@ -139,6 +144,7 @@ export const teams: NFLTeam[] = [
       flag: "https://media.api-sports.io/flags/us.svg",
     },
     nickname: "Ravens",
+    color: "#241773",
   },
   {
     id: 6,
@@ -156,6 +162,7 @@ export const teams: NFLTeam[] = [
       flag: "https://media.api-sports.io/flags/us.svg",
     },
     nickname: "Titans",
+    color: "#0C2340",
   },
   {
     id: 7,
@@ -173,6 +180,7 @@ export const teams: NFLTeam[] = [
       flag: "https://media.api-sports.io/flags/us.svg",
     },
     nickname: "Lions",
+    color: "#0076b6",
   },
   {
     id: 8,
@@ -190,6 +198,7 @@ export const teams: NFLTeam[] = [
       flag: "https://media.api-sports.io/flags/us.svg",
     },
     nickname: "Falcons",
+    color: "#a71930",
   },
   {
     id: 9,
@@ -207,6 +216,7 @@ export const teams: NFLTeam[] = [
       flag: "https://media.api-sports.io/flags/us.svg",
     },
     nickname: "Browns",
+    color: "#311D00",
   },
   {
     id: 10,
@@ -224,6 +234,7 @@ export const teams: NFLTeam[] = [
       flag: "https://media.api-sports.io/flags/us.svg",
     },
     nickname: "Bengals",
+    color: "#fb4f14",
   },
   {
     id: 11,
@@ -241,6 +252,7 @@ export const teams: NFLTeam[] = [
       flag: "https://media.api-sports.io/flags/us.svg",
     },
     nickname: "Cardinals",
+    color: "#97233F",
   },
   {
     id: 12,
@@ -258,6 +270,7 @@ export const teams: NFLTeam[] = [
       flag: "https://media.api-sports.io/flags/us.svg",
     },
     nickname: "Eagles",
+    color: "#004C54",
   },
   {
     id: 13,
@@ -276,6 +289,7 @@ export const teams: NFLTeam[] = [
       flag: "https://media.api-sports.io/flags/us.svg",
     },
     nickname: "Jets",
+    color: "#125740",
   },
   {
     id: 14,
@@ -293,6 +307,7 @@ export const teams: NFLTeam[] = [
       flag: "https://media.api-sports.io/flags/us.svg",
     },
     nickname: "49ers",
+    color: "#AA0000",
   },
   {
     id: 15,
@@ -310,6 +325,7 @@ export const teams: NFLTeam[] = [
       flag: "https://media.api-sports.io/flags/us.svg",
     },
     nickname: "Packers",
+    color: "#203731",
   },
   {
     id: 16,
@@ -327,6 +343,7 @@ export const teams: NFLTeam[] = [
       flag: "https://media.api-sports.io/flags/us.svg",
     },
     nickname: "Bears",
+    color: "#0B162A",
   },
   {
     id: 17,
@@ -344,6 +361,7 @@ export const teams: NFLTeam[] = [
       flag: "https://media.api-sports.io/flags/us.svg",
     },
     nickname: "Chiefs",
+    color: "#E31837",
   },
   {
     id: 18,
@@ -361,6 +379,7 @@ export const teams: NFLTeam[] = [
       flag: "https://media.api-sports.io/flags/us.svg",
     },
     nickname: "Commanders",
+    color: "#5A1414",
   },
   {
     id: 19,
@@ -378,6 +397,7 @@ export const teams: NFLTeam[] = [
       flag: "https://media.api-sports.io/flags/us.svg",
     },
     nickname: "Panthers",
+    color: "#0085CA",
   },
   {
     id: 20,
@@ -395,6 +415,7 @@ export const teams: NFLTeam[] = [
       flag: "https://media.api-sports.io/flags/us.svg",
     },
     nickname: "Bills",
+    color: "#00338D",
   },
   {
     id: 21,
@@ -412,6 +433,7 @@ export const teams: NFLTeam[] = [
       flag: "https://media.api-sports.io/flags/us.svg",
     },
     nickname: "Colts",
+    color: "#002C5F",
   },
   {
     id: 22,
@@ -429,6 +451,7 @@ export const teams: NFLTeam[] = [
       flag: "https://media.api-sports.io/flags/us.svg",
     },
     nickname: "Steelers",
+    color: "#FFB612",
   },
   {
     id: 23,
@@ -446,6 +469,7 @@ export const teams: NFLTeam[] = [
       flag: "https://media.api-sports.io/flags/us.svg",
     },
     nickname: "Seahawks",
+    color: "#002244",
   },
   {
     id: 24,
@@ -463,6 +487,7 @@ export const teams: NFLTeam[] = [
       flag: "https://media.api-sports.io/flags/us.svg",
     },
     nickname: "Buccaneers",
+    color: "#D50A0A",
   },
   {
     id: 25,
@@ -480,6 +505,7 @@ export const teams: NFLTeam[] = [
       flag: "https://media.api-sports.io/flags/us.svg",
     },
     nickname: "Dolphins",
+    color: "#008E97",
   },
   {
     id: 26,
@@ -497,6 +523,7 @@ export const teams: NFLTeam[] = [
       flag: "https://media.api-sports.io/flags/us.svg",
     },
     nickname: "Texans",
+    color: "#03202f",
   },
   {
     id: 27,
@@ -514,6 +541,7 @@ export const teams: NFLTeam[] = [
       flag: "https://media.api-sports.io/flags/us.svg",
     },
     nickname: "Saints",
+    color: "#D3BC8D",
   },
   {
     id: 28,
@@ -531,6 +559,7 @@ export const teams: NFLTeam[] = [
       flag: "https://media.api-sports.io/flags/us.svg",
     },
     nickname: "Broncos",
+    color: "#FB4F14",
   },
   {
     id: 29,
@@ -548,6 +577,7 @@ export const teams: NFLTeam[] = [
       flag: "https://media.api-sports.io/flags/us.svg",
     },
     nickname: "Cowboys",
+    color: "#041E42",
   },
   {
     id: 30,
@@ -565,6 +595,7 @@ export const teams: NFLTeam[] = [
       flag: "https://media.api-sports.io/flags/us.svg",
     },
     nickname: "Chargers",
+    color: "#0080C6",
   },
   {
     id: 31,
@@ -582,6 +613,7 @@ export const teams: NFLTeam[] = [
       flag: "https://media.api-sports.io/flags/us.svg",
     },
     nickname: "Rams",
+    color: "#003594",
   },
   {
     id: 32,
@@ -599,9 +631,9 @@ export const teams: NFLTeam[] = [
       flag: "https://media.api-sports.io/flags/us.svg",
     },
     nickname: "Vikings",
+    color: "#4F2683",
   },
 ] as const;
-
 
 export type Arena = {
   name: string;
@@ -613,7 +645,7 @@ export type Arena = {
 };
 
 export const neutralArenas: Record<string, Arena> = {
-  "Corinthians Arena" : {
+  "Corinthians Arena": {
     name: "Corinthians Arena",
     address:
       "Av. Miguel Ignácio Curi, 111 - Vila Carmosina, São Paulo - SP, 08295-005, Brazil",
@@ -623,8 +655,6 @@ export const neutralArenas: Record<string, Arena> = {
     arenaImage: require("../assets/Arenas/CorinthiansArena.webp"),
   },
 };
-
-
 
 export const getTeamInfo = (teamId: number | string) => {
   if (teamId == null) return undefined;

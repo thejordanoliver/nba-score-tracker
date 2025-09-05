@@ -4,6 +4,7 @@ import axios from "axios";
 
 type TeamRecord = {
   id: number;
+  code: string;   // 👈 added
   name: string;
   logo: string;
   conference: string;
@@ -22,7 +23,9 @@ type TeamRecord = {
   streak: string;
 };
 
+
 const BASE_URL = process.env.EXPO_PUBLIC_API_URL;
+
 
 
 export function useNFLStandings(season = "2025", league = "1") {
@@ -45,25 +48,27 @@ export function useNFLStandings(season = "2025", league = "1") {
 
         if (!isMounted) return;
 
-        const data: TeamRecord[] = res.data.response.map((item: any) => ({
-          id: item.team.id,
-          name: item.team.name,
-          logo: item.team.logo,
-          conference: item.conference,
-          division: item.division,
-          position: item.position,
-          won: item.won,
-          lost: item.lost,
-          ties: item.ties,
-          pointsFor: item.points.for,
-          pointsAgainst: item.points.against,
-          pointDifference: item.points.difference,
-          homeRecord: item.records.home,
-          roadRecord: item.records.road,
-          conferenceRecord: item.records.conference,
-          divisionRecord: item.records.division,
-          streak: item.streak,
-        }));
+      const data: TeamRecord[] = res.data.response.map((item: any) => ({
+  id: item.team.id,
+  code: item.team.code,   // 👈 add this line
+  name: item.team.name,
+  logo: item.team.logo,
+  conference: item.conference,
+  division: item.division,
+  position: item.position,
+  won: item.won,
+  lost: item.lost,
+  ties: item.ties,
+  pointsFor: item.points.for,
+  pointsAgainst: item.points.against,
+  pointDifference: item.points.difference,
+  homeRecord: item.records.home,
+  roadRecord: item.records.road,
+  conferenceRecord: item.records.conference,
+  divisionRecord: item.records.division,
+  streak: item.streak,
+}));
+
 
         setStandings(data);
         setError(null);

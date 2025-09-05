@@ -29,7 +29,7 @@ import { useNews } from "../../hooks/useNews";
 import { useWeeklyGames } from "../../hooks/useWeeklyGames";
 import { getStyles } from "../../styles/indexStyles";
 import NFLGamesList from "@/components/NFL/NFLGamesList";
-
+import { useNFLWeeklyGames } from "@/hooks/useWeeklyNFLGames";
 
 
 
@@ -119,6 +119,15 @@ export default function HomeScreen() {
     loading: highlightsLoading,
     error: highlightsError,
   } = useHighlights("NBA highlights", 50);
+
+
+  const {
+  games: nflGames,
+  loading: nflLoading,
+  error: nflError,
+  refetch: refreshNFLGames,
+} = useNFLWeeklyGames();
+
 
   const navigation = useNavigation();
   const router = useRouter();
@@ -306,7 +315,22 @@ const taggedHighlights: CombinedItem[] = highlights.map((item) => ({
         {selectedTab === "scores" ? (
           <>
             <Heading>Latest Games</Heading>
-           <NFLGamesList/>
+         <NFLGamesList
+  games={nflGames}
+  loading={nflLoading}
+  refreshing={refreshing}
+  onRefresh={async () => {
+    setRefreshing(true);
+    try {
+      await refreshNFLGames();
+    } finally {
+      setRefreshing(false);
+    }
+  }}
+  error={nflError}
+  expectedCount={nflGames.length}
+/>
+
             {onlySummerLeagueToday ? (
               <SummerGamesList
                 games={filteredSummer}

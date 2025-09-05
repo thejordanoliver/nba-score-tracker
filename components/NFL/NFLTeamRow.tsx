@@ -3,6 +3,7 @@ import { Fonts } from "@/constants/fonts";
 import { useRouter } from "expo-router";
 import { Image, Pressable, StyleSheet, Text, View } from "react-native";
 import { useNFLStandings } from "@/hooks/useNFLStandings";
+import { getTeamInfo } from "@/constants/teamsNFL";
 
 type Props = {
   team: {
@@ -34,13 +35,21 @@ export const NFLTeamRow = ({
   const router = useRouter();
   const { standings } = useNFLStandings();
 
-  // Find this team's record in the standings
-  const teamRecord = standings.find((t) => t.id === Number(team.id));
-  const record = teamRecord ? `${teamRecord.won}-${teamRecord.lost}` : "0-0";
+const teamInfo = getTeamInfo(team.id);
+
+// Compare names instead of codes
+const teamRecord = standings.find(
+  (t) => t.name.toLowerCase().trim() === teamInfo?.name.toLowerCase().trim()
+);
+
+const record = teamRecord ? `${teamRecord.won}-${teamRecord.lost}` : "0-0";
+
+console.log("Matching", teamInfo?.name, "| API:", teamRecord?.name);
+
 
   const handleTeamPress = () => {
     if (!team.id) return;
-    router.push(`/team/${team.id}`);
+    router.push(`/team/nfl/${team.id}`);
   };
 
   return (
