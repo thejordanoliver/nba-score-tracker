@@ -602,6 +602,30 @@ export const teams: NFLTeam[] = [
   },
 ] as const;
 
+
+export type Arena = {
+  name: string;
+  address: string;
+  latitude?: number;
+  longitude?: number;
+  arenaCapacity?: string;
+  arenaImage: any;
+};
+
+export const neutralArenas: Record<string, Arena> = {
+  "Corinthians Arena" : {
+    name: "Corinthians Arena",
+    address:
+      "Av. Miguel Ignácio Curi, 111 - Vila Carmosina, São Paulo - SP, 08295-005, Brazil",
+    latitude: 23.5453,
+    longitude: 46.4742,
+    arenaCapacity: "49,205",
+    arenaImage: require("../assets/Arenas/CorinthiansArena.webp"),
+  },
+};
+
+
+
 export const getTeamInfo = (teamId: number | string) => {
   if (teamId == null) return undefined;
   return teams.find((t) => String(t.id) === String(teamId));

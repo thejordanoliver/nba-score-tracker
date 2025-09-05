@@ -1,6 +1,6 @@
 // hooks/useWeeklyNFLGames.ts
 import axios from "axios";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 
 type Team = {
   id: number;
@@ -8,7 +8,7 @@ type Team = {
   logo: string;
 };
 
-type Game = {
+export type Game = {
   game: {
     id: number;
     stage: string;
@@ -47,29 +47,31 @@ type Game = {
 
 const BASE_URL = process.env.EXPO_PUBLIC_API_URL;
 
-// 🔹 New hook for weekly games
 export function useNFLWeeklyGames(season = "2025", league = "1") {
   const [games, setGames] = useState<Game[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    async function fetchWeeklyGames() {
-      try {
-        setLoading(true);
-        const res = await axios.get(`${BASE_URL}/api/gamesNFL/weekly`, {
-          params: { season, league },
-        });
-        setGames(res.data.response || []);
-      } catch (err: any) {
-        setError(err.message || "Failed to fetch weekly games");
-      } finally {
-        setLoading(false);
-      }
+  // Function to fetch weekly games
+  const fetchWeeklyGames = useCallback(async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      const res = await axios.get(`${BASE_URL}/api/gamesNFL/weekly`, {
+        params: { season, league },
+      });
+      setGames(res.data.response || []);
+    } catch (err: any) {
+      setError(err.message || "Failed to fetch weekly games");
+    } finally {
+      setLoading(false);
     }
-
-    fetchWeeklyGames();
   }, [season, league]);
 
-  return { games, loading, error };
+  // Initial fetch
+  useEffect(() => {
+    fetchWeeklyGames();
+  }, [fetchWeeklyGames]);
+
+  return { games, loading, error, refetch: fetchWeeklyGames };
 }

@@ -37,7 +37,7 @@ export function useNFLStandings(season = "2025", league = "1") {
       try {
         setLoading(true);
         const res = await axios.get(
-          `${BASE_URL}/api/standingsNFL`,
+          `${BASE_URL}/api/nfl/standingsNFL`,
           {
             params: { season, league },
           }
