@@ -1,3 +1,5 @@
+//comment-thread/[postId].tsx
+
 import { CustomHeaderTitle } from "@/components/CustomHeaderTitle";
 import { CommentItem } from "@/components/Forum/CommentItem";
 import { Post, PostItem, getStyles } from "@/components/Forum/PostItem";
@@ -94,17 +96,19 @@ export default function CommentThreadScreen() {
     });
   }, [navigation]);
 
-  // Fetch post + comments
-  const fetchThread = async () => {
+
+ const fetchThread = async () => {
   if (!postId) return;
   setLoading(true);
   try {
     const [postRes, commentRes] = await Promise.all([
-      axios.get(`${BASE_URL}/api/forum/post/${postId}`),
-      axios.get(`${BASE_URL}/api/forum/post/${postId}/comments`),
+      axios.get(`${BASE_URL}/api/forum/post/${postId}`, {
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
+      }),
+      axios.get(`${BASE_URL}/api/forum/post/${postId}/comments`, {
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
+      }),
     ]);
-    console.log("Fetched post:", postRes.data.post); // ✅ log the post
-    console.log("Fetched comments:", commentRes.data.comments);
     setPost(postRes.data.post);
     setComments(commentRes.data.comments);
   } catch (err) {
@@ -113,7 +117,6 @@ export default function CommentThreadScreen() {
     setLoading(false);
   }
 };
-
 
   useEffect(() => {
     if (postId) {
@@ -138,6 +141,7 @@ export default function CommentThreadScreen() {
       setSubmitting(false);
     }
   };
+
 
   const deletePost = async (postIdToDelete: string) => {
     if (!token || !postIdToDelete) return;
@@ -216,9 +220,9 @@ export default function CommentThreadScreen() {
     <KeyboardAvoidingView
       style={{ flex: 1 }}
       behavior={Platform.OS === "ios" ? "padding" : undefined}
-      keyboardVerticalOffset={-80} // adjust for header height
+      keyboardVerticalOffset={0} // adjust for header height
     >
-      <View style={{ flex: 1, backgroundColor: isDark ? "#1d1d1d" : "#fff" }}>
+    
         <FlatList
           data={comments.map(mapCommentToPost)}
           keyExtractor={(item) => item.id}
@@ -234,18 +238,17 @@ export default function CommentThreadScreen() {
           )}
           ListHeaderComponent={
             post ? (
-           <PostItem
-  item={post}
-  isDark={isDark}
-  token={token}
-  currentUserId={currentUserId}
-  deletePost={deletePost}
-  editPost={() => {}}
-  BASE_URL={BASE_URL}
-  styles={getStyles(isDark)}
-  onImagePress={() => {}}
-/>
-
+              <PostItem
+                item={post}
+                isDark={isDark}
+                token={token}
+                currentUserId={currentUserId}
+                deletePost={deletePost}
+                editPost={() => {}}
+                BASE_URL={BASE_URL}
+                styles={getStyles(isDark)}
+                onImagePress={() => {}}
+              />
             ) : null
           }
           contentContainerStyle={{ paddingBottom: 200 }}
@@ -255,17 +258,12 @@ export default function CommentThreadScreen() {
         {/* Input bar positioned at bottom */}
         <BlurView
           intensity={80}
-          tint={isDark ? "systemUltraThinMaterialDark" : "light"}
+          tint={"systemUltraThinMaterial"}
           style={{
-            position: "absolute",
-            bottom: 80,
-            left: 0,
-            right: 0,
-            padding: 12,
+            padding: 16,
+        paddingBottom: 30,
             flexDirection: "row",
-            alignItems: "flex-end",
-            borderTopLeftRadius: 12,
-            borderTopRightRadius: 12,
+          
           }}
         >
           <TextInput
@@ -279,13 +277,13 @@ export default function CommentThreadScreen() {
             style={{
               color: isDark ? "#fff" : "#000",
               backgroundColor: isDark ? "#222" : "#f0f0f0",
-              paddingVertical: 10,
+              paddingVertical: 12,
               paddingHorizontal: 16,
               flex: 1,
               fontFamily: Fonts.OSREGULAR,
-              borderTopLeftRadius: 50,
-              borderBottomLeftRadius: 50,
-              maxHeight: 100,
+              borderTopLeftRadius: 12,
+              borderBottomLeftRadius: 12,
+            
             }}
             placeholderTextColor={isDark ? "#888" : "#666"}
           />
@@ -294,11 +292,10 @@ export default function CommentThreadScreen() {
             disabled={submitting}
             style={{
               backgroundColor: isDark ? "#fff" : "#1d1d1d",
-              paddingVertical: 10,
+              paddingVertical: 12,
               paddingHorizontal: 16,
-
-              borderTopRightRadius: 50,
-              borderBottomRightRadius: 50,
+              borderTopRightRadius: 12,
+              borderBottomRightRadius: 12,
               justifyContent: "center",
               alignItems: "center",
             }}
@@ -310,7 +307,7 @@ export default function CommentThreadScreen() {
             />
           </TouchableOpacity>
         </BlurView>
-      </View>
+
     </KeyboardAvoidingView>
   );
 }

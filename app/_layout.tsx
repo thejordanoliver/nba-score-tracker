@@ -1,6 +1,8 @@
 import { CustomHeaderTitle } from "@/components/CustomHeaderTitle";
+import LiveChatBottomSheet from "@/components/GameDetails/LiveChat";
 import FollowersModal from "@/components/Profile/FollowersModal";
 import { PreferencesProvider } from "@/contexts/PreferencesContext";
+import { useChatStore } from "@/store/chatStore";
 import { useFollowersModalStore } from "@/store/followersModalStore";
 import {
   Oswald_200ExtraLight,
@@ -60,6 +62,7 @@ const hiddenRoutes = [
   "/settings",
   "/settings/index",
   "/login",
+  "/comment-thread/",
 ];
 
 export default function RootLayout() {
@@ -78,12 +81,19 @@ export default function RootLayout() {
 
   const [visibleTabBar, setVisibleTabBar] = useState(true);
   const opacity = useRef(new Animated.Value(1)).current;
+  const { isOpen, gameId, closeChat } = useChatStore();
 
-  useEffect(() => {
-    const shouldHide = hiddenRoutes.some((r) => pathname.startsWith(r));
-    setVisibleTabBar(!shouldHide);
-    opacity.setValue(shouldHide ? 0 : 1);
-  }, [pathname]);
+ useEffect(() => {
+  // Hide tab bar
+  const shouldHide = hiddenRoutes.some((r) => pathname.startsWith(r));
+  setVisibleTabBar(!shouldHide);
+  opacity.setValue(shouldHide ? 0 : 1);
+
+  // If leaving a game screen, close chat
+  if (!pathname.startsWith("/game/")) {
+    closeChat();
+  }
+}, [pathname]);
 
   // Followers modal (Zustand)
   const { isVisible, type, targetUserId, closeModal, currentUserId } =
@@ -175,6 +185,13 @@ export default function RootLayout() {
               currentUserId={currentUserId ?? ""}
               targetUserId={targetUserId ?? ""}
             />
+            {/* Global Chat */}
+            {gameId && isOpen && pathname.startsWith("/game/") && (
+              <LiveChatBottomSheet
+                gameId={gameId}
+                onChange={(index) => index === -1 && closeChat()}
+              />
+            )}
           </PreferencesProvider>
         </ThemeProvider>
       </BottomSheetModalProvider>

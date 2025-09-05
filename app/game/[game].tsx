@@ -22,7 +22,7 @@ import { useGamePrediction } from "@/hooks/usePredictions";
 import { useWeatherForecast } from "@/hooks/useWeather";
 import { useLocalSearchParams, useNavigation } from "expo-router";
 import { goBack } from "expo-router/build/global-state/routing";
-import { useEffect, useLayoutEffect, useMemo, useState } from "react";
+import { useEffect, useLayoutEffect, useMemo, useState, useRef } from "react";
 import {
   ScrollView,
   StyleSheet,
@@ -31,7 +31,14 @@ import {
   View,
 } from "react-native";
 import HistoricalOddsCardSkeleton from "../../components/GameDetails/HistoricalOddsSkeleton";
+import BottomSheet from "@gorhom/bottom-sheet";
+import Button
+ from "@/components/Button";
 import Weather from "@/components/GameDetails/Weather";
+import { useChatStore } from "@/store/chatStore";
+
+
+
 interface GameOdds {
   gameId: string | number;
   homeTeam: string;
@@ -48,6 +55,7 @@ export default function GameDetailsScreen() {
   const isDark = useColorScheme() === "dark";
   const navigation = useNavigation();
   const [isLoading, setIsLoading] = useState(true);
+const { openChat } = useChatStore();
 
   if (typeof game !== "string") return null;
 
@@ -133,6 +141,13 @@ export default function GameDetailsScreen() {
     null;
 
     
+const [isChatOpen, setIsChatOpen] = useState(false);
+
+const handleSheetChanges = (index: number) => {
+  setIsChatOpen(index !== -1); // index -1 = closed
+};
+
+    
 
   const colors = useMemo(
     () => ({
@@ -214,7 +229,9 @@ export default function GameDetailsScreen() {
     return null;
   };
 
+
   return (
+        <>
     <ScrollView
       contentContainerStyle={[styles.container, { paddingBottom: 140 }]}
       style={{ backgroundColor: colors.background }}
@@ -323,7 +340,11 @@ export default function GameDetailsScreen() {
         />
       </View>
 
+
       <View style={{ gap: 20, marginTop: 20 }}>
+<Button title="Open Chat" onPress={() => openChat(gameId)} />
+
+
         {/* {oddsLoading ? (
           <View style={{ marginTop: 20 }}>
             {[...Array(1)].map((_, i) => (
@@ -432,6 +453,10 @@ export default function GameDetailsScreen() {
         />
       </View>
     </ScrollView>
+  
+
+
+    </>
   );
 }
 
@@ -440,6 +465,7 @@ const styles = StyleSheet.create({
     paddingVertical: 24,
     paddingHorizontal: 12,
     paddingBottom: 60,
+  
   },
   teamsContainer: {
     flexDirection: "row",
