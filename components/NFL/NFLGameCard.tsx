@@ -115,29 +115,30 @@ function NFLGameCard({ game, isDark }: Props) {
   );
 
   // Winner/loser style logic
-  const getTeamStyle = useMemo(
-    () =>
-      (isHome: boolean): TextStyle => {
-        const homeScore = game.scores.home?.total ?? 0;
-        const awayScore = game.scores.away?.total ?? 0;
+ const getTeamStyle = useMemo(
+  () =>
+    (isHome: boolean): TextStyle => {
+      const homeScore = game.scores.home?.total ?? 0;
+      const awayScore = game.scores.away?.total ?? 0;
 
-        let isWinner = false;
+      let isWinner = true; // default: full opacity
 
-        if (status.isFinal || status.isLive) {
-          if (homeScore === awayScore) {
-            isWinner = true; // tie → both full opacity
-          } else {
-            isWinner = isHome ? homeScore > awayScore : awayScore > homeScore;
-          }
+      if (status.isFinal) {
+        if (homeScore === awayScore) {
+          isWinner = true; // tie → both full opacity
+        } else {
+          isWinner = isHome ? homeScore > awayScore : awayScore > homeScore;
         }
+      }
 
-        return {
-          color: dark ? "#fff" : "#1d1d1d",
-          opacity: isWinner ? 1 : 0.5,
-        };
-      },
-    [dark, status, game.scores]
-  );
+      return {
+        color: dark ? "#fff" : "#1d1d1d",
+        opacity: isWinner ? 1 : 0.5,
+      };
+    },
+  [dark, status, game.scores]
+);
+
 
   const formatQuarter = useMemo(
     () => (short: string) => {
