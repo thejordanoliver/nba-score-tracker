@@ -11,6 +11,8 @@ import { useLocalSearchParams } from "expo-router";
 import { goBack } from "expo-router/build/global-state/routing";
 import { useEffect, useLayoutEffect, useMemo, useState } from "react";
 import { ScrollView, StyleSheet, useColorScheme, View } from "react-native";
+import { LineScore } from "@/components/GameDetails";
+import NFLGameEvents from "@/components/NFL/NFLGameEvents";
 
 export default function NFLGameDetailsScreen() {
   const params = useLocalSearchParams();
@@ -60,7 +62,6 @@ export default function NFLGameDetailsScreen() {
     [isDark]
   );
 
-  // Safely extract values
   const { game: gameInfo, teams: teamsData, scores } = parsedGame || {};
   const home = teamsData?.home;
   const away = teamsData?.away;
@@ -75,7 +76,6 @@ export default function NFLGameDetailsScreen() {
     gameInfo?.status?.long === "Finished" &&
     (scores?.home?.total ?? 0) > (scores?.away?.total ?? 0);
 
-  // Status mapping
   const statusMap: Record<
     string,
     "Scheduled" | "In Progress" | "Final" | "Canceled" | "Postponed" | "Delayed"
@@ -97,7 +97,6 @@ export default function NFLGameDetailsScreen() {
   const rawStatus = (gameInfo?.status?.short || gameInfo?.status?.long || "").toUpperCase();
   const gameStatus = statusMap[rawStatus] || "Scheduled";
 
-  // ✅ Robust date parsing
   const gameDateObj = useMemo(() => {
     if (!gameInfo?.date) return null;
 
@@ -105,9 +104,9 @@ export default function NFLGameDetailsScreen() {
 
     if (typeof gameInfo.date === "object") {
       if (gameInfo.date.timestamp) {
-        raw = gameInfo.date.timestamp * 1000; // convert seconds → ms
+        raw = gameInfo.date.timestamp * 1000;
       } else if (gameInfo.date.date) {
-        raw = gameInfo.date.date; // ISO string
+        raw = gameInfo.date.date;
       }
     } else if (typeof gameInfo.date === "string") {
       raw = gameInfo.date;
@@ -129,57 +128,92 @@ export default function NFLGameDetailsScreen() {
       })
     : "";
 
+  const linescore = useMemo(() => {
+    if (!scores) return { home: [], away: [] };
+
+    const homePeriods = [
+      scores.home?.quarter_1,
+      scores.home?.quarter_2,
+      scores.home?.quarter_3,
+      scores.home?.quarter_4,
+    ];
+
+    const awayPeriods = [
+      scores.away?.quarter_1,
+      scores.away?.quarter_2,
+      scores.away?.quarter_3,
+      scores.away?.quarter_4,
+    ];
+
+    if (scores.home?.overtime != null) homePeriods.push(scores.home.overtime);
+    if (scores.away?.overtime != null) awayPeriods.push(scores.away.overtime);
+
+    return {
+      home: homePeriods.map((val) => (val != null ? String(val) : "0")),
+      away: awayPeriods.map((val) => (val != null ? String(val) : "0")),
+    };
+  }, [scores]);
+
+  if (!parsedGame || !homeTeam || !awayTeam) return <View />;
+
   return (
     <ScrollView
       contentContainerStyle={[styles.container, { paddingBottom: 140 }]}
       style={{ backgroundColor: colors.background }}
     >
-      {(!parsedGame || !homeTeam || !awayTeam) ? (
-        <View />
-      ) : (
-        <View style={[styles.teamsContainer, { borderColor: colors.border }]}>
-          <NFLTeamRow
-            team={{
-              id: String(awayTeam.id),
-              name: getTeamName(away.id, away.nickname),
-              logo: getNFLTeamsLogo(away.id, isDark),
-              record: away.record ?? "0-0",
-            }}
-            isDark={isDark}
-            isHome={false}
-            score={scores?.away?.total}
-            isWinner={awayIsWinner}
-            colors={colors}
-          />
+      <View style={[styles.teamsContainer, { borderColor: colors.border }]}>
+        <NFLTeamRow
+          team={{
+            id: String(awayTeam.id),
+            name: getTeamName(away.id, away.nickname),
+            logo: getNFLTeamsLogo(away.id, isDark),
+            record: away.record ?? "0-0",
+          }}
+          isDark={isDark}
+          isHome={false}
+          score={scores?.away?.total}
+          isWinner={awayIsWinner}
+          colors={colors}
+        />
 
-          <NFLGameCenterInfo
-            status={gameStatus}
-            date={formattedDate}
-            time={formattedTime}
-            period={gameInfo?.status?.short}
-            clock={gameInfo?.status?.timer}
-            colors={colors}
-            isDark={isDark}
-            playoffInfo={gameInfo?.playoffInfo}
-            homeTeam={homeTeam}
-            awayTeam={awayTeam}
-          />
+        <NFLGameCenterInfo
+          status={gameStatus}
+          date={formattedDate}
+          time={formattedTime}
+          period={gameInfo?.status?.short}
+          clock={gameInfo?.status?.timer}
+          colors={colors}
+          isDark={isDark}
+          playoffInfo={gameInfo?.playoffInfo}
+          homeTeam={homeTeam}
+          awayTeam={awayTeam}
+        />
 
-          <NFLTeamRow
-            team={{
-              id: String(homeTeam.id),
-              name: getTeamName(home.id, home.nickname),
-              logo: getNFLTeamsLogo(home.id, isDark),
-              record: home.record ?? "0-0",
-            }}
-            isDark={isDark}
-            isHome
-            score={scores?.home?.total}
-            isWinner={homeIsWinner}
-            colors={colors}
-          />
-        </View>
-      )}
+        <NFLTeamRow
+          team={{
+            id: String(homeTeam.id),
+            name: getTeamName(home.id, home.nickname),
+            logo: getNFLTeamsLogo(home.id, isDark),
+            record: home.record ?? "0-0",
+          }}
+          isDark={isDark}
+          isHome
+          score={scores?.home?.total}
+          isWinner={homeIsWinner}
+          colors={colors}
+        />
+      </View>
+
+  <View style={{ gap: 20, marginTop: 20 }}>
+      <LineScore
+        linescore={linescore}
+        homeCode={homeTeam?.code ?? ""}
+        awayCode={awayTeam?.code ?? ""}
+      />
+
+      {/* NFLGameEvents inside ScrollView */}
+      <NFLGameEvents gameId={gameInfo?.id}  />
+      </View>
     </ScrollView>
   );
 }

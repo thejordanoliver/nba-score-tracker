@@ -33,8 +33,9 @@ export const getStyles = (isDark: boolean) =>
       fontSize:28,
       fontFamily: Fonts.OSBOLD,
       color: isDark ? "#fff" : "#1d1d1d",
-      width: 40,
+      width: 48,
       textAlign: "center",
+      // backgroundColor: "red"
     },
     teamRecord: {
       fontSize: 20,

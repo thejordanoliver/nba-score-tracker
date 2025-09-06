@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import axios from "axios";
 
 type Team = {
@@ -32,11 +32,10 @@ type UseNFLGameEventsResult = {
   error: string | null;
 };
 
-const BASE_URL = process.env.EXPO_PUBLIC_API_URL;
-
+const KEY = process.env.EXPO_PUBLIC_RAPIDAPI_KEY;
 
 export function useNFLGameEvents(gameId: string | number): UseNFLGameEventsResult {
-  const [events, setEvents] = useState<GameEvent[] | null>(null);
+  const [rawEvents, setRawEvents] = useState<GameEvent[] | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -52,14 +51,14 @@ export function useNFLGameEvents(gameId: string | number): UseNFLGameEventsResul
         url: "https://api-american-football.p.rapidapi.com/games/events",
         params: { id: gameId },
         headers: {
-          "x-rapidapi-key": `${BASE_URL}`,
+          "x-rapidapi-key": `${KEY}`,
           "x-rapidapi-host": "api-american-football.p.rapidapi.com",
         },
       };
 
       try {
         const response = await axios.request(options);
-        setEvents(response.data.response); // the "response" array from API
+        setRawEvents(response.data.response);
       } catch (err: any) {
         console.error(err);
         setError(err.message || "Error fetching game events");
@@ -70,6 +69,9 @@ export function useNFLGameEvents(gameId: string | number): UseNFLGameEventsResul
 
     fetchEvents();
   }, [gameId]);
+
+  // Memoize the events so the reference only changes when rawEvents actually changes
+  const events = useMemo(() => rawEvents, [rawEvents]);
 
   return { events, loading, error };
 }

@@ -1,12 +1,11 @@
+import { Fonts } from "@/constants/fonts";
 import { StyleSheet, Text, useColorScheme, View } from "react-native";
 import HeadingTwo from "../Headings/HeadingTwo";
-const OSMEDIUM = "Oswald_500Medium";
-const OSREGULAR = "Oswald_400Regular";
 
 type Props = {
   linescore: {
-    home: string[];
-    away: string[];
+    home: (string | null | undefined)[];
+    away: (string | null | undefined)[];
   };
   homeCode: string;
   awayCode: string;
@@ -23,12 +22,11 @@ export default function LineScore({
 
   const isDark = useColorScheme() === "dark";
   const textColor = lighter ? "#ccc" : isDark ? "#fff" : "#000";
-
   const borderColor = lighter ? "#aaa" : isDark ? "#333" : "#888";
-
   const dividerColor = lighter ? "#bbb" : isDark ? "#888" : "#888";
-  const total = (scores: string[]) =>
-    scores.reduce((acc, val) => acc + parseInt(val || "0", 10), 0);
+
+  const total = (scores: (string | null | undefined)[]) =>
+    scores.reduce((acc, val) => acc + parseInt(val ?? "0", 10), 0);
 
   const homeTotal = total(linescore.home);
   const awayTotal = total(linescore.away);
@@ -39,6 +37,8 @@ export default function LineScore({
     if (i === 4) return "OT"; // First overtime
     return `OT${i - 3}`; // OT2 for index 5, OT3 for 6, etc.
   };
+
+  const renderScore = (score: string | null | undefined) => score ?? "0";
 
   return (
     <>
@@ -71,7 +71,7 @@ export default function LineScore({
                 key={`away-${index}`}
                 style={[styles.score, { color: textColor }]}
               >
-                {score}
+                {renderScore(score)}
               </Text>
             ))}
             <Text style={[styles.totalScore, { color: textColor }]}>
@@ -94,7 +94,7 @@ export default function LineScore({
                 key={`home-${index}`}
                 style={[styles.score, { color: textColor }]}
               >
-                {score}
+                {renderScore(score)}
               </Text>
             ))}
             <Text style={[styles.totalScore, { color: textColor }]}>
@@ -110,7 +110,7 @@ export default function LineScore({
 const styles = StyleSheet.create({
   container: {
     width: "100%",
-    marginTop: 10,
+    marginTop: -20,
   },
   row: {
     flexDirection: "row",
@@ -119,7 +119,7 @@ const styles = StyleSheet.create({
   },
   teamCode: {
     width: 40,
-    fontFamily: OSMEDIUM,
+    fontFamily: Fonts.OSMEDIUM,
     fontSize: 14,
     paddingLeft: 8,
   },
@@ -129,20 +129,20 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
   },
   header: {
-    fontFamily: OSMEDIUM,
+    fontFamily: Fonts.OSMEDIUM,
     fontSize: 10,
     opacity: 0.8,
     textAlign: "center",
     flex: 1,
   },
   score: {
-    fontFamily: OSREGULAR,
+    fontFamily: Fonts.OSREGULAR,
     fontSize: 14,
     textAlign: "center",
     flex: 1,
   },
   totalScore: {
-    fontFamily: OSMEDIUM,
+    fontFamily: Fonts.OSMEDIUM,
     fontSize: 14,
     textAlign: "center",
     flex: 1,

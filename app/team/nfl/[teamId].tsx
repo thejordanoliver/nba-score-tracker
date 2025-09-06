@@ -6,19 +6,25 @@ import { User } from "@/types/types";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useLocalSearchParams, useNavigation } from "expo-router";
 import { goBack } from "expo-router/build/global-state/routing";
-import { useEffect, useLayoutEffect, useMemo, useState } from "react";
+import React, {
+  useEffect,
+  useLayoutEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import {
   ActivityIndicator,
   FlatList,
   Text,
   View,
   useColorScheme,
-  StyleSheet,
 } from "react-native";
 import { CustomHeaderTitle } from "../../../components/CustomHeaderTitle";
 import TabBar from "../../../components/TabBar";
 import { style } from "../../../styles/TeamDetails.styles";
 import HeadingTwo from "@/components/Headings/HeadingTwo";
+import PagerView from "react-native-pager-view";
 
 export default function TeamDetailScreen() {
   const navigation = useNavigation();
@@ -37,11 +43,17 @@ export default function TeamDetailScreen() {
   const [selectedTab, setSelectedTab] =
     useState<(typeof tabs)[number]>("schedule");
 
+  const pagerRef = useRef<PagerView>(null);
+
+  const tabToIndex = (tab: (typeof tabs)[number]) => tabs.indexOf(tab);
+  const indexToTab = (index: number) => tabs[index];
+
   const team = useMemo(
     () => (teamIdNum ? teams.find((t) => Number(t.id) === teamIdNum) : null),
     [teamIdNum]
   );
 
+  // ✅ call hook directly
   const {
     games: rawTeamGames = [],
     loading: gamesLoading,
@@ -49,13 +61,13 @@ export default function TeamDetailScreen() {
     refreshGames: refreshTeamGames,
   } = useNFLTeamGames(teamIdNum ? teamIdNum.toString() : "");
 
-  // only valid games
+  // --- Memoize valid games ---
   const teamGames = useMemo(
     () => rawTeamGames.filter((g: Game) => g?.game?.date?.date),
     [rawTeamGames]
   );
 
-  // --- Flatten games with headers (only here) ---
+  // --- Memoize flattened grouping ---
   const flattenedGames = useMemo(() => {
     const grouped: { [stage: string]: Game[] } = {};
     teamGames.forEach((g) => {
@@ -138,8 +150,7 @@ export default function TeamDetailScreen() {
             teamCode={team.code}
             isFavorite={isFavorite}
             onToggleFavorite={toggleFavorite}
-                        league="NFL" // 👈 ensures NFL BottomSheet is used
-
+            league="NFL"
           />
         ),
     });
@@ -155,38 +166,70 @@ export default function TeamDetailScreen() {
 
   return (
     <View style={styles.container}>
-      <TabBar tabs={tabs} selected={selectedTab} onTabPress={setSelectedTab} />
+      <TabBar
+        tabs={tabs}
+        selected={selectedTab}
+        onTabPress={(tab) => {
+          setSelectedTab(tab);
+          pagerRef.current?.setPage(tabToIndex(tab));
+        }}
+      />
 
-      {/* Schedule Page */}
-      {selectedTab === "schedule" && (
-   <FlatList
-  data={flattenedGames}
-  keyExtractor={(item, index) =>
-    item.type === "header"
-      ? `header-${item.title}`
-      : `game-${item.game.game.id}-${index}`
-  }
-  renderItem={({ item }) => {
-    if (item.type === "header") {
-      return (
-        <View style={{ marginTop: 4, paddingHorizontal: 12 }}>
-          <HeadingTwo>{item.title}</HeadingTwo>
+      <PagerView
+        ref={pagerRef}
+        style={{ flex: 1 }}
+        initialPage={tabToIndex(selectedTab)}
+        onPageSelected={(e) => {
+          const index = e.nativeEvent.position;
+          setSelectedTab(indexToTab(index));
+        }}
+      >
+        {/* Schedule Page */}
+        <View key="schedule" style={{ flex: 1 }}>
+          <FlatList
+            data={flattenedGames}
+            keyExtractor={(item, index) =>
+              item.type === "header"
+                ? `header-${item.title}`
+                : `game-${item.game.game.id}-${index}`
+            }
+            renderItem={({ item }) =>
+              item.type === "header" ? (
+                <View style={{ marginTop: 4, paddingHorizontal: 12 }}>
+                  <HeadingTwo>{item.title}</HeadingTwo>
+                </View>
+              ) : (
+                <View style={{ paddingHorizontal: 12 }}>
+                  <NFLGameCard game={item.game} isDark={isDark} />
+                </View>
+              )
+            }
+            contentContainerStyle={{ paddingBottom: 100, gap: 12 }}
+            refreshing={refreshing}
+            onRefresh={handleRefresh}
+          />
         </View>
-      );
-    } else {
-      return (
-        <View style={{ paddingHorizontal: 12 }}>
-          <NFLGameCard game={item.game} isDark={isDark} />
-        </View>
-      );
-    }
-  }}
-  contentContainerStyle={{ paddingBottom: 100, gap: 12 }}
-  refreshing={refreshing}
-  onRefresh={handleRefresh}
-/>
 
-      )}
+        {/* News Page */}
+        <View key="news" style={{ flex: 1, alignItems: "center", justifyContent: "center" }}>
+          <Text style={{ color: isDark ? "#fff" : "#000" }}>Team News (TODO)</Text>
+        </View>
+
+        {/* Roster Page */}
+        <View key="roster" style={{ flex: 1, alignItems: "center", justifyContent: "center" }}>
+          <Text style={{ color: isDark ? "#fff" : "#000" }}>Roster (TODO)</Text>
+        </View>
+
+        {/* Forum Page */}
+        <View key="forum" style={{ flex: 1, alignItems: "center", justifyContent: "center" }}>
+          <Text style={{ color: isDark ? "#fff" : "#000" }}>Forum (TODO)</Text>
+        </View>
+
+        {/* Stats Page */}
+        <View key="stats" style={{ flex: 1, alignItems: "center", justifyContent: "center" }}>
+          <Text style={{ color: isDark ? "#fff" : "#000" }}>Stats (TODO)</Text>
+        </View>
+      </PagerView>
     </View>
   );
 }
