@@ -1,4 +1,5 @@
 import { CustomHeaderTitle } from "@/components/CustomHeaderTitle";
+import FloatingChatButton from "@/components/FloatingButton";
 import {
   BoxScore,
   GameInfo,
@@ -11,7 +12,9 @@ import {
   TeamRow,
 } from "@/components/GameDetails";
 import GameUniforms from "@/components/GameDetails/GameUniforms";
-import HistoricalOddsCard from "@/components/GameDetails/HistoricalOddsCard";
+import Weather from "@/components/GameDetails/Weather";
+import HistoricalOddsCard from "@/components/summer-league/HistoricalOddsCard";
+import HistoricalOddsCardSkeleton from "@/components/summer-league/HistoricalOddsSkeleton";
 import { Fonts } from "@/constants/fonts";
 import { arenaImages, neutralArenas, teams } from "@/constants/teams";
 import { useGameStatistics } from "@/hooks/useGameStatistics";
@@ -20,24 +23,19 @@ import { useLastFiveGames } from "@/hooks/useLastFiveGames";
 import { useFetchPlayoffGames } from "@/hooks/usePlayoffSeries";
 import { useGamePrediction } from "@/hooks/usePredictions";
 import { useWeatherForecast } from "@/hooks/useWeather";
+import { useChatStore } from "@/store/chatStore";
 import { useLocalSearchParams, useNavigation } from "expo-router";
 import { goBack } from "expo-router/build/global-state/routing";
-import { useEffect, useLayoutEffect, useMemo, useState, useRef } from "react";
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import {
+  Animated,
+  Easing,
   ScrollView,
   StyleSheet,
   Text,
   useColorScheme,
   View,
 } from "react-native";
-import HistoricalOddsCardSkeleton from "../../components/GameDetails/HistoricalOddsSkeleton";
-import BottomSheet from "@gorhom/bottom-sheet";
-import Button
- from "@/components/Button";
-import Weather from "@/components/GameDetails/Weather";
-import { useChatStore } from "@/store/chatStore";
-
-
 
 interface GameOdds {
   gameId: string | number;
@@ -55,7 +53,31 @@ export default function GameDetailsScreen() {
   const isDark = useColorScheme() === "dark";
   const navigation = useNavigation();
   const [isLoading, setIsLoading] = useState(true);
-const { openChat } = useChatStore();
+  const { openChat } = useChatStore();
+  const { isOpen: isChatOpen } = useChatStore(); // pull global state
+  const opacityAnim = useRef(new Animated.Value(0)).current;
+  const [isScrolling, setIsScrolling] = useState(false);
+  const scrollTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const handleScrollStart = () => {
+    if (scrollTimeout.current) clearTimeout(scrollTimeout.current);
+    setIsScrolling(true);
+  };
+
+  const handleScrollEnd = () => {
+    if (scrollTimeout.current) clearTimeout(scrollTimeout.current);
+    scrollTimeout.current = setTimeout(() => {
+      setIsScrolling(false);
+    }, 1000); // <-- 500ms delay before showing button again
+  };
+  // Fade anim for FloatingChatButton
+  useEffect(() => {
+    Animated.timing(opacityAnim, {
+      toValue: isChatOpen || isScrolling ? 0 : 1, // hide if chat is open OR scrolling
+      duration: 200,
+      easing: Easing.inOut(Easing.ease),
+      useNativeDriver: true,
+    }).start();
+  }, [isChatOpen, isScrolling]);
 
   if (typeof game !== "string") return null;
 
@@ -140,15 +162,6 @@ const { openChat } = useChatStore();
     homeTeamData.longitude ??
     null;
 
-    
-const [isChatOpen, setIsChatOpen] = useState(false);
-
-const handleSheetChanges = (index: number) => {
-  setIsChatOpen(index !== -1); // index -1 = closed
-};
-
-    
-
   const colors = useMemo(
     () => ({
       background: isDark ? "#1d1d1d" : "#ffffff",
@@ -229,233 +242,258 @@ const handleSheetChanges = (index: number) => {
     return null;
   };
 
+  useEffect(() => {
+    Animated.timing(opacityAnim, {
+      toValue: isChatOpen ? 0 : 1, // hide if chat is open
+      duration: 300,
+      easing: Easing.inOut(Easing.ease),
+      useNativeDriver: true,
+    }).start();
+  }, [isChatOpen]);
+
+  // Render
+  <Animated.View
+    style={{
+      opacity: opacityAnim,
+      position: "absolute",
+      bottom: 24,
+      right: 24,
+    }}
+    pointerEvents={isChatOpen ? "none" : "auto"} // disable touches when hidden
+  ></Animated.View>;
 
   return (
-        <>
-    <ScrollView
-      contentContainerStyle={[styles.container, { paddingBottom: 140 }]}
-      style={{ backgroundColor: colors.background }}
-    >
-      <View style={[styles.teamsContainer, { borderColor: colors.border }]}>
-        <TeamRow
-          team={{
-            id: awayTeamData.id,
-            code: awayTeamData.code,
-            name: away.name,
-            record: away.record,
-            logo:
-              isDark && awayTeamData.logoLight
-                ? awayTeamData.logoLight
-                : awayTeamData.logo || require("../../assets/Logos/NBA.png"),
-          }}
-          isDark={isDark}
-          score={awayScore}
-          isWinner={awayIsWinner}
-          colors={colors}
-        />
-
-        <GameInfo
-          status={status}
-          date={date}
-          time={time}
-          clock={clock}
-          period={period}
-          colors={colors}
-          isDark={isDark}
-          homeTeam={home.name}
-          awayTeam={away.name}
-        />
-
-        {/* Playoff Summary */}
-        {playoffGames.length > 0 && (getGameNumberLabel() || seriesSummary) && (
-          <View
-            style={{
-              flexDirection: "row",
-              justifyContent: "center",
-              alignItems: "center",
-              marginVertical: 4,
-              position: "absolute",
-              top: -25,
-              width: "100%",
+    <>
+      <ScrollView
+        contentContainerStyle={[styles.container, { paddingBottom: 140 }]}
+        style={{ backgroundColor: colors.background }}
+        onScrollBeginDrag={handleScrollStart}
+        onMomentumScrollEnd={handleScrollEnd}
+        onScrollEndDrag={handleScrollEnd}
+      >
+        <View style={[styles.teamsContainer, { borderColor: colors.border }]}>
+          <TeamRow
+            team={{
+              id: awayTeamData.id,
+              code: awayTeamData.code,
+              name: away.name,
+              record: away.record,
+              logo:
+                isDark && awayTeamData.logoLight
+                  ? awayTeamData.logoLight
+                  : awayTeamData.logo || require("../../assets/Logos/NBA.png"),
             }}
-          >
-            {getGameNumberLabel() && (
-              <Text
-                style={{
-                  color: colors.text,
-                  fontFamily: Fonts.OSEXTRALIGHT,
-                  fontSize: 14,
-                  textAlign: "center",
-                }}
-              >
-                {getGameNumberLabel()}
-              </Text>
-            )}
-            {getGameNumberLabel() && seriesSummary && (
+            isDark={isDark}
+            score={awayScore}
+            isWinner={awayIsWinner}
+            colors={colors}
+          />
+
+          <GameInfo
+            status={status}
+            date={date}
+            time={time}
+            clock={clock}
+            period={period}
+            colors={colors}
+            isDark={isDark}
+            homeTeam={home.name}
+            awayTeam={away.name}
+          />
+
+          {/* Playoff Summary */}
+          {playoffGames.length > 0 &&
+            (getGameNumberLabel() || seriesSummary) && (
               <View
                 style={{
-                  height: 16,
-                  width: 1,
-                  backgroundColor: colors.text,
-                  opacity: 0.4,
-                  marginHorizontal: 8,
+                  flexDirection: "row",
+                  justifyContent: "center",
+                  alignItems: "center",
+                  marginVertical: 4,
+                  position: "absolute",
+                  top: -25,
+                  width: "100%",
                 }}
-              />
+              >
+                {getGameNumberLabel() && (
+                  <Text
+                    style={{
+                      color: colors.text,
+                      fontFamily: Fonts.OSEXTRALIGHT,
+                      fontSize: 14,
+                      textAlign: "center",
+                    }}
+                  >
+                    {getGameNumberLabel()}
+                  </Text>
+                )}
+                {getGameNumberLabel() && seriesSummary && (
+                  <View
+                    style={{
+                      height: 16,
+                      width: 1,
+                      backgroundColor: colors.text,
+                      opacity: 0.4,
+                      marginHorizontal: 8,
+                    }}
+                  />
+                )}
+                {seriesSummary &&
+                  (status === "Final" || status === "Scheduled") && (
+                    <Text
+                      style={{
+                        color: colors.text,
+                        fontFamily: Fonts.OSEXTRALIGHT,
+                        fontSize: 14,
+                        textAlign: "center",
+                        flexShrink: 1,
+                      }}
+                      numberOfLines={1}
+                      ellipsizeMode="tail"
+                    >
+                      {seriesSummary}
+                    </Text>
+                  )}
+              </View>
             )}
-            {seriesSummary &&
-              (status === "Final" || status === "Scheduled") && (
-                <Text
-                  style={{
-                    color: colors.text,
-                    fontFamily: Fonts.OSEXTRALIGHT,
-                    fontSize: 14,
-                    textAlign: "center",
-                    flexShrink: 1,
-                  }}
-                  numberOfLines={1}
-                  ellipsizeMode="tail"
-                >
-                  {seriesSummary}
-                </Text>
-              )}
-          </View>
-        )}
 
-        <TeamRow
-          team={{
-            id: homeTeamData.id,
-            code: homeTeamData.code,
-            name: home.name,
-            record: home.record,
-            logo:
-              isDark && homeTeamData.logoLight
-                ? homeTeamData.logoLight
-                : homeTeamData.logo || require("../../assets/Logos/NBA.png"),
-          }}
-          isDark={isDark}
-          isHome
-          score={homeScore}
-          isWinner={homeIsWinner}
-          colors={colors}
-        />
-      </View>
+          <TeamRow
+            team={{
+              id: homeTeamData.id,
+              code: homeTeamData.code,
+              name: home.name,
+              record: home.record,
+              logo:
+                isDark && homeTeamData.logoLight
+                  ? homeTeamData.logoLight
+                  : homeTeamData.logo || require("../../assets/Logos/NBA.png"),
+            }}
+            isDark={isDark}
+            isHome
+            score={homeScore}
+            isWinner={homeIsWinner}
+            colors={colors}
+          />
+        </View>
 
-
-      <View style={{ gap: 20, marginTop: 20 }}>
-<Button title="Open Chat" onPress={() => openChat(gameId)} />
-
-
-        {/* {oddsLoading ? (
-          <View style={{ marginTop: 20 }}>
-            {[...Array(1)].map((_, i) => (
-              <HistoricalOddsCardSkeleton key={i} />
-            ))}
-          </View>
-        ) : (
-          historicalOdds.length > 0 && (
+        <View style={{ gap: 20, marginTop: 20 }}>
+          {oddsLoading ? (
             <View style={{ marginTop: 20 }}>
-              {historicalOdds.map((game) => (
-                <HistoricalOddsCard key={game.id} game={game} />
+              {[...Array(1)].map((_, i) => (
+                <HistoricalOddsCardSkeleton key={i} />
               ))}
             </View>
-          )
-        )}
-        {oddsError && (
-          <View style={{ marginTop: 20 }}>
-            <Text style={{ color: "red" }}>
-              Error loading odds: {oddsError}
-            </Text>
-          </View>
-        )} */}
+          ) : (
+            historicalOdds.length > 0 && (
+              <View style={{ marginTop: 20 }}>
+                {historicalOdds.map((game) => (
+                  <HistoricalOddsCard key={game.id} game={game} />
+                ))}
+              </View>
+            )
+          )}
+          {oddsError && (
+            <View style={{ marginTop: 20 }}>
+              <Text style={{ color: "red" }}>
+                Error loading odds: {oddsError}
+              </Text>
+            </View>
+          )}
 
-        {prediction && !predictionLoading && !predictionError && (
-          <View style={{ marginTop: 20 }}>
-            <PredictionBar
-              homeWinProbability={prediction.homeWinProbability * 100}
-              awayWinProbability={prediction.awayWinProbability * 100}
-              homeColor={homeColor}
-              awayColor={awayColor}
-              homeSecondaryColor={homeTeamData.secondaryColor}
-              awaySecondaryColor={awayTeamData.secondaryColor}
-              homeTeamId={homeTeamData.id} // <-- pass team IDs now
-              awayTeamId={awayTeamData.id} // <-- pass team IDs now
-            />
-          </View>
-        )}
+          {prediction && !predictionLoading && !predictionError && (
+            <View style={{ marginTop: 20 }}>
+              <PredictionBar
+                homeWinProbability={prediction.homeWinProbability * 100}
+                awayWinProbability={prediction.awayWinProbability * 100}
+                homeColor={homeColor}
+                awayColor={awayColor}
+                homeSecondaryColor={homeTeamData.secondaryColor}
+                awaySecondaryColor={awayTeamData.secondaryColor}
+                homeTeamId={homeTeamData.id} // <-- pass team IDs now
+                awayTeamId={awayTeamData.id} // <-- pass team IDs now
+              />
+            </View>
+          )}
 
-        {predictionError && (
-        
+          {predictionError && (
             <Text style={{ color: "red" }}>
               Prediction error: {predictionError}
             </Text>
-       
-        )}
+          )}
 
-       
-        {linescore && (
-          <LineScore
-            linescore={linescore}
-            homeCode={homeTeamData.code}
-            awayCode={awayTeamData.code}
+          {linescore && (
+            <LineScore
+              linescore={linescore}
+              homeCode={homeTeamData.code}
+              awayCode={awayTeamData.code}
+            />
+          )}
+
+          <GameLeaders
+            gameId={gameId.toString()}
+            awayTeamId={awayTeamIdNum}
+            homeTeamId={homeTeamIdNum}
           />
-        )}
 
-        <GameLeaders
-          gameId={gameId.toString()}
-          awayTeamId={awayTeamIdNum}
-          homeTeamId={homeTeamIdNum}
-        />
+          <BoxScore
+            gameId={gameId.toString()}
+            homeTeamId={homeTeamIdNum}
+            awayTeamId={awayTeamIdNum}
+          />
+          {!statsLoading && gameStats && <GameTeamStats stats={gameStats} />}
 
-        <BoxScore
-          gameId={gameId.toString()}
-          homeTeamId={homeTeamIdNum}
-          awayTeamId={awayTeamIdNum}
-        />
-        {!statsLoading && gameStats && <GameTeamStats stats={gameStats} />}
+          <LastFiveGamesSwitcher
+            isDark={isDark}
+            home={{
+              teamCode: homeTeamData.code,
+              teamLogo: homeTeamData.logo,
+              teamLogoLight: homeTeamData.logoLight,
+              games: homeLastGames.games,
+            }}
+            away={{
+              teamCode: awayTeamData.code,
+              teamLogo: awayTeamData.logo,
+              teamLogoLight: awayTeamData.logoLight,
+              games: awayLastGames.games,
+            }}
+          />
 
-        <LastFiveGamesSwitcher
-          isDark={isDark}
-          home={{
-            teamCode: homeTeamData.code,
-            teamLogo: homeTeamData.logo,
-            teamLogoLight: homeTeamData.logoLight,
-            games: homeLastGames.games,
-          }}
-          away={{
-            teamCode: awayTeamData.code,
-            teamLogo: awayTeamData.logo,
-            teamLogoLight: awayTeamData.logoLight,
-            games: awayLastGames.games,
-          }}
-        />
+          <GameUniforms
+            homeTeamId={homeTeamData.id}
+            awayTeamId={awayTeamData.id}
+          />
 
-         <GameUniforms
-          homeTeamId={homeTeamData.id}
-          awayTeamId={awayTeamData.id}
-        />
+          <TeamLocationSection
+            arenaImage={resolvedArenaImage}
+            arenaName={resolvedArenaName}
+            location={resolvedArenaCity}
+            address={resolvedArenaAddress}
+            arenaCapacity={resolvedArenaCapacity}
+            weather={weather}
+            loading={loading}
+            error={error}
+          />
+          <Weather
+            address={resolvedArenaAddress}
+            weather={weather}
+            loading={loading}
+            error={error}
+          />
+        </View>
+      </ScrollView>
 
-
-        <TeamLocationSection
-          arenaImage={resolvedArenaImage}
-          arenaName={resolvedArenaName}
-          location={resolvedArenaCity}
-          address={resolvedArenaAddress}
-          arenaCapacity={resolvedArenaCapacity}
-          weather={weather}
-          loading={loading}
-          error={error}
-        />
-        <Weather
-          address={resolvedArenaAddress}
-          weather={weather}
-          loading={loading}
-          error={error}
-        />
-      </View>
-    </ScrollView>
-  
-
-
+      <Animated.View
+        style={{
+          opacity: opacityAnim,
+          position: "absolute",
+          bottom: 100,
+          left: 0,
+          right: 0,
+        }}
+        pointerEvents={isChatOpen ? "none" : "auto"} // disable touches when hidden
+      >
+        <FloatingChatButton gameId={gameId} openChat={openChat} />
+      </Animated.View>
     </>
   );
 }
@@ -465,7 +503,6 @@ const styles = StyleSheet.create({
     paddingVertical: 24,
     paddingHorizontal: 12,
     paddingBottom: 60,
-  
   },
   teamsContainer: {
     flexDirection: "row",

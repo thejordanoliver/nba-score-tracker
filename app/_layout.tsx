@@ -1,4 +1,5 @@
 import { CustomHeaderTitle } from "@/components/CustomHeaderTitle";
+import ChatInputBar from "@/components/GameDetails/ChatInputBar";
 import LiveChatBottomSheet from "@/components/GameDetails/LiveChat";
 import FollowersModal from "@/components/Profile/FollowersModal";
 import { PreferencesProvider } from "@/contexts/PreferencesContext";
@@ -30,7 +31,6 @@ import {
 } from "react-native";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import CustomTabBar from "../components/CustomTabBar";
-
 // Custom themes
 const CustomDarkTheme = {
   ...NavigationDarkTheme,
@@ -66,7 +66,7 @@ const hiddenRoutes = [
 ];
 
 export default function RootLayout() {
-  const pathname = usePathname();
+  const pathname = usePathname() || "";
   const colorScheme = useColorScheme();
   const isDark = colorScheme === "dark";
 
@@ -82,18 +82,26 @@ export default function RootLayout() {
   const [visibleTabBar, setVisibleTabBar] = useState(true);
   const opacity = useRef(new Animated.Value(1)).current;
   const { isOpen, gameId, closeChat } = useChatStore();
+  const [input, setInput] = useState("");
+  const [sendFn, setSendFn] = useState<((msg: string) => void) | null>(null);
 
- useEffect(() => {
-  // Hide tab bar
-  const shouldHide = hiddenRoutes.some((r) => pathname.startsWith(r));
-  setVisibleTabBar(!shouldHide);
-  opacity.setValue(shouldHide ? 0 : 1);
+  const sendMessage = () => {
+    if (!input.trim() || !gameId) return;
+    // TODO: hook this into your socket logic (maybe via chatStore or context)
+    console.log("Sending message:", input);
+    setInput("");
+  };
 
-  // If leaving a game screen, close chat
-  if (!pathname.startsWith("/game/")) {
-    closeChat();
-  }
-}, [pathname]);
+  useEffect(() => {
+    if (!pathname) return;
+
+    const shouldHide = hiddenRoutes.some((r) => pathname.startsWith(r));
+    setVisibleTabBar(!shouldHide);
+
+    if (!pathname.startsWith("/game/")) {
+      closeChat();
+    }
+  }, [pathname]);
 
   // Followers modal (Zustand)
   const { isVisible, type, targetUserId, closeModal, currentUserId } =
@@ -186,12 +194,33 @@ export default function RootLayout() {
               targetUserId={targetUserId ?? ""}
             />
             {/* Global Chat */}
-            {gameId && isOpen && pathname.startsWith("/game/") && (
-              <LiveChatBottomSheet
-                gameId={gameId}
-                onChange={(index) => index === -1 && closeChat()}
-              />
-            )}
+   {gameId && isOpen && pathname.startsWith("/game/") && (
+  <>
+    <LiveChatBottomSheet
+      gameId={gameId}
+      onChange={(index) => index === -1 && closeChat()}
+      onSend={(sendMessage) => {
+        // we can store this locally if we want, but now it's not required
+        setSendFn(() => sendMessage);
+      }}
+    />
+
+    <ChatInputBar
+      value={input}
+      onChange={setInput}
+      onSend={() => {
+        if (!input.trim() || !gameId) return;
+
+        // directly send to the socket using LiveChatBottomSheet's sendMessage
+        if (sendFn) {
+          sendFn(input);
+          setInput("");
+        }
+      }}
+    />
+  </>
+)}
+
           </PreferencesProvider>
         </ThemeProvider>
       </BottomSheetModalProvider>

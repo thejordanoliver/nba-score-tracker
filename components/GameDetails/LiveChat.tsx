@@ -1,17 +1,19 @@
 import { Fonts } from "@/constants/fonts";
 import { useAuth } from "@/hooks/useAuth";
-import { Ionicons } from "@expo/vector-icons";
-import BottomSheet, { BottomSheetView } from "@gorhom/bottom-sheet";
+import BottomSheet, {
+  BottomSheetBackdrop,
+  BottomSheetView,
+} from "@gorhom/bottom-sheet";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import { format } from "date-fns"; // optional helper to get date string
 import { BlurView } from "expo-blur";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
+  Dimensions,
   FlatList,
-  KeyboardAvoidingView,
-  Platform,
+  Keyboard,
   StyleSheet,
   Text,
-  TextInput,
-  TouchableOpacity,
   useColorScheme,
   View,
 } from "react-native";
@@ -33,22 +35,46 @@ interface Message {
 interface Props {
   gameId: string | number;
   onChange?: (index: number) => void;
+  onSend?: (sendFn: (text: string) => void) => void;
 }
 
-export default function LiveChatBottomSheet({ gameId, onChange }: Props) {
+export default function LiveChatBottomSheet({
+  gameId,
+  onChange,
+  onSend,
+}: Props) {
   const { user } = useAuth();
   const [messages, setMessages] = useState<Message[]>([]);
-  const [input, setInput] = useState("");
   const socketRef = useRef<SocketIOClient.Socket | null>(null);
   const flatListRef = useRef<FlatList>(null);
   const bottomSheetRef = useRef<BottomSheet>(null);
   const isDark = useColorScheme() === "dark";
-  const styles = getStyles(isDark);
   const userName = user?.username ?? "Anonymous";
   const userProfile = user?.profile_image;
   const [userCount, setUserCount] = useState(0);
-  const snapPoints = useMemo(() => ["25%", "50%", "75%", "90%"], []);
+  const [sheetHeight, setSheetHeight] = useState(0);
+  const [keyboardVisible, setKeyboardVisible] = useState(false);
+  const snapPoints = useMemo(() => ["40%", "50%", "75%", "92%"], []);
   const EMOJIS = ["😂", "🔥"];
+  const getTodayKey = (gameId: string | number) => {
+    const today = format(new Date(), "yyyy-MM-dd");
+    return `chat_${gameId}_${today}`;
+  };
+
+  // Listen to keyboard show/hide
+  useEffect(() => {
+    const showSub = Keyboard.addListener("keyboardDidShow", () =>
+      setKeyboardVisible(true)
+    );
+    const hideSub = Keyboard.addListener("keyboardDidHide", () =>
+      setKeyboardVisible(false)
+    );
+
+    return () => {
+      showSub.remove();
+      hideSub.remove();
+    };
+  }, []);
 
   const addReaction = (index: number, emoji: string) => {
     const currentUser = userName;
@@ -76,6 +102,7 @@ export default function LiveChatBottomSheet({ gameId, onChange }: Props) {
     }
   }, [gameId]);
 
+  // Socket setup
   useEffect(() => {
     const socket = io(SOCKET_URL);
     socketRef.current = socket;
@@ -91,18 +118,51 @@ export default function LiveChatBottomSheet({ gameId, onChange }: Props) {
     };
   }, [gameId]);
 
-  const sendMessage = () => {
-    if (!input.trim()) return;
-    const msg: Message = {
-      user: userName,
-      message: input,
-      time: Date.now(),
-      profile_image: userProfile,
+  const sendMessage = useCallback(
+    (text: string) => {
+      if (!text?.trim()) return;
+      const msg: Message = {
+        user: userName,
+        message: text,
+        time: Date.now(),
+        profile_image: userProfile,
+      };
+      socketRef.current?.emit("sendMessage", { gameId, ...msg });
+      setTimeout(
+        () => flatListRef.current?.scrollToEnd({ animated: true }),
+        50
+      );
+    },
+    [userName, userProfile, gameId]
+  );
+
+  useEffect(() => {
+    if (onSend) {
+      onSend(sendMessage);
+    }
+  }, [onSend, sendMessage]);
+
+  useEffect(() => {
+    const loadMessages = async () => {
+      const key = getTodayKey(gameId);
+      const saved = await AsyncStorage.getItem(key);
+      if (saved) {
+        setMessages(JSON.parse(saved));
+        setTimeout(
+          () => flatListRef.current?.scrollToEnd({ animated: true }),
+          50
+        );
+      }
     };
-    socketRef.current?.emit("sendMessage", { gameId, ...msg });
-    setInput("");
-    setTimeout(() => flatListRef.current?.scrollToEnd({ animated: true }), 50);
-  };
+    if (gameId != null) loadMessages();
+  }, [gameId]);
+
+  useEffect(() => {
+  if (!gameId) return;
+  const key = getTodayKey(gameId);
+  AsyncStorage.setItem(key, JSON.stringify(messages));
+}, [messages, gameId]);
+
 
   const renderMessage = ({ item, index }: { item: Message; index: number }) => (
     <ChatMessage
@@ -116,117 +176,82 @@ export default function LiveChatBottomSheet({ gameId, onChange }: Props) {
     />
   );
 
+  const calculatedHeight = keyboardVisible ? 390 : sheetHeight - 50;
+
   return (
     <BottomSheet
       ref={bottomSheetRef}
       index={-1}
       snapPoints={snapPoints}
       onChange={onChange}
+      onAnimate={(fromIndex, toIndex) => {
+        const point = snapPoints[toIndex];
+        if (!point) return; // <-- guard for closed state
+
+        if (point.toString().includes("%")) {
+          const percent = parseFloat(point.toString()) / 100;
+          const height = percent * (Dimensions.get("window").height || 0);
+          setSheetHeight(height);
+        } else {
+          setSheetHeight(Number(point));
+        }
+      }}
       enablePanDownToClose
       enableDynamicSizing={false}
+      handleIndicatorStyle={{ backgroundColor: isDark ? "#fff" : "#1d1d1d" }}
+      backdropComponent={(props) => (
+        <BottomSheetBackdrop
+          {...props}
+          appearsOnIndex={0}
+          disappearsOnIndex={-1}
+        />
+      )}
       backgroundComponent={() => (
         <View
           style={[
             StyleSheet.absoluteFill,
             {
-              backgroundColor: isDark
-                ? "rgba(0, 0, 0, 0.25)"
-                : "rgba(255, 255, 255, 0.25)",
-              borderTopLeftRadius: 24,
-              borderTopRightRadius: 24,
               overflow: "hidden",
+              borderTopLeftRadius: 12,
+              borderTopRightRadius: 12,
             },
           ]}
         >
           <BlurView
             intensity={80}
-            tint="systemUltraThinMaterial"
-            style={[
-              StyleSheet.absoluteFill,
-              { backgroundColor: isDark ? "#1a1a1aCC" : "#ffffffCC" },
-            ]}
+            tint={"systemThinMaterial"}
+            style={StyleSheet.absoluteFill}
           />
         </View>
       )}
       keyboardBehavior="interactive"
       keyboardBlurBehavior="restore"
-      handleIndicatorStyle={{
-        backgroundColor: isDark ? "#fff" : "#1d1d1d",
-        width: 36,
-        height: 4,
-      }}
     >
-      <BottomSheetView style={{ flex: 1 }}>
-        <View style={{ padding: 12, alignItems: "center", flex: 1 }}>
+      <BottomSheetView>
+        {/* User count */}
+        <View style={{ padding: 12, alignItems: "center" }}>
           <Text
             style={{
-              color: isDark ? "#aaa" : "#555",
-              fontFamily: Fonts.OSREGULAR,
+              color: isDark ? "#fff" : "#1d1d1d",
+              fontFamily: Fonts.OSMEDIUM,
             }}
           >
             {userCount} {userCount === 1 ? "person" : "people"} in chat
           </Text>
         </View>
 
+        {/* Chat messages */}
         <FlatList
           ref={flatListRef}
           data={messages}
           keyExtractor={(_, idx) => idx.toString()}
           renderItem={renderMessage}
-          style={{ height: 400 }} // <-- fixed height
-          contentContainerStyle={{
-            paddingHorizontal: 12,
-            paddingBottom: 12,
-            justifyContent: "flex-end",
-          }}
+          style={{ height: calculatedHeight }}
+          contentContainerStyle={{ paddingHorizontal: 12, paddingBottom: 120 }}
           keyboardShouldPersistTaps="handled"
-          keyboardDismissMode="on-drag"
+          keyboardDismissMode="interactive"
         />
-
-        <KeyboardAvoidingView
-          behavior={Platform.OS === "ios" ? "padding" : "height"}
-          keyboardVerticalOffset={20}
-        >
-          <View style={styles.inputContainer}>
-            <TextInput
-              style={styles.input}
-              placeholder="Type your message..."
-              placeholderTextColor={isDark ? "#aaa" : "#555"}
-              value={input}
-              onChangeText={setInput}
-              onSubmitEditing={sendMessage}
-              returnKeyType="send"
-            />
-            <TouchableOpacity onPress={sendMessage}>
-              <Ionicons
-                name="send"
-                size={24}
-                color={isDark ? "#fff" : "#1d1d1d"}
-              />
-            </TouchableOpacity>
-          </View>
-        </KeyboardAvoidingView>
       </BottomSheetView>
     </BottomSheet>
   );
 }
-
-const getStyles = (isDark: boolean) =>
-  StyleSheet.create({
-    inputContainer: {
-      flexDirection: "row",
-      alignItems: "center",
-      padding: 8,
-      borderTopWidth: 1,
-      borderColor: isDark ? "#333" : "#ccc",
-    },
-    input: {
-      flex: 1,
-      padding: 10,
-      borderRadius: 8,
-      marginRight: 8,
-      backgroundColor: isDark ? "#2e2e2e" : "#eee",
-      color: isDark ? "#fff" : "#1d1d1d",
-      fontFamily: Fonts.OSREGULAR,
-    },
-  });
