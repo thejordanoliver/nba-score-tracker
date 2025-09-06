@@ -125,7 +125,7 @@ const styles = StyleSheet.create({
     resizeMode: "contain",
   },
   score: {
-    fontSize: 24,
+    fontSize: 32,
     fontFamily: Fonts.OSBOLD,
     width: 60,
     textAlign: "center",

@@ -671,3 +671,37 @@ export const getTeamName = (teamId: number | string, fallback?: string) => {
   const team = getTeamInfo(teamId);
   return team?.nickname || fallback || "Unknown Team";
 };
+
+export const logoMap: Record<string, any> = {
+  "RaidersLogo": RaidersLogo,
+  "JaguarsLogo": JaguarsLogo,
+  "PatriotsLogo": PatriotsLogo,
+  "GiantsLogo": GiantsLogo,
+  "GiantsLogoLight": GiantsLogoLight,
+  "RavensLogo": RavensLogo,
+  "TitansLogo": TitansLogo,
+  "LionsLogo": LionsLogo,
+  "FalconsLogo": FalconsLogo,
+  "BrownsLogo": BrownsLogo,
+  "BengalsLogo": BengalsLogo,
+  "CardinalsLogo": CardinalsLogo,
+  "EaglesLogo": EaglesLogo,
+  "JetsLogo": JetsLogo,
+  "JetsLogoLight": JetsLogoLight,
+  "49ersLogo": NinersLogo,
+  "PackersLogo": PackersLogo,
+  "BearsLogo": BearsLogo,
+  "ChiefsLogo": ChiefsLogo,
+  "CommandersLogo": CommandersLogo,
+  "PanthersLogo": PanthersLogo,
+  "BillsLogo": BillsLogo,
+  "ColtsLogo": ColtsLogo,
+  "SteelersLogo": SteelersLogo,
+  "SeahawksLogo": SeahawksLogo,
+  "BuccaneersLogo": BuccaneersLogo,
+  "DolphinsLogo": DolphinsLogo,
+  "TexansLogo": TexansLogo,
+  "RamsLogo": RamsLogo,
+  "ChargersLogo": ChargersLogo,
+  "VikingsLogo": VikingsLogo,
+};

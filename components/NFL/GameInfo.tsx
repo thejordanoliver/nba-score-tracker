@@ -1,7 +1,9 @@
 import { Fonts } from "@/constants/fonts";
 import { NFLTeam } from "@/constants/teamsNFL";
 import { getStyles } from "@/styles/GameCard.styles";
+import { useMemo } from "react";
 import { StyleSheet, Text, View } from "react-native";
+
 type NFLGameCenterInfoProps = {
   status:
     | "Scheduled"
@@ -34,6 +36,26 @@ export function NFLGameCenterInfo({
 }: NFLGameCenterInfoProps) {
   const styles = getStyles(isDark);
 
+  const formatQuarter = useMemo(
+    () => (short: string) => {
+      switch (short) {
+        case "Q1":
+          return "1st";
+        case "Q2":
+          return "2nd";
+        case "Q3":
+          return "3rd";
+        case "Q4":
+          return "4th";
+        case "OT":
+          return "OT";
+        default:
+          return short;
+      }
+    },
+    []
+  );
+
   return (
     <View
       style={[
@@ -42,7 +64,6 @@ export function NFLGameCenterInfo({
           alignItems: "center",
           marginHorizontal: 8,
           marginBottom: 8,
-          backgroundColor: "rgba(0,0,0,0.05)", // debug highlight
         },
       ]}
     >
@@ -57,7 +78,7 @@ export function NFLGameCenterInfo({
       {/* In Progress */}
       {status === "In Progress" && (
         <>
-          <Text style={styles.date}>{period}</Text>
+          <Text style={styles.date}>{period ? formatQuarter(period) : ""}</Text>
           {clock && <Text style={styles.clock}>{clock}</Text>}
         </>
       )}
@@ -80,14 +101,12 @@ export function NFLGameCenterInfo({
   );
 }
 
-
 const styles = StyleSheet.create({
   container: {
     justifyContent: "center",
     alignItems: "center",
     marginHorizontal: 8,
     marginBottom: 8,
-    backgroundColor: "rgba(0,0,0,0.05)", // temporary highlight to see the box
   },
   date: {
     fontSize: 14,

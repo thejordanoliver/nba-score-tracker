@@ -24,8 +24,22 @@ export function useNFLTeamGames(
       const res = await axios.get(`${BASE_URL}/api/gamesNFL/team/${teamId}`, {
         params: { season, league, all: fetchAll ? 1 : 0 },
       });
-      setGames(res.data.response || []);
-      console.log("NFL API response:", res.data);
+
+      console.log("NFL API raw response:", res.data);
+
+      const games = res.data.response || [];
+
+      games.forEach((g: Game, i: number) => {
+        const ts = g?.game?.date?.timestamp;
+        if (ts) {
+          const utc = new Date(ts * 1000);
+          console.log(
+            `Game[${i}] → timestamp: ${ts}, UTC: ${utc.toISOString()}, Local: ${utc.toString()}`
+          );
+        }
+      });
+
+      setGames(games);
     } catch (err: any) {
       console.error("Error fetching NFL team games:", err.message);
       setError("Failed to load team games");

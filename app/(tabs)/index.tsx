@@ -1,4 +1,3 @@
-import DummyGameCard from "@/components/Games/DummyGameCard";
 import GamesList from "@/components/Games/GamesList";
 import Heading from "@/components/Headings/Heading";
 import NewsHighlightsList from "@/components/News/NewsHighlightsList";

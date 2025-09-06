@@ -90,29 +90,34 @@ function NFLGameCard({ game, isDark }: Props) {
     };
   }, [game.game.status]);
 
-  const gameDate = useMemo(
-    () => new Date(game.game.date.date),
-    [game.game.date.date]
-  );
+// Base gameDate from timestamp
+const gameDate = useMemo(() => {
+  return game?.game?.date?.timestamp
+    ? new Date(game.game.date.timestamp * 1000)
+    : null;
+}, [game?.game?.date?.timestamp]);
 
-  const formattedDate = useMemo(
-    () =>
-      gameDate.toLocaleDateString("en-US", {
+// Date → MM/DD
+const formattedDate = useMemo(() => {
+  return gameDate
+    ? gameDate.toLocaleDateString("en-US", {
         month: "numeric",
         day: "numeric",
-      }),
-    [gameDate]
-  );
+      })
+    : "";
+}, [gameDate]);
 
-  const formattedTime = useMemo(
-    () =>
-      gameDate.toLocaleTimeString("en-US", {
+// Time → HH:MM AM/PM
+const formattedTime = useMemo(() => {
+  return gameDate
+    ? gameDate.toLocaleTimeString("en-US", {
         hour: "numeric",
         minute: "2-digit",
         hour12: true,
-      }),
-    [gameDate]
-  );
+      })
+    : "";
+}, [gameDate]);
+
 
   // Winner/loser style logic
  const getTeamStyle = useMemo(

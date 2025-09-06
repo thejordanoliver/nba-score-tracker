@@ -1,7 +1,6 @@
+// components/NFL/TeamInfoBottomSheetNFL.tsx
 import ChampionshipBanner from "@/components/ChampionshipBanner";
-import { Fonts } from "@/constants/fonts";
-import { logoMap, teams } from "@/constants/teams";
-import { useTeamInfo } from "@/hooks/useTeamInfo";
+import { getTeamInfo } from "@/constants/teamsNFL";
 import {
   BottomSheetBackdrop,
   BottomSheetModal,
@@ -12,38 +11,24 @@ import { useEffect, useMemo, useRef } from "react";
 import { StyleSheet, Text, View, useColorScheme } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import TeamInfoCard from "./TeamInfoCard";
+import { Fonts } from "@/constants/fonts";
 
 type Props = {
   visible: boolean;
   onClose: () => void;
-  coachName?: string;
-  coachImage?: any;
-  teamHistory?: string;
-  teamId?: string;
+  teamId?: string | number;
 };
 
-export default function TeamInfoBottomSheet({
-  visible,
-  onClose,
-  coachName,
-  coachImage,
-  teamHistory,
-  teamId,
-}: Props) {
+export default function TeamInfoBottomSheetNFL({ visible, onClose, teamId }: Props) {
   const isDark = useColorScheme() === "dark";
   const insets = useSafeAreaInsets();
   const sheetRef = useRef<BottomSheetModal>(null);
 
-  const { team: fetchedTeam, loading, error } = useTeamInfo(teamId);
-
-  const localTeam = teams.find((t) => t.id === teamId);
+const team = teamId ? getTeamInfo(teamId) : undefined;
 
   useEffect(() => {
-    if (visible) {
-      sheetRef.current?.present();
-    } else {
-      sheetRef.current?.dismiss();
-    }
+    if (visible) sheetRef.current?.present();
+    else sheetRef.current?.dismiss();
   }, [visible]);
 
   const snapPoints = useMemo(() => ["60%", "92%"], []);
@@ -55,7 +40,7 @@ export default function TeamInfoBottomSheet({
       snapPoints={snapPoints}
       onDismiss={onClose}
       enablePanDownToClose
-      enableDynamicSizing={false} // <-- prevents full-screen expansion
+      enableDynamicSizing={false}
       backdropComponent={(props) => (
         <BottomSheetBackdrop
           {...props}
@@ -64,9 +49,7 @@ export default function TeamInfoBottomSheet({
           pressBehavior="close"
         />
       )}
-      backgroundStyle={{
-        backgroundColor: "transparent",
-      }}
+      backgroundStyle={{ backgroundColor: "transparent" }}
       handleStyle={{
         backgroundColor: "transparent",
         paddingTop: 12,
@@ -76,7 +59,7 @@ export default function TeamInfoBottomSheet({
         right: 0,
       }}
       handleIndicatorStyle={{
-        backgroundColor: localTeam?.color,
+        backgroundColor: team?.color,
         width: 36,
         height: 4,
         borderRadius: 2,
@@ -92,34 +75,28 @@ export default function TeamInfoBottomSheet({
       >
         <BlurView
           intensity={100}
-          tint={isDark ? "systemThinMaterialDark" : "systemThinMaterialLight"}
+          tint={"systemThinMaterial"}
           style={StyleSheet.absoluteFill}
         />
 
         <View style={{ paddingHorizontal: 12, flex: 1 }}>
-          {/* Header */}
-          <View style={{}}>
-            {fetchedTeam?.name ? (
-              <Text
-                style={{
-                  fontFamily: Fonts.OSSEMIBOLD,
-                  fontSize: 20,
-                  paddingTop: insets.top - 20,
-                  paddingBottom: 12,
-                  color: isDark ? "#fff" : "#000",
-                  textAlign: "center",
-                }}
-              >
-                {fetchedTeam.name}
-              </Text>
-            ) : null}
-          </View>
-          {/* Content */}
+          {team?.name && (
+            <Text
+              style={{
+                fontFamily: Fonts.OSSEMIBOLD,
+                fontSize: 20,
+                paddingTop: insets.top - 20,
+                paddingBottom: 12,
+                color: isDark ? "#fff" : "#000",
+                textAlign: "center",
+              }}
+            >
+              {team.name}
+            </Text>
+          )}
+
           <BottomSheetScrollView
-            contentContainerStyle={{
-              paddingTop: 20,
-              paddingBottom: 40,
-            }}
+            contentContainerStyle={{ paddingTop: 20, paddingBottom: 40 }}
             showsVerticalScrollIndicator={false}
           >
             <Text
@@ -134,22 +111,16 @@ export default function TeamInfoBottomSheet({
                 color: isDark ? "#fff" : "#1d1d1d",
               }}
             >
-              Championships
+             Super Bowls
             </Text>
 
             <ChampionshipBanner
-              years={
-                fetchedTeam?.championships
-                  ? fetchedTeam.championships.map((year) => Number(year))
-                  : []
-              }
-              logo={
-                fetchedTeam?.logo_filename
-                  ? logoMap[fetchedTeam.logo_filename]
-                  : undefined
-              }
-              teamName={fetchedTeam?.name}
-              teamId={fetchedTeam?.id}
+              years={[]} // you can expand constants later
+              logo={team?.logo}
+              teamName={team?.name}
+              teamId={team?.id}
+                league="NFL" // 👈 add this
+
             />
 
             <TeamInfoCard teamId={teamId} />

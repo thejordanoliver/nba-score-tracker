@@ -138,6 +138,8 @@ export default function TeamDetailScreen() {
             teamCode={team.code}
             isFavorite={isFavorite}
             onToggleFavorite={toggleFavorite}
+                        league="NFL" // 👈 ensures NFL BottomSheet is used
+
           />
         ),
     });

@@ -1,5 +1,7 @@
-import TeamInfoBottomSheet from "@/components/Team/TeamInfoModal";
-import { teams } from "@/constants/teams";
+import TeamInfoBottomSheet from "@/components/Team/TeamInfoModal"; // NBA
+import TeamInfoBottomSheetNFL from "@/components/NFL/Team/TeamInfoModal"; // NFL
+import { teams as nbaTeams } from "@/constants/teams";
+import { teams as nflTeams } from "@/constants/teamsNFL";
 import { Ionicons } from "@expo/vector-icons";
 import { HeaderTitle } from "@react-navigation/elements";
 import { useState } from "react";
@@ -37,6 +39,8 @@ type CustomHeaderTitleProps = {
   teamHistory?: string;
   isPlayerScreen?: boolean;
   showBackButton?: boolean;
+    league?: "NBA" | "NFL"; // 👈 new prop
+
 
   // Favorite
   isFavorite?: boolean;
@@ -71,17 +75,25 @@ export function CustomHeaderTitle({
   onToggleNotifications,
   isPlayerScreen,
   showBackButton = true, // default to true
+    league = "NBA",
+
 }: CustomHeaderTitleProps) {
   const colorScheme = useColorScheme();
   const isDark = colorScheme === "dark";
   const insets = useSafeAreaInsets();
   const [modalVisible, setModalVisible] = useState(false);
 
-  const selectedTeam = teams.find((t) => t.code === teamCode);
+  const selectedTeam =
+    league === "NFL"
+      ? nflTeams.find((t) => t.code === teamCode)
+      : nbaTeams.find((t) => t.code === teamCode);
+      
   const coach = selectedTeam?.coach || teamCoach || "N/A";
-  const coachImage = selectedTeam?.coachImage;
+const coachImage = league === "NBA" ? (selectedTeam as any)?.coachImage : undefined;
   const selectedLogo = logoLight ?? logo;
   const defaultBgColor = isDark ? "#1d1d1d" : "#fff";
+
+  
 
   const textStyle: TextStyle = {
     fontFamily: "Oswald_400Regular",
@@ -231,15 +243,19 @@ export function CustomHeaderTitle({
               </TouchableOpacity>
             )}
 
+{league === "NFL" ? (
+            <TeamInfoBottomSheetNFL
+              visible={modalVisible}
+              onClose={() => setModalVisible(false)}
+    teamId={selectedTeam?.id?.toString()} // 👈 converted
+            />
+          ) : (
             <TeamInfoBottomSheet
-  visible={modalVisible}
-  onClose={() => setModalVisible(false)}
-  coachName={coach}
-  coachImage={coachImage}
-  teamHistory={teamHistory ?? "This is some team history..."}
-  teamId={selectedTeam?.id}
-/>
-
+              visible={modalVisible}
+              onClose={() => setModalVisible(false)}
+    teamId={selectedTeam?.id?.toString()} // 👈 converted
+            />
+          )}
           </View>
         ) : tabName === "Profile" && onSettings ? (
           <TouchableOpacity onPress={onSettings}>
