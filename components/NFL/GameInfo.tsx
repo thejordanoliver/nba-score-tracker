@@ -11,7 +11,8 @@ type NFLGameCenterInfoProps = {
     | "Final"
     | "Canceled"
     | "Postponed"
-    | "Delayed"; // <-- added "Delayed"
+    | "Delayed" // <-- added "Delayed"
+    | "Halftime";
   date: string;
   time: string;
   period?: string;
@@ -56,6 +57,7 @@ export function NFLGameCenterInfo({
     []
   );
 
+  
   return (
     <View
       style={[
@@ -80,6 +82,12 @@ export function NFLGameCenterInfo({
         <>
           <Text style={styles.date}>{period ? formatQuarter(period) : ""}</Text>
           {clock && <Text style={styles.clock}>{clock}</Text>}
+        </>
+      )}
+      {/* In Progress */}
+      {status === "Halftime" && (
+        <>
+          <Text style={styles.date}>Halftime</Text>
         </>
       )}
 

@@ -121,13 +121,13 @@ export default function GameDetailsScreen() {
     arenaImages[homeTeamData.code] ||
     homeTeamData.arenaImage;
 
-  const gameDate = new Date(date).toISOString().split("T")[0];
-  const { data: historicalOdds, loading: oddsLoading, error: oddsError } =
-    useHistoricalOdds({
-      date: gameDate,
-      team1: awayTeamData.code,
-      team2: homeTeamData.code,
-    });
+  // const gameDate = new Date(date).toISOString().split("T")[0];
+  // const { data: historicalOdds, loading: oddsLoading, error: oddsError } =
+  //   useHistoricalOdds({
+  //     date: gameDate,
+  //     team1: awayTeamData.code,
+  //     team2: homeTeamData.code,
+  //   });
 
   const lat =
     neutralArenaData?.latitude ??
@@ -326,7 +326,15 @@ export default function GameDetailsScreen() {
         />
       </View>
 
-      <View style={{ gap: 20, marginTop: 20 }}>
+      <View style={{marginTop: 20 }}>
+          {linescore && (
+          <LineScore
+            linescore={linescore}
+            homeCode={homeTeamData.code}
+            awayCode={awayTeamData.code}
+          />
+        )}
+        
         {prediction && !predictionLoading && !predictionError && (
           <PredictionBar
             homeWinProbability={prediction.homeWinProbability * 100}
@@ -339,20 +347,13 @@ export default function GameDetailsScreen() {
             awayTeamId={awayTeamData.id}
           />
         )}
-
         {predictionError && (
           <Text style={{ color: "red" }}>
             Prediction error: {predictionError}
           </Text>
         )}
 
-        {linescore && (
-          <LineScore
-            linescore={linescore}
-            homeCode={homeTeamData.code}
-            awayCode={awayTeamData.code}
-          />
-        )}
+      
 
         <GameLeaders
           gameId={gameId.toString()}

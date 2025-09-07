@@ -86,6 +86,7 @@ function NFLGameCard({ game, isDark }: Props) {
       isHalftime: long === "Halftime",
       isLive: live,
       short: game.game.status.short,
+      long: game.game.status.long,
       timer: game.game.status.timer,
     };
   }, [game.game.status]);
@@ -211,7 +212,7 @@ const formattedTime = useMemo(() => {
             </>
           )}
           {status.isHalftime && (
-            <Text style={styles.date}>{formatQuarter(status.short)}</Text>
+            <Text style={styles.date}>{formatQuarter(status.long)}</Text>
           )}
           {status.isFinal && (
             <>

@@ -1,25 +1,26 @@
 import { CustomHeaderTitle } from "@/components/CustomHeaderTitle";
+import { LineScore } from "@/components/GameDetails";
 import { NFLGameCenterInfo } from "@/components/NFL/GameInfo";
+import NFLGameEvents from "@/components/NFL/NFLGameEvents";
+import NFLGameTeamStats from "@/components/NFL/NFLGameTeamStats";
 import { NFLTeamRow } from "@/components/NFL/NFLTeamRow";
 import {
   getNFLTeamsLogo,
   getTeamInfo,
   getTeamName,
 } from "@/constants/teamsNFL";
+import { useNFLTeamStats } from "@/hooks/useNFLTeamStats";
 import { useNavigation } from "@react-navigation/native";
 import { useLocalSearchParams } from "expo-router";
 import { goBack } from "expo-router/build/global-state/routing";
 import { useEffect, useLayoutEffect, useMemo, useState } from "react";
 import { ScrollView, StyleSheet, useColorScheme, View } from "react-native";
-import { LineScore } from "@/components/GameDetails";
-import NFLGameEvents from "@/components/NFL/NFLGameEvents";
 
 export default function NFLGameDetailsScreen() {
   const params = useLocalSearchParams();
   const isDark = useColorScheme() === "dark";
   const navigation = useNavigation();
   const [parsedGame, setParsedGame] = useState<any>(null);
-
   useEffect(() => {
     if (!params?.game) return;
     try {
@@ -30,6 +31,9 @@ export default function NFLGameDetailsScreen() {
       console.warn("Failed to parse game:", params.game);
     }
   }, [params?.game]);
+
+  const { stats, loading } = useNFLTeamStats(parsedGame?.game?.id);
+  console.log("Fetching stats for gameId", parsedGame?.game?.id);
 
   const headerTitle = useMemo(() => {
     if (!parsedGame) return "";
@@ -78,7 +82,13 @@ export default function NFLGameDetailsScreen() {
 
   const statusMap: Record<
     string,
-    "Scheduled" | "In Progress" | "Final" | "Canceled" | "Postponed" | "Delayed"
+    | "Scheduled"
+    | "In Progress"
+    | "Final"
+    | "Canceled"
+    | "Postponed"
+    | "Delayed"
+    | "Halftime"
   > = {
     NS: "Scheduled",
     Q1: "In Progress",
@@ -86,7 +96,7 @@ export default function NFLGameDetailsScreen() {
     Q3: "In Progress",
     Q4: "In Progress",
     OT: "In Progress",
-    HT: "In Progress",
+    HT: "Halftime",
     FT: "Final",
     AOT: "Final",
     CANC: "Canceled",
@@ -94,7 +104,11 @@ export default function NFLGameDetailsScreen() {
     DELAYED: "Delayed",
   };
 
-  const rawStatus = (gameInfo?.status?.short || gameInfo?.status?.long || "").toUpperCase();
+  const rawStatus = (
+    gameInfo?.status?.short ||
+    gameInfo?.status?.long ||
+    ""
+  ).toUpperCase();
   const gameStatus = statusMap[rawStatus] || "Scheduled";
 
   const gameDateObj = useMemo(() => {
@@ -117,7 +131,10 @@ export default function NFLGameDetailsScreen() {
   }, [gameInfo?.date]);
 
   const formattedDate = gameDateObj
-    ? gameDateObj.toLocaleDateString("en-US", { month: "numeric", day: "numeric" })
+    ? gameDateObj.toLocaleDateString("en-US", {
+        month: "numeric",
+        day: "numeric",
+      })
     : "";
 
   const formattedTime = gameDateObj
@@ -174,6 +191,7 @@ export default function NFLGameDetailsScreen() {
           score={scores?.away?.total}
           isWinner={awayIsWinner}
           colors={colors}
+          status={gameStatus} // 👈 fixed
         />
 
         <NFLGameCenterInfo
@@ -201,18 +219,20 @@ export default function NFLGameDetailsScreen() {
           score={scores?.home?.total}
           isWinner={homeIsWinner}
           colors={colors}
+          status={gameStatus} // 👈 fixed
         />
       </View>
 
-  <View style={{ gap: 20, marginTop: 20 }}>
-      <LineScore
-        linescore={linescore}
-        homeCode={homeTeam?.code ?? ""}
-        awayCode={awayTeam?.code ?? ""}
-      />
+      <View style={{ gap: 20, marginTop: 20 }}>
+        <LineScore
+          linescore={linescore}
+          homeCode={homeTeam?.code ?? ""}
+          awayCode={awayTeam?.code ?? ""}
+        />
 
-      {/* NFLGameEvents inside ScrollView */}
-      <NFLGameEvents gameId={gameInfo?.id}  />
+        {/* NFLGameEvents inside ScrollView */}
+        <NFLGameEvents gameId={gameInfo?.id} />
+        {stats && stats.length >= 2 && <NFLGameTeamStats stats={stats} />}
       </View>
     </ScrollView>
   );

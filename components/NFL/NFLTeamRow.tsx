@@ -16,6 +16,7 @@ type Props = {
   isHome?: boolean;
   score?: number;
   isWinner?: boolean;
+  status?: string; // 👈 NEW: "Live", "Final", etc.
   colors: {
     text: string;
     record: string;
@@ -30,39 +31,60 @@ export const NFLTeamRow = ({
   isHome = false,
   score,
   isWinner,
+  status,
   colors,
 }: Props) => {
   const router = useRouter();
   const { standings } = useNFLStandings();
 
-const teamInfo = getTeamInfo(team.id);
+  const teamInfo = getTeamInfo(team.id);
 
-// Compare names instead of codes
-const teamRecord = standings.find(
-  (t) => t.name.toLowerCase().trim() === teamInfo?.name.toLowerCase().trim()
-);
+  // Compare names instead of codes
+  const teamRecord = standings.find(
+    (t) => t.name.toLowerCase().trim() === teamInfo?.name.toLowerCase().trim()
+  );
 
-const record = teamRecord ? `${teamRecord.won}-${teamRecord.lost}` : "0-0";
-
-console.log("Matching", teamInfo?.name, "| API:", teamRecord?.name);
-
+  const record = teamRecord ? `${teamRecord.won}-${teamRecord.lost}` : "0-0";
 
   const handleTeamPress = () => {
     if (!team.id) return;
     router.push(`/team/nfl/${team.id}`);
   };
 
+// 🎯 Replace your current live check + score color logic with this
+
+// Is the game live? (anything that's not final/not started/etc.)
+const isLive =
+  status &&
+  status !== "Not Started" &&
+  status !== "Finished" &&
+  status !== "Canceled" &&
+  status !== "Delayed" &&
+  status !== "Postponed" &&
+  status !== "Halftime";
+
+// 🎨 Score color logic
+const getScoreStyle = () => {
+  if (!score && score !== 0) return { color: colors.score };
+
+  // If live → both scores should be pure text colors
+  if (isLive) {
+    return { color: isDark ? "#fff" : "#1d1d1d" };
+  }
+
+  // If final → losing score gets opacity
+  if (status === "Final" && !isWinner) {
+    return { color: colors.score, opacity: 0.5 };
+  }
+
+  // Otherwise → normal styling
+  return { color: isWinner ? colors.winnerScore : colors.score };
+};
+
   return (
     <View style={styles.row}>
       {isHome && (
-        <Text
-          style={[
-            styles.score,
-            { color: isWinner ? colors.winnerScore : colors.score },
-          ]}
-        >
-          {score ?? ""}
-        </Text>
+        <Text style={[styles.score, getScoreStyle()]}>{score ?? ""}</Text>
       )}
 
       <View style={styles.teamInfoContainer}>
@@ -80,19 +102,11 @@ console.log("Matching", teamInfo?.name, "| API:", teamRecord?.name);
       </View>
 
       {!isHome && (
-        <Text
-          style={[
-            styles.score,
-            { color: isWinner ? colors.winnerScore : colors.score },
-          ]}
-        >
-          {score ?? ""}
-        </Text>
+        <Text style={[styles.score, getScoreStyle()]}>{score ?? ""}</Text>
       )}
     </View>
   );
 };
-
 
 const styles = StyleSheet.create({
   row: {
