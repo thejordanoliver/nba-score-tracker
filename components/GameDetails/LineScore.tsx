@@ -1,5 +1,6 @@
-import { StyleSheet, Text, useColorScheme, View } from "react-native";
+import { FlatList, StyleSheet, Text, useColorScheme, View } from "react-native";
 import HeadingTwo from "../Headings/HeadingTwo";
+
 const OSMEDIUM = "Oswald_500Medium";
 const OSREGULAR = "Oswald_400Regular";
 
@@ -23,10 +24,9 @@ export default function LineScore({
 
   const isDark = useColorScheme() === "dark";
   const textColor = lighter ? "#ccc" : isDark ? "#fff" : "#000";
-
   const borderColor = lighter ? "#aaa" : isDark ? "#333" : "#888";
-
   const dividerColor = lighter ? "#bbb" : isDark ? "#888" : "#888";
+
   const total = (scores: string[]) =>
     scores.reduce((acc, val) => acc + parseInt(val || "0", 10), 0);
 
@@ -40,24 +40,25 @@ export default function LineScore({
     return `OT${i - 3}`; // OT2 for index 5, OT3 for 6, etc.
   };
 
+  const quarters = [...Array(maxQuarters)].map((_, i) => getQuarterLabel(i));
+
   return (
     <>
-      <HeadingTwo lighter={lighter}>Score Summary</HeadingTwo>
       <View style={[styles.container, { borderColor }]}>
+        <HeadingTwo lighter={lighter}>Score Summary</HeadingTwo>
         {/* Header */}
         <View style={styles.row}>
           <Text style={[styles.teamCode, { color: "transparent" }]}>-</Text>
-          <View style={styles.scoresWrapper}>
-            {[...Array(maxQuarters)].map((_, i) => (
-              <Text
-                key={`q-${i}`}
-                style={[styles.header, { color: textColor }]}
-              >
-                {getQuarterLabel(i)}
-              </Text>
-            ))}
-            <Text style={[styles.header, { color: textColor }]}>Total</Text>
-          </View>
+          <FlatList
+            data={[...quarters, "Total"]}
+            keyExtractor={(item, index) => `header-${index}`}
+            horizontal
+            scrollEnabled={false}
+            renderItem={({ item }) => (
+              <Text style={[styles.header, { color: textColor }]}>{item}</Text>
+            )}
+            contentContainerStyle={styles.scoresWrapper} // 👈 FIXED
+          />
         </View>
 
         {/* Away Row */}
@@ -65,19 +66,16 @@ export default function LineScore({
           <Text style={[styles.teamCode, { color: textColor }]}>
             {awayCode}
           </Text>
-          <View style={styles.scoresWrapper}>
-            {linescore.away.map((score, index) => (
-              <Text
-                key={`away-${index}`}
-                style={[styles.score, { color: textColor }]}
-              >
-                {score}
-              </Text>
-            ))}
-            <Text style={[styles.totalScore, { color: textColor }]}>
-              {awayTotal}
-            </Text>
-          </View>
+          <FlatList
+            data={[...linescore.away, awayTotal.toString()]}
+            keyExtractor={(item, index) => `away-${index}`}
+            horizontal
+            scrollEnabled={false}
+            renderItem={({ item }) => (
+              <Text style={[styles.score, { color: textColor }]}>{item}</Text>
+            )}
+            contentContainerStyle={styles.scoresWrapper} // 👈 FIXED
+          />
         </View>
 
         {/* Divider */}
@@ -88,19 +86,16 @@ export default function LineScore({
           <Text style={[styles.teamCode, { color: textColor }]}>
             {homeCode}
           </Text>
-          <View style={styles.scoresWrapper}>
-            {linescore.home.map((score, index) => (
-              <Text
-                key={`home-${index}`}
-                style={[styles.score, { color: textColor }]}
-              >
-                {score}
-              </Text>
-            ))}
-            <Text style={[styles.totalScore, { color: textColor }]}>
-              {homeTotal}
-            </Text>
-          </View>
+          <FlatList
+            data={[...linescore.home, homeTotal.toString()]}
+            keyExtractor={(item, index) => `home-${index}`}
+            horizontal
+            scrollEnabled={false}
+            renderItem={({ item }) => (
+              <Text style={[styles.score, { color: textColor }]}>{item}</Text>
+            )}
+            contentContainerStyle={styles.scoresWrapper} // 👈 FIXED
+          />
         </View>
       </View>
     </>
@@ -110,7 +105,6 @@ export default function LineScore({
 const styles = StyleSheet.create({
   container: {
     width: "100%",
-    marginTop: 10,
   },
   row: {
     flexDirection: "row",
@@ -124,28 +118,25 @@ const styles = StyleSheet.create({
     paddingLeft: 8,
   },
   scoresWrapper: {
-    flexDirection: "row",
     flex: 1,
-    justifyContent: "space-between",
+    flexDirection: "row",
+    justifyContent: "space-evenly", // 👈 evenly space columns
   },
   header: {
     fontFamily: OSMEDIUM,
     fontSize: 10,
     opacity: 0.8,
     textAlign: "center",
-    flex: 1,
   },
   score: {
     fontFamily: OSREGULAR,
     fontSize: 14,
     textAlign: "center",
-    flex: 1,
   },
   totalScore: {
     fontFamily: OSMEDIUM,
     fontSize: 14,
     textAlign: "center",
-    flex: 1,
   },
   divider: {
     height: 1,

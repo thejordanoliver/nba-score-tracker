@@ -1,6 +1,5 @@
-// hooks/useHistoricalOdds.ts
-import { useEffect, useState } from "react";
-import axios from "axios";
+import { useEffect, useState, useRef } from "react";
+import axios, { CancelTokenSource } from "axios";
 
 export interface Bookmaker {
   key: string;
@@ -27,38 +26,85 @@ export interface HistoricalGameOdds {
 const BASE_URL = process.env.EXPO_PUBLIC_API_URL;
 
 interface UseHistoricalOddsOptions {
-  date?: string; // e.g. "2025-04-03"
-  timestamp?: number; // UNIX ms
+  date?: string;
+  timestamp?: number;
   team1?: string;
   team2?: string;
+  gameId?: string | number; // stable identifier
 }
 
-export const useHistoricalOdds = ({ date, timestamp, team1, team2 }: UseHistoricalOddsOptions) => {
+const cache: Record<string, HistoricalGameOdds[]> = {}; // ✅ in-memory cache
+
+export const useHistoricalOdds = ({
+  date,
+  timestamp,
+  team1,
+  team2,
+  gameId,
+}: UseHistoricalOddsOptions) => {
   const [data, setData] = useState<HistoricalGameOdds[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  const lastParamsRef = useRef<string | null>(null);
+
   useEffect(() => {
-    if (!date) return;
+    if (!date || !gameId) return;
+
+    const params: Record<string, string> = { date };
+    if (timestamp) params.timestamp = new Date(timestamp).toISOString();
+    if (team1) params.team1 = team1;
+    if (team2) params.team2 = team2;
+
+    const key = JSON.stringify(params);
+
+    // 🔎 Debug log
+    console.log("🔎 useHistoricalOdds triggered with params:", params);
+
+    // ✅ Check cache
+    if (cache[key]) {
+      console.log("✅ Returning cached odds for key:", key);
+      setData(cache[key]);
+      setError(null);
+      return;
+    }
+
+    // ✅ Prevent refetch if already requested
+    if (lastParamsRef.current === key) {
+      console.log("⏸ Skipping fetch (params unchanged):", key);
+      return;
+    }
+    lastParamsRef.current = key;
+
+    let cancelSource: CancelTokenSource | null = axios.CancelToken.source();
 
     const fetchData = async () => {
       setLoading(true);
       try {
-        const params: Record<string, string> = { date };
+        console.log("🌍 Fetching odds from API:", params);
+        console.log("📡 useHistoricalOdds API call:", { date, team1, team2, gameId });
 
-        if (timestamp) {
-          // Convert UNIX ms to ISO string (UTC) for backend compatibility
-          params.timestamp = new Date(timestamp).toISOString();
-        }
-
-        if (team1) params.team1 = team1;
-        if (team2) params.team2 = team2;
-
-        const res = await axios.get(`${BASE_URL}/api/odds/historical`, { params });
-
-        setData(res.data.games);
+        const res = await axios.get(`${BASE_URL}/api/odds/historical`, {
+          params,
+          cancelToken: cancelSource?.token,
+          
+        });
+        const games = res.data.games || [];
+        cache[key] = games; // ✅ save to cache
+        console.log("✅ Fetched and cached odds for key:", key, games);
+        console.log(
+  "✅ Fetched and cached odds for key:",
+  key,
+  JSON.stringify(games, null, 2)
+);
+        setData(games);
+        setError(null);
       } catch (err: any) {
-        console.error("Error fetching historical odds:", err.response?.data || err.message);
+        if (axios.isCancel(err)) return;
+        console.error(
+          "❌ Error fetching historical odds:",
+          err.response?.data || err.message
+        );
         setError(err.response?.data?.error || "Failed to fetch odds");
       } finally {
         setLoading(false);
@@ -66,7 +112,11 @@ export const useHistoricalOdds = ({ date, timestamp, team1, team2 }: UseHistoric
     };
 
     fetchData();
-  }, [date, timestamp, team1, team2]); // ✅ Include timestamp in dependency array
+
+    return () => {
+      cancelSource?.cancel("Component unmounted");
+    };
+  }, [date, timestamp, team1, team2, gameId]);
 
   return { data, loading, error };
 };

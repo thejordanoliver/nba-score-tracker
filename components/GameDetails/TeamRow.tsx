@@ -106,7 +106,7 @@ const styles = StyleSheet.create({
     justifyContent: "center",
   },
   teamName: {
-    fontSize: 16,
+    fontSize: 12,
     fontFamily: Fonts.OSREGULAR,
     textAlign: "center",
   },

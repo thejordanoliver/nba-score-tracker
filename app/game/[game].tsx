@@ -13,8 +13,6 @@ import {
 } from "@/components/GameDetails";
 import GameUniforms from "@/components/GameDetails/GameUniforms";
 import Weather from "@/components/GameDetails/Weather";
-import HistoricalOddsCard from "@/components/summer-league/HistoricalOddsCard";
-import HistoricalOddsCardSkeleton from "@/components/summer-league/HistoricalOddsSkeleton";
 import { Fonts } from "@/constants/fonts";
 import { arenaImages, neutralArenas, teams } from "@/constants/teams";
 import { useGameStatistics } from "@/hooks/useGameStatistics";
@@ -140,16 +138,26 @@ export default function GameDetailsScreen() {
     arenaImages[homeTeamData.code] ||
     homeTeamData.arenaImage;
 
-  const gameDate = new Date(date).toISOString().split("T")[0];
-  const {
-    data: historicalOdds,
-    loading: oddsLoading,
-    error: oddsError,
-  } = useHistoricalOdds({
-    date: gameDate,
-    team1: awayTeamData.code,
-    team2: homeTeamData.code,
-  });
+  // ⚡ useMemo so the date string stays stable
+  const gameDate = useMemo(() => {
+    return new Date(date).toISOString().split("T")[0];
+  }, [date]);
+
+  const awayCode = useMemo(() => awayTeamData.code, [awayTeamData.code]);
+  const homeCode = useMemo(() => homeTeamData.code, [homeTeamData.code]);
+  const stableGameId = useMemo(() => gameId.toString(), [gameId]);
+
+  // ✅ now pass only stable values
+  // const {
+  //   data: historicalOdds,
+  //   loading: oddsLoading,
+  //   error: oddsError,
+  // } = useHistoricalOdds({
+  //   date: gameDate,
+  //   team1: awayCode,
+  //   team2: homeCode,
+  //   gameId: stableGameId,
+  // });
 
   const lat =
     neutralArenaData?.latitude ??
@@ -377,28 +385,36 @@ export default function GameDetailsScreen() {
         </View>
 
         <View style={{ gap: 20, marginTop: 20 }}>
-          {oddsLoading ? (
-            <View style={{ marginTop: 20 }}>
-              {[...Array(1)].map((_, i) => (
-                <HistoricalOddsCardSkeleton key={i} />
-              ))}
-            </View>
-          ) : (
-            historicalOdds.length > 0 && (
-              <View style={{ marginTop: 20 }}>
-                {historicalOdds.map((game) => (
-                  <HistoricalOddsCard key={game.id} game={game} />
-                ))}
-              </View>
-            )
+          {linescore && (
+            <LineScore
+              linescore={linescore}
+              homeCode={homeTeamData.code}
+              awayCode={awayTeamData.code}
+            />
           )}
-          {oddsError && (
-            <View style={{ marginTop: 20 }}>
-              <Text style={{ color: "red" }}>
-                Error loading odds: {oddsError}
-              </Text>
-            </View>
-          )}
+
+          {/* {oddsLoading ? (
+    <View style={{ marginTop: 20 }}>
+      {[...Array(1)].map((_, i) => (
+        <HistoricalOddsCardSkeleton key={i} />
+      ))}
+    </View>
+  ) : (
+    historicalOdds.length > 0 && (
+      <View style={{ marginTop: 20 }}>
+        {historicalOdds.map((game) => (
+          <HistoricalOddsCard key={game.id} game={game} />
+        ))}
+      </View>
+    )
+  )}
+  {oddsError && (
+    <View style={{ marginTop: 20 }}>
+      <Text style={{ color: "red" }}>
+        Error loading odds: {oddsError}
+      </Text>
+    </View>
+  )} */}
 
           {prediction && !predictionLoading && !predictionError && (
             <View style={{ marginTop: 20 }}>
@@ -419,14 +435,6 @@ export default function GameDetailsScreen() {
             <Text style={{ color: "red" }}>
               Prediction error: {predictionError}
             </Text>
-          )}
-
-          {linescore && (
-            <LineScore
-              linescore={linescore}
-              homeCode={homeTeamData.code}
-              awayCode={awayTeamData.code}
-            />
           )}
 
           <GameLeaders
