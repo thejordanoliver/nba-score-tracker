@@ -42,22 +42,21 @@ export default function LineScore({
 
   return (
     <>
-      <HeadingTwo lighter={lighter}>Score Summary</HeadingTwo>
       <View style={[styles.container, { borderColor }]}>
+        <HeadingTwo lighter={lighter}>Score Summary</HeadingTwo>
         {/* Header */}
         <View style={styles.row}>
           <Text style={[styles.teamCode, { color: "transparent" }]}>-</Text>
-          <View style={styles.scoresWrapper}>
-            {[...Array(maxQuarters)].map((_, i) => (
-              <Text
-                key={`q-${i}`}
-                style={[styles.header, { color: textColor }]}
-              >
-                {getQuarterLabel(i)}
-              </Text>
-            ))}
-            <Text style={[styles.header, { color: textColor }]}>Total</Text>
-          </View>
+          <FlatList
+            data={[...quarters, "Total"]}
+            keyExtractor={(item, index) => `header-${index}`}
+            horizontal
+            scrollEnabled={false}
+            renderItem={({ item }) => (
+              <Text style={[styles.header, { color: textColor }]}>{item}</Text>
+            )}
+            contentContainerStyle={styles.scoresWrapper} // 👈 FIXED
+          />
         </View>
 
         {/* Away Row */}
@@ -123,28 +122,25 @@ const styles = StyleSheet.create({
     paddingLeft: 8,
   },
   scoresWrapper: {
-    flexDirection: "row",
     flex: 1,
-    justifyContent: "space-between",
+    flexDirection: "row",
+    justifyContent: "space-evenly", // 👈 evenly space columns
   },
   header: {
     fontFamily: Fonts.OSMEDIUM,
     fontSize: 10,
     opacity: 0.8,
     textAlign: "center",
-    flex: 1,
   },
   score: {
     fontFamily: Fonts.OSREGULAR,
     fontSize: 14,
     textAlign: "center",
-    flex: 1,
   },
   totalScore: {
     fontFamily: Fonts.OSMEDIUM,
     fontSize: 14,
     textAlign: "center",
-    flex: 1,
   },
   divider: {
     height: 1,

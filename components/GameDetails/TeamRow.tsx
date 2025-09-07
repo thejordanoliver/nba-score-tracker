@@ -1,9 +1,7 @@
+import { Fonts } from "@/constants/fonts";
 import { useRouter } from "expo-router";
 import { Image, Pressable, StyleSheet, Text, View } from "react-native";
 import { useTeamInfo } from "../../hooks/useTeamInfo"; // adjust path
-
-const OSREGULAR = "Oswald_400Regular";
-const OSBOLD = "Oswald_700Bold";
 
 type Props = {
   team: {
@@ -109,12 +107,12 @@ const styles = StyleSheet.create({
   },
   teamName: {
     fontSize: 12,
-    fontFamily: OSREGULAR,
+    fontFamily: Fonts.OSREGULAR,
     textAlign: "center",
   },
   record: {
     fontSize: 12,
-    fontFamily: OSREGULAR,
+    fontFamily: Fonts.OSREGULAR,
     textAlign: "center",
   },
   logo: {
@@ -123,8 +121,8 @@ const styles = StyleSheet.create({
     resizeMode: "contain",
   },
   score: {
-    fontSize: 24,
-    fontFamily: OSBOLD,
+    fontSize: 28,
+    fontFamily: Fonts.OSBOLD,
     width: 60,
     textAlign: "center",
     marginHorizontal: 16,

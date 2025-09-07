@@ -45,9 +45,7 @@ type CustomHeaderTitleProps = {
   // Favorite
   isFavorite?: boolean;
   onToggleFavorite?: () => void;
-  // Notifications
-  notificationsEnabled?: boolean;
-  onToggleNotifications?: () => void;
+
 };
 
 export function CustomHeaderTitle({
@@ -71,8 +69,6 @@ export function CustomHeaderTitle({
   teamHistory,
   isFavorite,
   onToggleFavorite,
-  notificationsEnabled,
-  onToggleNotifications,
   isPlayerScreen,
   showBackButton = true, // default to true
     league = "NBA",
@@ -204,23 +200,7 @@ const coachImage = league === "NBA" ? (selectedTeam as any)?.coachImage : undefi
         {/* Right Icons */}
         {isTeamScreen ? (
           <View style={{ flexDirection: "row", alignItems: "center" }}>
-            {onToggleNotifications && (
-              <TouchableOpacity
-                onPress={onToggleNotifications}
-                style={{ padding: 8, marginRight: 8 }}
-              >
-                <Ionicons
-                  name={
-                    notificationsEnabled
-                      ? "notifications"
-                      : "notifications-outline"
-                  }
-                  size={24}
-                  color="#fff"
-                />
-              </TouchableOpacity>
-            )}
-
+          
             {onToggleFavorite && (
               <TouchableOpacity
                 onPress={onToggleFavorite}

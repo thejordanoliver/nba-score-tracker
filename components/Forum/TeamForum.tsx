@@ -1,3 +1,5 @@
+// components/Forum/TeamForum.tsx
+
 import { Fonts } from "@/constants/fonts";
 import { Ionicons } from "@expo/vector-icons";
 import AsyncStorage from "@react-native-async-storage/async-storage";
@@ -179,7 +181,6 @@ export default function TeamForum({ teamId }: TeamForumProps) {
             styles={styles}
             token={token}
             currentUserId={currentUserId}
-            likedPosts={likedPosts}
             deletePost={deletePost}
             editPost={editPost}
             BASE_URL={BASE_URL}

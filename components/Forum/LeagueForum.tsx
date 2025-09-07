@@ -171,7 +171,6 @@ export default function LeagueForum() {
             styles={styles}
             token={token}
             currentUserId={currentUserId}
-            likedPosts={likedPosts}
             deletePost={deletePost}
             editPost={editPost}
             BASE_URL={BASE_URL}

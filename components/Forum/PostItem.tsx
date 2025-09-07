@@ -1,11 +1,11 @@
 // components/Forum/PostItem.tsx
 import { Fonts } from "@/constants/fonts";
+import { useLikesStore } from "@/store/useLikesStore";
 import { Ionicons } from "@expo/vector-icons";
 import axios from "axios";
 import { formatDistanceToNow } from "date-fns/formatDistanceToNow";
 import { ResizeMode, Video } from "expo-av";
 import { BlurView } from "expo-blur";
-import * as Haptics from "expo-haptics";
 import { useRouter } from "expo-router";
 import { memo, useEffect, useRef, useState } from "react";
 import {
@@ -46,6 +46,8 @@ interface PostItemProps {
   editPost: (postId: string, newText: string) => void;
   BASE_URL: string;
   onImagePress: (uri: string, caption?: string) => void;
+    disableCommentNavigation?: boolean; // 👈 new
+
 }
 
 export const PostItem = memo(function PostItem({
@@ -57,24 +59,14 @@ export const PostItem = memo(function PostItem({
   deletePost,
   editPost,
   BASE_URL,
-  onImagePress,
+  onImagePress,   disableCommentNavigation,
 }: PostItemProps) {
+  const { likes, setLike, toggleLike } = useLikesStore();
+  const likeState = likes[item.id];
   const [isEditing, setIsEditing] = useState(false);
   const [editText, setEditText] = useState(item.text);
   const [dropdownVisible, setDropdownVisible] = useState(false);
   const router = useRouter();
-  const [liked, setLiked] = useState<boolean>(item.liked_by_current_user);
-  const [likeCount, setLikeCount] = useState<number>(item.likes);
-console.log("PostItem render:", {
-  id: item.id,
-  liked_by_current_user: item.liked_by_current_user,
-  likes: item.likes,
-});
-
-  useEffect(() => {
-    setLiked(item.liked_by_current_user);
-    setLikeCount(item.likes);
-  }, [item.liked_by_current_user, item.likes]);
 
   const profileImageUri = item.profile_image
     ? item.profile_image.startsWith("http")
@@ -100,32 +92,33 @@ console.log("PostItem render:", {
     return `${IMG_BASE_URL}${vid}`;
   });
 
+  // If no entry yet, initialize it from item props
+  useEffect(() => {
+    if (!likeState) {
+      setLike(item.id, item.liked_by_current_user, item.likes);
+    }
+  }, [item.id, item.liked_by_current_user, item.likes]);
+
+  const liked = likeState?.liked ?? item.liked_by_current_user;
+  const likeCount = likeState?.count ?? item.likes;
+
   const toggleLikePress = async () => {
     if (!token) {
       alert("You must be logged in to like posts.");
       return;
     }
 
-    const newLiked = !liked;
-    setLiked(newLiked);
-    setLikeCount((count) => count + (newLiked ? 1 : -1));
-
-    // 🎉 Add haptics feedback
-    if (newLiked) {
-      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-    } else {
-      Haptics.selectionAsync();
-    }
+    toggleLike(item.id);
 
     try {
       await axios.patch(
         `${BASE_URL}/api/forum/post/${item.id}/like`,
-        { like: newLiked },
+        { like: !liked },
         { headers: { Authorization: `Bearer ${token}` } }
       );
     } catch (err: any) {
-      setLiked(!newLiked);
-      setLikeCount((count) => count - (newLiked ? 1 : -1));
+      // rollback
+      toggleLike(item.id);
       alert(
         err.response?.data?.error || err.message || "Failed to toggle like"
       );
@@ -385,22 +378,25 @@ console.log("PostItem render:", {
                       />
                       <Text style={styles.count}>{likeCount}</Text>
                     </TouchableOpacity>
-                    <TouchableOpacity
-                      onPress={() => {
-                        router.push({
-                          pathname: "/comment-thread/[postId]",
-                          params: { postId: item.id },
-                        });
-                      }}
-                      style={styles.likeButtonContainer}
-                    >
-                      <Ionicons
-                        name="chatbubble-outline"
-                        size={28}
-                        color={isDark ? "#fff" : "#1d1d1d"}
-                      />
-                      <Text style={styles.count}>{item.comments_count}</Text>
-                    </TouchableOpacity>
+                  <TouchableOpacity
+  onPress={() => {
+    if (!disableCommentNavigation) {
+      router.push({
+        pathname: "/comment-thread/[postId]",
+        params: { postId: item.id },
+      });
+    }
+  }}
+  style={styles.likeButtonContainer}
+>
+  <Ionicons
+    name="chatbubble-outline"
+    size={28}
+    color={isDark ? "#fff" : "#1d1d1d"}
+  />
+  <Text style={styles.count}>{item.comments_count}</Text>
+</TouchableOpacity>
+
                   </View>
                   <View style={styles.rightSide}>
                     <TouchableOpacity style={styles.likeButtonContainer}>

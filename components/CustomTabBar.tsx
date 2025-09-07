@@ -51,6 +51,7 @@ const TAB_ROUTE_PARENTS: { [key: string]: string } = {
   "/explore": "/explore",
   "/profile": "/profile",
 
+
 };
 
 function getActiveTab(pathname: string): string | null {
@@ -196,7 +197,8 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 5 },
     shadowOpacity: 0.25,
     shadowRadius: 12,
-    elevation: 12,
+    elevation: 12, 
+    
   },
   tabBarContainer: {
     height: 80,
