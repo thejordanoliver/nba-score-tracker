@@ -13,10 +13,8 @@ import {
 } from "@/components/GameDetails";
 import GameUniforms from "@/components/GameDetails/GameUniforms";
 import Weather from "@/components/GameDetails/Weather";
-import { Fonts } from "@/constants/fonts";
 import { arenaImages, neutralArenas, teams } from "@/constants/teams";
 import { useGameStatistics } from "@/hooks/useGameStatistics";
-import { useHistoricalOdds } from "@/hooks/useHistoricalOdds";
 import { useLastFiveGames } from "@/hooks/useLastFiveGames";
 import { useFetchPlayoffGames } from "@/hooks/usePlayoffSeries";
 import { useGamePrediction } from "@/hooks/usePredictions";
@@ -24,7 +22,14 @@ import { useWeatherForecast } from "@/hooks/useWeather";
 import { useChatStore } from "@/store/chatStore";
 import { useLocalSearchParams, useNavigation } from "expo-router";
 import { goBack } from "expo-router/build/global-state/routing";
-import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
+import {
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import {
   Animated,
   Easing,
@@ -35,27 +40,13 @@ import {
   View,
 } from "react-native";
 
-interface GameOdds {
-  gameId: string | number;
-  homeTeam: string;
-  awayTeam: string;
-  spread: number;
-  odds: number;
-}
-
-interface OddsResponse {
-  games: GameOdds[];
-}
 export default function GameDetailsScreen() {
   const { game } = useLocalSearchParams();
   const isDark = useColorScheme() === "dark";
   const navigation = useNavigation();
-  const [isLoading, setIsLoading] = useState(true);
-  const { openChat } = useChatStore();
-  const { isOpen: isChatOpen } = useChatStore(); // pull global state
-  const opacityAnim = useRef(new Animated.Value(0)).current;
   const [isScrolling, setIsScrolling] = useState(false);
   const scrollTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
+
   const handleScrollStart = () => {
     if (scrollTimeout.current) clearTimeout(scrollTimeout.current);
     setIsScrolling(true);
@@ -65,12 +56,15 @@ export default function GameDetailsScreen() {
     if (scrollTimeout.current) clearTimeout(scrollTimeout.current);
     scrollTimeout.current = setTimeout(() => {
       setIsScrolling(false);
-    }, 1000); // <-- 500ms delay before showing button again
+    }, 1000);
   };
-  // Fade anim for FloatingChatButton
+
+  const opacityAnim = useRef(new Animated.Value(0)).current;
+  const { openChat, isOpen: isChatOpen } = useChatStore();
+
   useEffect(() => {
     Animated.timing(opacityAnim, {
-      toValue: isChatOpen || isScrolling ? 0 : 1, // hide if chat is open OR scrolling
+      toValue: isChatOpen || isScrolling ? 0 : 1,
       duration: 200,
       easing: Easing.inOut(Easing.ease),
       useNativeDriver: true,
@@ -104,7 +98,6 @@ export default function GameDetailsScreen() {
     id: gameId,
   } = parsedGame;
 
-  // 🟢 Memoized derived values
   const homeTeamData = useMemo(
     () =>
       teams.find(
@@ -148,10 +141,12 @@ export default function GameDetailsScreen() {
     () => cleanedArenaName || homeTeamData.arenaName,
     [cleanedArenaName, homeTeamData.arenaName]
   );
+
   const resolvedArenaCity = useMemo(
     () => arenaCityFromGame || homeTeamData.location,
     [arenaCityFromGame, homeTeamData.location]
   );
+
   const resolvedArenaAddress =
     neutralArenaData?.address || homeTeamData.address || "";
   const resolvedArenaCapacity =
@@ -163,26 +158,13 @@ export default function GameDetailsScreen() {
     arenaImages[homeTeamData.code] ||
     homeTeamData.arenaImage;
 
-  // ⚡ useMemo so the date string stays stable
-  const gameDate = useMemo(() => {
-    return new Date(date).toISOString().split("T")[0];
-  }, [date]);
-
+  const gameDate = useMemo(
+    () => new Date(date).toISOString().split("T")[0],
+    [date]
+  );
   const awayCode = useMemo(() => awayTeamData.code, [awayTeamData.code]);
   const homeCode = useMemo(() => homeTeamData.code, [homeTeamData.code]);
   const stableGameId = useMemo(() => gameId.toString(), [gameId]);
-
-  // ✅ now pass only stable values
-  // const {
-  //   data: historicalOdds,
-  //   loading: oddsLoading,
-  //   error: oddsError,
-  // } = useHistoricalOdds({
-  //   date: gameDate,
-  //   team1: awayCode,
-  //   team2: homeCode,
-  //   gameId: stableGameId,
-  // });
 
   const lat =
     neutralArenaData?.latitude ??
@@ -214,8 +196,7 @@ export default function GameDetailsScreen() {
   const homeLastGames = useLastFiveGames(homeTeamIdNum);
   const awayLastGames = useLastFiveGames(awayTeamIdNum);
 
-  const { data: gameStats, loading: statsLoading } =
-    useGameStatistics(gameId);
+  const { data: gameStats, loading: statsLoading } = useGameStatistics(gameId);
   const { games: playoffGames } = useFetchPlayoffGames(
     homeTeamIdNum,
     awayTeamIdNum,
@@ -226,8 +207,7 @@ export default function GameDetailsScreen() {
     loading: predictionLoading,
     error: predictionError,
   } = useGamePrediction(homeTeamIdNum, awayTeamIdNum, season);
-
-  const { weather, loading, error } = useWeatherForecast(lat, lon, date);
+  const { weather, weatherLoading, weatherError } = useWeatherForecast(lat, lon, date);
 
   const currentPlayoffGame = playoffGames.find((g) => g.id === gameId);
 
@@ -251,9 +231,14 @@ export default function GameDetailsScreen() {
     return isNeutralSiteByArena
       ? `${awayTeamData.code} vs ${homeTeamData.code}`
       : isHomeSiteByArena
-      ? `${awayTeamData.code} @ ${homeTeamData.code}`
-      : `${awayTeamData.code} vs ${homeTeamData.code}`;
-  }, [isNeutralSiteByArena, isHomeSiteByArena, homeTeamData.code, awayTeamData.code]);
+        ? `${awayTeamData.code} @ ${homeTeamData.code}`
+        : `${awayTeamData.code} vs ${homeTeamData.code}`;
+  }, [
+    isNeutralSiteByArena,
+    isHomeSiteByArena,
+    homeTeamData.code,
+    awayTeamData.code,
+  ]);
 
   useLayoutEffect(() => {
     navigation.setOptions({
@@ -268,27 +253,7 @@ export default function GameDetailsScreen() {
       return `Game ${currentPlayoffGame.gameNumber}`;
     if (status === "Scheduled") return `Game ${playoffGames.length + 1}`;
     return null;
-  };
-
-  useEffect(() => {
-    Animated.timing(opacityAnim, {
-      toValue: isChatOpen ? 0 : 1, // hide if chat is open
-      duration: 300,
-      easing: Easing.inOut(Easing.ease),
-      useNativeDriver: true,
-    }).start();
-  }, [isChatOpen]);
-
-  // Render
-  <Animated.View
-    style={{
-      opacity: opacityAnim,
-      position: "absolute",
-      bottom: 24,
-      right: 24,
-    }}
-    pointerEvents={isChatOpen ? "none" : "auto"} // disable touches when hidden
-  ></Animated.View>;
+  }, [currentPlayoffGame, status, playoffGames.length]);
 
   return (
     <>
@@ -329,62 +294,6 @@ export default function GameDetailsScreen() {
             awayTeam={away.name}
           />
 
-          {/* Playoff Summary */}
-          {playoffGames.length > 0 &&
-            (getGameNumberLabel() || seriesSummary) && (
-              <View
-                style={{
-                  flexDirection: "row",
-                  justifyContent: "center",
-                  alignItems: "center",
-                  marginVertical: 4,
-                  position: "absolute",
-                  top: -25,
-                  width: "100%",
-                }}
-              >
-                {getGameNumberLabel() && (
-                  <Text
-                    style={{
-                      color: colors.text,
-                      fontFamily: Fonts.OSEXTRALIGHT,
-                      fontSize: 14,
-                      textAlign: "center",
-                    }}
-                  >
-                    {getGameNumberLabel()}
-                  </Text>
-                )}
-                {getGameNumberLabel() && seriesSummary && (
-                  <View
-                    style={{
-                      height: 16,
-                      width: 1,
-                      backgroundColor: colors.text,
-                      opacity: 0.4,
-                      marginHorizontal: 8,
-                    }}
-                  />
-                )}
-                {seriesSummary &&
-                  (status === "Final" || status === "Scheduled") && (
-                    <Text
-                      style={{
-                        color: colors.text,
-                        fontFamily: Fonts.OSEXTRALIGHT,
-                        fontSize: 14,
-                        textAlign: "center",
-                        flexShrink: 1,
-                      }}
-                      numberOfLines={1}
-                      ellipsizeMode="tail"
-                    >
-                      {seriesSummary}
-                    </Text>
-                  )}
-              </View>
-            )}
-
           <TeamRow
             team={{
               id: homeTeamData.id,
@@ -405,14 +314,6 @@ export default function GameDetailsScreen() {
         </View>
 
         <View style={{ gap: 20, marginTop: 20 }}>
-          {linescore && (
-            <LineScore
-              linescore={linescore}
-              homeCode={homeTeamData.code}
-              awayCode={awayTeamData.code}
-            />
-          )}
-
           {/* {oddsLoading ? (
     <View style={{ marginTop: 20 }}>
       {[...Array(1)].map((_, i) => (
@@ -436,6 +337,14 @@ export default function GameDetailsScreen() {
     </View>
   )} */}
 
+          {linescore && (
+            <LineScore
+              linescore={linescore}
+              homeCode={homeTeamData.code}
+              awayCode={awayTeamData.code}
+            />
+          )}
+
           {prediction && !predictionLoading && !predictionError && (
             <View style={{ marginTop: 20 }}>
               <PredictionBar
@@ -445,8 +354,8 @@ export default function GameDetailsScreen() {
                 awayColor={awayColor}
                 homeSecondaryColor={homeTeamData.secondaryColor}
                 awaySecondaryColor={awayTeamData.secondaryColor}
-                homeTeamId={homeTeamData.id} // <-- pass team IDs now
-                awayTeamId={awayTeamData.id} // <-- pass team IDs now
+                homeTeamId={homeTeamData.id}
+                awayTeamId={awayTeamData.id}
               />
             </View>
           )}
@@ -497,15 +406,14 @@ export default function GameDetailsScreen() {
             location={resolvedArenaCity}
             address={resolvedArenaAddress}
             arenaCapacity={resolvedArenaCapacity}
-            weather={weather}
-            loading={loading}
-            error={error}
+            loading={weatherLoading}
+            error={weatherError}
           />
           <Weather
             address={resolvedArenaAddress}
             weather={weather}
-            loading={loading}
-            error={error}
+            loading={weatherLoading}
+            error={weatherError}
           />
         </View>
       </ScrollView>
@@ -518,7 +426,7 @@ export default function GameDetailsScreen() {
           left: 0,
           right: 0,
         }}
-        pointerEvents={isChatOpen ? "none" : "auto"} // disable touches when hidden
+        pointerEvents={isChatOpen ? "none" : "auto"}
       >
         <FloatingChatButton gameId={gameId} openChat={openChat} />
       </Animated.View>

@@ -26,7 +26,6 @@ export function useNFLTeamStats(gameId: string | number) {
           }
         );
         setStats(response.data.response || []);
-        console.log("NFL stats response", response.data);
 
       } catch (err: any) {
         setError(err.message || "Failed to fetch team stats");

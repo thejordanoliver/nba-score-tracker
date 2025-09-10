@@ -9,11 +9,11 @@ import {
   useColorScheme,
   View,
 } from "react-native";
+import HeadingTwo from "../Headings/HeadingTwo";
 
 type Props = {
   gameId: string | number;
 };
-import HeadingTwo from "../Headings/HeadingTwo";
 export default function NFLGameEvents({ gameId }: Props) {
   const { events, loading, error } = useNFLGameEvents(gameId);
   const isDark = useColorScheme() === "dark";
@@ -22,8 +22,7 @@ export default function NFLGameEvents({ gameId }: Props) {
 
   if (loading) return <Text style={styles.loading}>Loading events...</Text>;
   if (error) return <Text style={styles.error}>{error}</Text>;
-  if (!events || events.length === 0)
-    return <Text style={styles.noEvents}>No events yet.</Text>;
+  if (!events || events.length === 0) return null;
 
   function formatQuarter(quarter: string) {
     switch (quarter) {
@@ -42,40 +41,40 @@ export default function NFLGameEvents({ gameId }: Props) {
     }
   }
 
-return (
-  <FlatList
-    data={events}
-    scrollEnabled={false}
-    keyExtractor={(item, idx) => `${item.quarter}-${item.minute}-${idx}`}
-    contentContainerStyle={{ paddingVertical: 10 }}
-    ListHeaderComponent={<HeadingTwo>Scoring Plays</HeadingTwo>}
-    renderItem={({ item }) => (
-      <View style={styles.eventRow}>
-        {/* Left: Team Logo */}
-        <Image
-          source={getNFLTeamsLogo(item.team.id, isDark)}
-          style={styles.logo}
-          resizeMode="contain"
-        />
-<View style={styles.divder}></View>
-        {/* Center: Comment */}
-        <View style={styles.commentWrapper}>
-          <Text style={styles.comment}>{item.comment}</Text>
-        </View>
+  return (
+    <FlatList
+      data={events}
+      scrollEnabled={false}
+      keyExtractor={(item, idx) => `${item.quarter}-${item.minute}-${idx}`}
+      contentContainerStyle={{ paddingVertical: 10 }}
+      ListHeaderComponent={<HeadingTwo>Scoring Plays</HeadingTwo>}
+      renderItem={({ item }) => (
+        <View style={styles.eventRow}>
+          {/* Left: Team Logo */}
+          <Image
+            source={getNFLTeamsLogo(item.team.id, isDark)}
+            style={styles.logo}
+            resizeMode="contain"
+          />
+          <View style={styles.divder}></View>
+          {/* Center: Comment */}
+          <View style={styles.commentWrapper}>
+            <Text style={styles.comment}>{item.comment}</Text>
+          </View>
 
-        {/* Right: Quarter/Time above Score */}
-        <View style={styles.right}>
-          <Text style={styles.time}>
-            {formatQuarter(item.quarter)} {item.minute}'
-          </Text>
-          <Text style={styles.score}>
-            {item.score.home} - {item.score.away}
-          </Text>
+          {/* Right: Quarter/Time above Score */}
+          <View style={styles.right}>
+            <Text style={styles.time}>
+              {formatQuarter(item.quarter)} {item.minute}'
+            </Text>
+            <Text style={styles.score}>
+              {item.score.home} - {item.score.away}
+            </Text>
+          </View>
         </View>
-      </View>
-    )}
-  />
-);
+      )}
+    />
+  );
 }
 
 // Styles
@@ -89,7 +88,7 @@ const getStyles = (isDark: boolean) =>
       borderBottomColor: isDark ? "#444" : "#888",
       borderBottomWidth: 1,
       paddingVertical: 8,
-      paddingHorizontal: 12,
+      paddingHorizontal: 4,
     },
     logo: {
       width: 42,
@@ -102,12 +101,12 @@ const getStyles = (isDark: boolean) =>
       marginHorizontal: 8,
       paddingLeft: 8,
     },
-divder: {
-    height: "100%",
-    width: 1,
-    backgroundColor: isDark ? "#444" : "#888",
-},
-    
+    divder: {
+      height: "100%",
+      width: 1,
+      backgroundColor: isDark ? "#444" : "#888",
+    },
+
     comment: {
       fontFamily: Fonts.OSREGULAR,
       fontSize: 12,
@@ -142,4 +141,3 @@ divder: {
       color: isDark ? "#ccc" : "#555",
     },
   });
-

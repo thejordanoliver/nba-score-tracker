@@ -25,7 +25,6 @@ export function useNFLTeamGames(
         params: { season, league, all: fetchAll ? 1 : 0 },
       });
 
-      console.log("NFL API raw response:", res.data);
 
       const games = res.data.response || [];
 

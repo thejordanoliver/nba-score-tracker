@@ -1,18 +1,15 @@
-import NFLGameCard from "@/components/NFL/NFLGameCard";
+import HeadingTwo from "@/components/Headings/HeadingTwo";
+import NFLGameCard from "@/components/NFL/Games/NFLGameCard";
+import NFLRoster from "@/components/NFL/Team/Roster";
 import { teams } from "@/constants/teamsNFL";
 import { useNFLTeamGames } from "@/hooks/useNFLTeamGames";
 import { Game } from "@/types/nfl";
 import { User } from "@/types/types";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { useLocalSearchParams, useNavigation } from "expo-router";
+import { useNavigation } from "@react-navigation/native";
+import { useLocalSearchParams } from "expo-router";
 import { goBack } from "expo-router/build/global-state/routing";
-import React, {
-  useEffect,
-  useLayoutEffect,
-  useMemo,
-  useRef,
-  useState,
-} from "react";
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import {
   ActivityIndicator,
   FlatList,
@@ -20,11 +17,10 @@ import {
   View,
   useColorScheme,
 } from "react-native";
+import PagerView from "react-native-pager-view";
 import { CustomHeaderTitle } from "../../../components/CustomHeaderTitle";
 import TabBar from "../../../components/TabBar";
 import { style } from "../../../styles/TeamDetails.styles";
-import HeadingTwo from "@/components/Headings/HeadingTwo";
-import PagerView from "react-native-pager-view";
 
 export default function TeamDetailScreen() {
   const navigation = useNavigation();
@@ -42,6 +38,7 @@ export default function TeamDetailScreen() {
   const tabs = ["schedule", "news", "roster", "forum", "stats"] as const;
   const [selectedTab, setSelectedTab] =
     useState<(typeof tabs)[number]>("schedule");
+  const rosterRef = useRef<{ refresh: () => void }>(null);
 
   const pagerRef = useRef<PagerView>(null);
 
@@ -85,11 +82,16 @@ export default function TeamDetailScreen() {
     return flat;
   }, [teamGames]);
 
+  // inside TeamDetailScreen
+
   const handleRefresh = async () => {
     setRefreshing(true);
     try {
       if (selectedTab === "schedule") {
         await refreshTeamGames?.();
+      } else if (selectedTab === "roster") {
+        // ✅ trigger roster refresh
+        rosterRef.current?.refresh();
       }
     } catch (err) {
       console.error("Refresh failed:", err);
@@ -211,22 +213,38 @@ export default function TeamDetailScreen() {
         </View>
 
         {/* News Page */}
-        <View key="news" style={{ flex: 1, alignItems: "center", justifyContent: "center" }}>
-          <Text style={{ color: isDark ? "#fff" : "#000" }}>Team News (TODO)</Text>
+        <View
+          key="news"
+          style={{ flex: 1, alignItems: "center", justifyContent: "center" }}
+        >
+          <Text style={{ color: isDark ? "#fff" : "#000" }}>
+            Team News (TODO)
+          </Text>
         </View>
 
         {/* Roster Page */}
-        <View key="roster" style={{ flex: 1, alignItems: "center", justifyContent: "center" }}>
-          <Text style={{ color: isDark ? "#fff" : "#000" }}>Roster (TODO)</Text>
+        <View key="roster" style={{ flex: 1 }}>
+          <NFLRoster
+            ref={rosterRef}
+            teamId={String(team.id)}
+            teamName={team.name}
+            refreshing={refreshing}
+          />{" "}
         </View>
 
         {/* Forum Page */}
-        <View key="forum" style={{ flex: 1, alignItems: "center", justifyContent: "center" }}>
+        <View
+          key="forum"
+          style={{ flex: 1, alignItems: "center", justifyContent: "center" }}
+        >
           <Text style={{ color: isDark ? "#fff" : "#000" }}>Forum (TODO)</Text>
         </View>
 
         {/* Stats Page */}
-        <View key="stats" style={{ flex: 1, alignItems: "center", justifyContent: "center" }}>
+        <View
+          key="stats"
+          style={{ flex: 1, alignItems: "center", justifyContent: "center" }}
+        >
           <Text style={{ color: isDark ? "#fff" : "#000" }}>Stats (TODO)</Text>
         </View>
       </PagerView>

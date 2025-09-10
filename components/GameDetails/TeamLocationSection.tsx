@@ -1,5 +1,4 @@
 import { Fonts } from "@/constants/fonts";
-import { WeatherData } from "@/hooks/useWeather";
 import { Ionicons } from "@expo/vector-icons";
 import {
   Alert,
@@ -19,7 +18,6 @@ type Props = {
   arenaImage?: any;
   arenaName?: string;
   location?: string;
-  weather: WeatherData | null;
   loading: boolean;
   error: string | null;
   address: string;
@@ -32,7 +30,6 @@ const TeamLocationSection: React.FC<Props> = ({
   location,
   address,
   arenaCapacity,
-  weather,
   loading,
   error,
 }) => {
@@ -105,11 +102,14 @@ const TeamLocationSection: React.FC<Props> = ({
                 )}
               </View>
             </View>
-
             <View style={styles.addressContainer}>
               <Ionicons name="location" size={20} color={textColor} />
               {location && (
-                <TouchableOpacity onPress={openInMaps}>
+                <TouchableOpacity
+                  onPress={openInMaps}
+                  activeOpacity={0.7}
+                  style={{ flexShrink: 1 }}
+                >
                   <Text
                     style={[
                       styles.subText,
@@ -117,7 +117,6 @@ const TeamLocationSection: React.FC<Props> = ({
                         color: textColor,
                         marginLeft: 8,
                         borderBottomWidth: 1,
-                        paddingBottom: 1,
                         borderBottomColor: textColor,
                       },
                     ]}

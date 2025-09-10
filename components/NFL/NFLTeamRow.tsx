@@ -1,28 +1,28 @@
-// components/NFLTeamRow.tsx
 import { Fonts } from "@/constants/fonts";
 import { useRouter } from "expo-router";
 import { Image, Pressable, StyleSheet, Text, View } from "react-native";
-import { useNFLStandings } from "@/hooks/useNFLStandings";
-import { getTeamInfo } from "@/constants/teamsNFL";
+import { MaterialCommunityIcons } from "@expo/vector-icons";
 
 type Props = {
   team: {
     id: string;
     name: string;
     logo: any;
-    record?: string;
+    record?: string; // 👈 record comes from parent
   };
   isDark: boolean;
   isHome?: boolean;
   score?: number;
   isWinner?: boolean;
-  status?: string; // 👈 NEW: "Live", "Final", etc.
+  status?: string; // "Live", "Final", etc.
   colors: {
     text: string;
     record: string;
     score: string;
     winnerScore: string;
   };
+  possessionTeamId?: string;
+  size?: number; // 👈 new prop (default 50)
 };
 
 export const NFLTeamRow = ({
@@ -33,76 +33,105 @@ export const NFLTeamRow = ({
   isWinner,
   status,
   colors,
+  possessionTeamId,
+  size = 50,
 }: Props) => {
   const router = useRouter();
-  const { standings } = useNFLStandings();
-
-  const teamInfo = getTeamInfo(team.id);
-
-  // Compare names instead of codes
-  const teamRecord = standings.find(
-    (t) => t.name.toLowerCase().trim() === teamInfo?.name.toLowerCase().trim()
-  );
-
-  const record = teamRecord ? `${teamRecord.won}-${teamRecord.lost}` : "0-0";
 
   const handleTeamPress = () => {
     if (!team.id) return;
     router.push(`/team/nfl/${team.id}`);
   };
 
-// 🎯 Replace your current live check + score color logic with this
+  const isLive =
+    status && ["Q1", "Q2", "Q3", "Q4", "OT", "HT"].includes(status);
 
-// Is the game live? (anything that's not final/not started/etc.)
-const isLive =
-  status &&
-  status !== "Not Started" &&
-  status !== "Finished" &&
-  status !== "Canceled" &&
-  status !== "Delayed" &&
-  status !== "Postponed" &&
-  status !== "Halftime";
+  const isFinal = status === "Final";
+  const isNotStarted = status === "Scheduled";
 
-// 🎨 Score color logic
-const getScoreStyle = () => {
-  if (!score && score !== 0) return { color: colors.score };
+  const getScoreStyle = () => {
+    if (!score && score !== 0) return { color: colors.score };
 
-  // If live → both scores should be pure text colors
-  if (isLive) {
-    return { color: isDark ? "#fff" : "#1d1d1d" };
-  }
+    if (isLive) {
+      return { color: isDark ? "#fff" : "#000" };
+    }
 
-  // If final → losing score gets opacity
-  if (status === "Final" && !isWinner) {
-    return { color: colors.score, opacity: 0.5 };
-  }
+    if (isFinal && !isWinner) {
+      return { color: colors.score, opacity: 0.5 };
+    }
 
-  // Otherwise → normal styling
-  return { color: isWinner ? colors.winnerScore : colors.score };
-};
+    return { color: isWinner ? colors.winnerScore : colors.score };
+  };
 
   return (
     <View style={styles.row}>
       {isHome && (
-        <Text style={[styles.score, getScoreStyle()]}>{score ?? ""}</Text>
+        <Text
+          style={
+            isNotStarted
+              ? [
+                  styles.preGameRecord,
+                  { color: colors.record, fontSize: size * 0.5, width: size + 10 },
+                ]
+              : [
+                  styles.score,
+                  getScoreStyle(),
+                  { fontSize: size * 0.64, width: size + 10 },
+                ]
+          }
+        >
+          {isNotStarted ? team.record ?? "0-0" : score ?? "0-0"}
+        </Text>
       )}
 
       <View style={styles.teamInfoContainer}>
         <Pressable onPress={handleTeamPress}>
-          <Image source={team.logo} style={styles.logo} />
+          <Image source={team.logo} style={{ width: size, height: size, resizeMode: "contain" }} />
         </Pressable>
         <View style={styles.teamInfo}>
-          <Text style={[styles.teamName, { color: colors.text }]}>
-            {team.name}
-          </Text>
-          <Text style={[styles.record, { color: colors.record }]}>
-            {record}
-          </Text>
+          <View style={styles.nameRow}>
+            <Text style={[styles.teamName, { color: colors.text, fontSize: size * 0.25 }]}>
+              {team.name}
+            </Text>
+            {isLive && possessionTeamId === team.id && (
+              <MaterialCommunityIcons
+                name="football"
+                size={size * 0.3}
+                color={isDark ? "#fff" : "#000"}
+                style={{ marginLeft: 4 }}
+              />
+            )}
+          </View>
+          {isFinal && (
+            <Text
+              style={[
+                styles.record,
+                { color: colors.record, fontSize: size * 0.24 },
+              ]}
+            >
+              {team.record ?? "0-0"}
+            </Text>
+          )}
         </View>
       </View>
 
       {!isHome && (
-        <Text style={[styles.score, getScoreStyle()]}>{score ?? ""}</Text>
+        <Text
+          style={
+            isNotStarted
+              ? [
+                  styles.preGameRecord,
+                  { color: colors.record, fontSize: size * 0.5, width: size + 10 },
+                ]
+              : [
+                  styles.score,
+                  getScoreStyle(),
+                  { fontSize: size * 0.64, width: size + 10 },
+                ]
+          }
+        >
+          {isNotStarted ? team.record ?? "0-0" : score ?? "0-0"}
+        </Text>
       )}
     </View>
   );
@@ -123,25 +152,25 @@ const styles = StyleSheet.create({
   teamInfo: {
     justifyContent: "center",
   },
+  nameRow: {
+    flexDirection: "row",
+    alignItems: "center",
+  },
   teamName: {
-    fontSize: 12,
     fontFamily: Fonts.OSREGULAR,
     textAlign: "center",
   },
   record: {
-    fontSize: 12,
     fontFamily: Fonts.OSREGULAR,
     textAlign: "center",
   },
-  logo: {
-    width: 50,
-    height: 50,
-    resizeMode: "contain",
-  },
   score: {
-    fontSize: 32,
     fontFamily: Fonts.OSBOLD,
-    width: 60,
+    textAlign: "center",
+    marginHorizontal: 16,
+  },
+  preGameRecord: {
+    fontFamily: Fonts.OSBOLD,
     textAlign: "center",
     marginHorizontal: 16,
   },

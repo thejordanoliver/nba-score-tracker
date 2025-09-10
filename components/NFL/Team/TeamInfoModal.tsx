@@ -120,7 +120,6 @@ const team = teamId ? getTeamInfo(teamId) : undefined;
               teamName={team?.name}
               teamId={team?.id}
                 league="NFL" // 👈 add this
-
             />
 
             <TeamInfoCard teamId={teamId} />

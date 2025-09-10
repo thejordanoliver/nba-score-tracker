@@ -483,13 +483,13 @@ export default function StackedGameCard({
               <Text style={[styles.finalText]}>Canc.</Text>
             ) : isFinal ? (
               <>
-                <Text style={styles.finalText}>Final</Text>
                 <Text style={[styles.dateFinal]}>
                   {new Date(game.date).toLocaleDateString("en-US", {
                     month: "short",
                     day: "numeric",
                   })}
                 </Text>
+                <Text style={styles.finalText}>Final</Text>
               </>
             ) : game.status === "Scheduled" ? (
               <>
@@ -683,12 +683,12 @@ export const getStyles = (dark: boolean) =>
       justifyContent: "flex-start",
       alignItems: "center",
       gap: 8,
-      width: 80,
       flex: 1,
+      paddingLeft: 4
     },
     logo: {
-      width: 24,
-      height: 24,
+      width: 28,
+      height: 28,
       resizeMode: "contain",
     },
     teamName: {
@@ -703,15 +703,12 @@ export const getStyles = (dark: boolean) =>
       fontFamily: Fonts.OSBOLD,
       textAlign: "right",
       color: dark ? "#aaa" : "#888",
-      width: 40,
     },
     teamRecord: {
-      width: 40,
-      fontSize: 12,
-      fontFamily: Fonts.OSREGULAR,
-      textAlign: "center",
-      marginVertical: 2,
-      color: dark ? "#bbb" : "#888",
+      fontSize: 18,
+      fontFamily: Fonts.OSBOLD,
+      textAlign: "right",
+      color: dark ? "#aaa" : "#888",
     },
     info: {
       alignItems: "center",
@@ -723,7 +720,6 @@ export const getStyles = (dark: boolean) =>
       fontFamily: Fonts.OSMEDIUM,
       fontSize: 16,
       color: dark ? "#ff4444" : "#cc0000",
-      fontWeight: "bold",
       textAlign: "center",
       width: 40,
     },
@@ -735,7 +731,7 @@ export const getStyles = (dark: boolean) =>
     },
     dateFinal: {
       fontFamily: Fonts.OSREGULAR,
-      color: dark ? "rgba(255,255,255, .5)" : "rgba(0, 0, 0, .5)",
+      color: dark ? "#fff" : "#1d1d1d",
       fontSize: 14,
     },
     time: {
@@ -754,7 +750,6 @@ export const getStyles = (dark: boolean) =>
       fontSize: 12,
       fontFamily: Fonts.OSREGULAR,
       textAlign: "center",
-      marginTop: 4,
-      color: dark ? "rgba(255,255,255, .5)" : "rgba(0, 0, 0, .5)",
+      color: dark ? "rgba(255,255,255, .5)" : "rgba(0, 0, 0, 0.5)",
     },
   });

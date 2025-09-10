@@ -1,6 +1,6 @@
-import axios from "axios";
-import { useEffect, useState, useCallback } from "react";
 import { Game } from "@/types/nfl";
+import axios from "axios";
+import { useCallback, useEffect, useState } from "react";
 
 const BASE_URL = process.env.EXPO_PUBLIC_API_URL;
 
@@ -18,19 +18,7 @@ export function useNFLWeeklyGames(season = "2025", league = "1") {
         params: { season, league },
       });
 
-      console.log("NFL Weekly API raw response:", res.data);
-
       const games = res.data.response || [];
-
-      games.forEach((g: Game, i: number) => {
-        const ts = g?.game?.date?.timestamp;
-        if (ts) {
-          const utc = new Date(ts * 1000);
-          console.log(
-            `WeeklyGame[${i}] → timestamp: ${ts}, UTC: ${utc.toISOString()}, Local: ${utc.toString()}`
-          );
-        }
-      });
 
       setGames(games);
     } catch (err: any) {

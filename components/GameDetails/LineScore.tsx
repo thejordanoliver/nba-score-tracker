@@ -1,5 +1,5 @@
 import { Fonts } from "@/constants/fonts";
-import { StyleSheet, Text, useColorScheme, View } from "react-native";
+import { useColorScheme, StyleSheet, Text, View, ViewStyle } from "react-native";
 import HeadingTwo from "../Headings/HeadingTwo";
 
 type Props = {
@@ -9,15 +9,10 @@ type Props = {
   };
   homeCode: string;
   awayCode: string;
-  lighter?: boolean; // new prop to force lighter colors
+  lighter?: boolean;
 };
 
-export default function LineScore({
-  linescore,
-  homeCode,
-  awayCode,
-  lighter,
-}: Props) {
+export default function LineScore({ linescore, homeCode, awayCode, lighter }: Props) {
   if (!linescore || !linescore.home || !linescore.away) return null;
 
   const isDark = useColorScheme() === "dark";
@@ -34,75 +29,68 @@ export default function LineScore({
 
   const getQuarterLabel = (i: number) => {
     if (i < 4) return `Q${i + 1}`;
-    if (i === 4) return "OT"; // First overtime
-    return `OT${i - 3}`; // OT2 for index 5, OT3 for 6, etc.
+    if (i === 4) return "OT";
+    return `OT${i - 3}`;
   };
+
+  const quarters = Array.from({ length: maxQuarters }, (_, i) => getQuarterLabel(i));
 
   const renderScore = (score: string | null | undefined) => score ?? "0";
 
+  const columnStyle: ViewStyle = { flex: 1, alignItems: "center" }; // ✅ cast as ViewStyle
+
   return (
-    <>
-      <View style={[styles.container, { borderColor }]}>
-        <HeadingTwo lighter={lighter}>Score Summary</HeadingTwo>
-        {/* Header */}
-        <View style={styles.row}>
-          <Text style={[styles.teamCode, { color: "transparent" }]}>-</Text>
-          <FlatList
-            data={[...quarters, "Total"]}
-            keyExtractor={(item, index) => `header-${index}`}
-            horizontal
-            scrollEnabled={false}
-            renderItem={({ item }) => (
-              <Text style={[styles.header, { color: textColor }]}>{item}</Text>
-            )}
-            contentContainerStyle={styles.scoresWrapper} // 👈 FIXED
-          />
-        </View>
+    <View style={[styles.container, { borderColor }]}>
+      <HeadingTwo lighter={lighter}>Score Summary</HeadingTwo>
 
-        {/* Away Row */}
-        <View style={styles.row}>
-          <Text style={[styles.teamCode, { color: textColor }]}>
-            {awayCode}
-          </Text>
-          <View style={styles.scoresWrapper}>
-            {linescore.away.map((score, index) => (
-              <Text
-                key={`away-${index}`}
-                style={[styles.score, { color: textColor }]}
-              >
-                {renderScore(score)}
-              </Text>
-            ))}
-            <Text style={[styles.totalScore, { color: textColor }]}>
-              {awayTotal}
-            </Text>
-          </View>
-        </View>
-
-        {/* Divider */}
-        <View style={[styles.divider, { backgroundColor: dividerColor }]} />
-
-        {/* Home Row */}
-        <View style={styles.row}>
-          <Text style={[styles.teamCode, { color: textColor }]}>
-            {homeCode}
-          </Text>
-          <View style={styles.scoresWrapper}>
-            {linescore.home.map((score, index) => (
-              <Text
-                key={`home-${index}`}
-                style={[styles.score, { color: textColor }]}
-              >
-                {renderScore(score)}
-              </Text>
-            ))}
-            <Text style={[styles.totalScore, { color: textColor }]}>
-              {homeTotal}
-            </Text>
+      {/* Header */}
+      <View style={styles.row}>
+        <Text style={[styles.teamCode, { color: "transparent" }]}>-</Text>
+        <View style={styles.scoresWrapper}>
+          {quarters.map((q, idx) => (
+            <View key={`q-${idx}`} style={columnStyle}>
+              <Text style={[styles.header, { color: textColor }]}>{q}</Text>
+            </View>
+          ))}
+          <View style={columnStyle}>
+            <Text style={[styles.header, { color: textColor }]}>Total</Text>
           </View>
         </View>
       </View>
-    </>
+
+      {/* Away Row */}
+      <View style={styles.row}>
+        <Text style={[styles.teamCode, { color: textColor }]}>{awayCode}</Text>
+        <View style={styles.scoresWrapper}>
+          {linescore.away.map((score, idx) => (
+            <View key={`away-${idx}`} style={columnStyle}>
+              <Text style={[styles.score, { color: textColor }]}>{renderScore(score)}</Text>
+            </View>
+          ))}
+          <View style={columnStyle}>
+            <Text style={[styles.totalScore, { color: textColor }]}>{awayTotal}</Text>
+          </View>
+        </View>
+      </View>
+
+      {/* Divider */}
+      <View style={[styles.divider, { backgroundColor: dividerColor }]} />
+
+      {/* Home Row */}
+      <View style={styles.row}>
+        <Text style={[styles.teamCode, { color: textColor }]}>{homeCode}</Text>
+        <View style={styles.scoresWrapper}>
+          {linescore.home.map((score, idx) => (
+            <View key={`home-${idx}`} style={columnStyle}>
+              <Text style={[styles.score, { color: textColor }]}>{renderScore(score)}</Text>
+            </View>
+          ))}
+          <View style={columnStyle}>
+            <Text style={[styles.totalScore, { color: textColor }]}>{homeTotal}</Text>
+          </View>
+        </View>
+      </View>
+    </View>
   );
 }
 
@@ -124,7 +112,6 @@ const styles = StyleSheet.create({
   scoresWrapper: {
     flex: 1,
     flexDirection: "row",
-    justifyContent: "space-evenly", // 👈 evenly space columns
   },
   header: {
     fontFamily: Fonts.OSMEDIUM,

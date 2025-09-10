@@ -63,7 +63,7 @@ export function GameInfo({
   const networkString = matched?.broadcasts
     ?.map((b) => b.network)
     .filter(Boolean)
-    .join(", ");
+    .join("/");
 
   // Optional: Debug log to confirm broadcast networks found
 
@@ -171,19 +171,17 @@ const styles = StyleSheet.create({
     fontFamily: Fonts.OSREGULAR,
   },
   period: {
-    fontFamily: "Oswald_500Medium",
+    fontFamily: Fonts.OSMEDIUM,
     fontSize: 14,
   },
   clock: {
     fontSize: 14,
-    fontFamily: "Oswald_500Medium",
-    fontWeight: "bold",
+    fontFamily: Fonts.OSMEDIUM,
     marginTop: 4,
     textAlign: "center",
   },
   final: {
     fontSize: 14,
-    fontWeight: "bold",
     fontFamily: Fonts.OSBOLD,
   },
   playoffText: {

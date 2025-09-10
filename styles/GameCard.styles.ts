@@ -30,7 +30,7 @@ export const getStyles = (isDark: boolean) =>
       textAlign: "center",
     },
     teamScore: {
-      fontSize:28,
+      fontSize: 28,
       fontFamily: Fonts.OSBOLD,
       color: isDark ? "#fff" : "#1d1d1d",
       width: 48,

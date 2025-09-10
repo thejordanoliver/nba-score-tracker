@@ -1,6 +1,7 @@
 import { Fonts } from "@/constants/fonts";
 import { NFLTeam } from "@/constants/teamsNFL";
-import { getStyles } from "@/styles/GameCard.styles";
+
+import { useNFLGameBroadcasts } from "@/hooks/useNFLGameBroadcasts";
 import { useMemo } from "react";
 import { StyleSheet, Text, View } from "react-native";
 
@@ -11,7 +12,7 @@ type NFLGameCenterInfoProps = {
     | "Final"
     | "Canceled"
     | "Postponed"
-    | "Delayed" // <-- added "Delayed"
+    | "Delayed"
     | "Halftime";
   date: string;
   time: string;
@@ -21,7 +22,7 @@ type NFLGameCenterInfoProps = {
   isDark: boolean;
   playoffInfo?: string | string[];
   homeTeam: NFLTeam;
-  awayTeam: NFLTeam;
+  awayTeam: NFLTeam
 };
 
 export function NFLGameCenterInfo({
@@ -35,7 +36,11 @@ export function NFLGameCenterInfo({
   homeTeam,
   awayTeam,
 }: NFLGameCenterInfoProps) {
-  const styles = getStyles(isDark);
+  const { broadcasts, loading, error } = useNFLGameBroadcasts(
+    homeTeam.code,
+    awayTeam.code,
+    date
+  );
 
   const formatQuarter = useMemo(
     () => (short: string) => {
@@ -57,18 +62,10 @@ export function NFLGameCenterInfo({
     []
   );
 
-  
+  const styles = getStyles(isDark);
+
   return (
-    <View
-      style={[
-        {
-          justifyContent: "center",
-          alignItems: "center",
-          marginHorizontal: 8,
-          marginBottom: 8,
-        },
-      ]}
-    >
+    <View style={styles.container}>
       {/* Scheduled */}
       {status === "Scheduled" && (
         <>
@@ -76,7 +73,6 @@ export function NFLGameCenterInfo({
           <Text style={styles.time}>{time || ""}</Text>
         </>
       )}
-
       {/* In Progress */}
       {status === "In Progress" && (
         <>
@@ -84,58 +80,81 @@ export function NFLGameCenterInfo({
           {clock && <Text style={styles.clock}>{clock}</Text>}
         </>
       )}
-      {/* In Progress */}
-      {status === "Halftime" && (
-        <>
-          <Text style={styles.date}>Halftime</Text>
-        </>
-      )}
-
+      {/* Halftime */}
+      {status === "Halftime" && <Text style={styles.date}>Halftime</Text>}
       {/* Final */}
       {status === "Final" && (
         <>
-          <Text style={styles.finalText}>Final</Text>
           <Text style={styles.dateFinal}>{date || ""}</Text>
+          <Text style={styles.finalText}>Final</Text>
         </>
       )}
-
-      {/* Canceled, Postponed, or Delayed */}
+      {/* Canceled, Postponed, Delayed */}
       {(status === "Canceled" ||
         status === "Postponed" ||
-        status === "Delayed") && (
-        <Text style={[styles.finalText]}>{status}</Text>
+        status === "Delayed") && <Text style={styles.finalText}>{status}</Text>}
+      {!loading && broadcasts.length > 0 && (
+        <View>
+          {broadcasts.map((b, i) => (
+            <Text key={i} style={styles.broadcasts}>
+              {b.names.join("/")}
+            </Text>
+          ))}
+        </View>
       )}
     </View>
   );
 }
 
-const styles = StyleSheet.create({
-  container: {
-    justifyContent: "center",
-    alignItems: "center",
-    marginHorizontal: 8,
-    marginBottom: 8,
-  },
-  date: {
-    fontSize: 14,
-    fontFamily: Fonts.OSREGULAR,
-  },
-  time: {
-    fontSize: 14,
-    fontFamily: Fonts.OSREGULAR,
-  },
-  period: {
-    fontFamily: Fonts.OSMEDIUM,
-    fontSize: 14,
-  },
-  clock: {
-    fontSize: 14,
-    fontFamily: Fonts.OSMEDIUM,
-    marginTop: 4,
-    textAlign: "center",
-  },
-  final: {
-    fontSize: 14,
-    fontFamily: Fonts.OSBOLD,
-  },
-});
+export const getStyles = (isDark: boolean) =>
+  StyleSheet.create({
+    container: {
+      justifyContent: "center",
+      alignItems: "center",
+      marginHorizontal: 8,
+      marginBottom: 8,
+    },
+    date: {
+       fontFamily: Fonts.OSMEDIUM,
+      color: isDark ? "#fff" : "#1d1d1d",
+      fontSize: 14,
+    },
+    time: {
+      fontSize: 14,
+      fontFamily: Fonts.OSREGULAR,
+      color: isDark ? "#fff" : "#444",
+    },
+    broadcasts: {
+      fontSize: 10,
+      fontFamily: Fonts.OSREGULAR,
+      color: isDark ? "#aaa" : "#444",
+    },
+    period: {
+      fontFamily: Fonts.OSMEDIUM,
+      fontSize: 14,
+    },
+   clock: {
+      fontFamily: Fonts.OSMEDIUM,
+      fontSize: 14,
+      color: isDark ? "#ff4444" : "#cc0000",
+      marginTop: 4,
+      textAlign: "center",
+    },
+
+    final: {
+      fontSize: 14,
+      fontFamily: Fonts.OSBOLD,
+    },
+
+    dateFinal: {
+      fontFamily: Fonts.OSREGULAR,
+      color: isDark ? "rgba(255,255,255, 1)" : "rgba(0, 0, 0, .5)",
+      fontSize: 14,
+    },
+    finalText: {
+      fontFamily: Fonts.OSMEDIUM,
+      fontSize: 16,
+      color: isDark ? "#ff4444" : "#cc0000",
+      textAlign: "center",
+    },
+  });

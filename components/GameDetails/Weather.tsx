@@ -1,20 +1,11 @@
 import { Fonts } from "@/constants/fonts";
 import { WeatherData } from "@/hooks/useWeather";
+import { Ionicons } from "@expo/vector-icons";
 import { ResizeMode, Video } from "expo-av";
 import { BlurView } from "expo-blur";
-import {
-  Alert,
-  Image,
-  Linking,
-  Platform,
-  StyleSheet,
-  Text,
-  useColorScheme,
-  View,
-} from "react-native";
+import { StyleSheet, Text, useColorScheme, View } from "react-native";
 import TeamLocationSkeleton from "../GameDetails/TeamLocationSkeleton";
 import HeadingTwo from "../Headings/HeadingTwo";
-import { Ionicons } from "@expo/vector-icons";
 
 type Props = {
   arenaImage?: any;
@@ -36,52 +27,49 @@ const Weather: React.FC<Props> = ({ address, weather, loading, error }) => {
   const isDark = useColorScheme() === "dark";
   const textColor = isDark ? "#fff" : "#1d1d1d";
 
-const weatherKeywords: Record<string, keyof typeof weatherVideos> = {
-  sun: "sunny",
-  rain: "rain",
-  cloud: "cloudy",
-  clear: "clear",
-};
+  const weatherKeywords: Record<string, keyof typeof weatherVideos> = {
+    sun: "sunny",
+    rain: "rain",
+    cloud: "cloudy",
+    clear: "clear",
+  };
 
-const getBackgroundVideo = () => {
-  if (!weather?.description) return null;
-  const desc = weather.description.toLowerCase();
+  const getBackgroundVideo = () => {
+    if (!weather?.description) return null;
+    const desc = weather.description.toLowerCase();
 
-  for (const keyword in weatherKeywords) {
-    if (desc.includes(keyword)) {
-      return weatherVideos[weatherKeywords[keyword]];
+    for (const keyword in weatherKeywords) {
+      if (desc.includes(keyword)) {
+        return weatherVideos[weatherKeywords[keyword]];
+      }
     }
-  }
 
-  return null;
-};
+    return null;
+  };
 
-const weatherIcons: Record<string, keyof typeof Ionicons.glyphMap> = {
-  sun: "sunny",
-  clear: "sunny",
-  rain: "rainy",
-  cloud: "cloud",
-  thunder: "thunderstorm",
-  snow: "snow",
-  mist: "cloudy",
-  fog: "cloudy",
-};
+  const weatherIcons: Record<string, keyof typeof Ionicons.glyphMap> = {
+    sun: "sunny",
+    clear: "sunny",
+    rain: "rainy",
+    cloud: "cloud",
+    thunder: "thunderstorm",
+    snow: "snow",
+    mist: "cloudy",
+    fog: "cloudy",
+  };
 
-const getWeatherIcon = () => {
-  if (!weather?.description) return "help-outline"; // fallback icon
-  const desc = weather.description.toLowerCase();
+  const getWeatherIcon = () => {
+    if (!weather?.description) return "help-outline"; // fallback icon
+    const desc = weather.description.toLowerCase();
 
-  for (const keyword in weatherIcons) {
-    if (desc.includes(keyword)) {
-      return weatherIcons[keyword];
+    for (const keyword in weatherIcons) {
+      if (desc.includes(keyword)) {
+        return weatherIcons[keyword];
+      }
     }
-  }
 
-  return "help-outline"; // fallback if no match
-};
-
-
-
+    return "help-outline"; // fallback if no match
+  };
 
   const titleCase = (str: string) =>
     str
@@ -127,11 +115,16 @@ const getWeatherIcon = () => {
                 </Text>
               ) : weather ? (
                 <>
-<Ionicons name={getWeatherIcon()} size={64} color={textColor} />
+                  <Ionicons
+                    name={getWeatherIcon()}
+                    size={64}
+                    color={textColor}
+                  />
 
                   <Text style={[styles.cityName, { color: textColor }]}>
-                    {weather.cityName}
-                  </Text>
+  {weather?.cityName ?? address}
+</Text>
+
 
                   <Text style={[styles.temperature, { color: textColor }]}>
                     {weather.tempFahrenheit.toFixed(0)}°F

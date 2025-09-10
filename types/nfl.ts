@@ -1,25 +1,65 @@
 // types/nfl.ts
+
+export type NFLTeam = {
+  id: number | string;
+  name: string;
+  code: string;
+  city: string;
+  location: string;
+  address?: string;
+  coach: string;
+  owner: string;
+  stadium: string;
+  established: number;
+  logo: string;
+  logoLight?: string;
+  country: {
+    name: string;
+    code: string;
+    flag: string;
+  };
+  nickname: string;
+  color?: string;
+  latitude: number;
+  longitude: number;
+  stadiumImage: any;
+  stadiumCapictiy: string;
+};
+
 export type NFLGame = {
-  id: number;
-  date: string;
-  league: { id: number; name: string };
-  season: { year: number };
-  status: { short: string; long: string };
+  game: {
+    id: string;
+    date: { timestamp: number };
+    status: { short: string; long: string; timer?: string };
+    venue?: { name: string; city: string };
+  };
   teams: {
-    home: { id: number; name: string; abbreviation: string; score: number };
-    away: { id: number; name: string; abbreviation: string; score: number };
+    home: NFLTeam;
+    away: NFLTeam;
+  };
+  scores: {
+    home?: {
+      total?: number;
+      quarter_1?: number;
+      quarter_2?: number;
+      quarter_3?: number;
+      quarter_4?: number;
+      overtime?: number;
+    };
+    away?: {
+      total?: number;
+      quarter_1?: number;
+      quarter_2?: number;
+      quarter_3?: number;
+      quarter_4?: number;
+      overtime?: number;
+    };
   };
 };
 
 export type NFLGamesResponse = {
   results: number;
   response: NFLGame[];
-};
-
-export type Team = {
-  id: number;
-  name: string;
-  logo: string;
 };
 
 export type Game = {
@@ -50,8 +90,8 @@ export type Game = {
     logo: string;
   };
   teams: {
-    home: Team;
-    away: Team;
+    home: NFLTeam;
+    away: NFLTeam;
   };
   scores: {
     home: Record<string, number | null>;

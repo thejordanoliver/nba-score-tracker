@@ -19,6 +19,7 @@ import {
 import { teams } from "../../constants/teams";
 import type { Game } from "../../types/types";
 import { DBPlayer } from "../../types/types";
+
 // Extend Team type locally to include optional 'record' property
 type TeamWithRecord = (typeof teams)[number] & { record?: string };
 

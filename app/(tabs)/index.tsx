@@ -27,7 +27,7 @@ import { useLiveGames } from "../../hooks/useLiveGames";
 import { useNews } from "../../hooks/useNews";
 import { useWeeklyGames } from "../../hooks/useWeeklyGames";
 import { getStyles } from "../../styles/indexStyles";
-import NFLGamesList from "@/components/NFL/NFLGamesList";
+import NFLGamesList from "@/components/NFL/Games/NFLGamesList";
 import { useNFLWeeklyGames } from "@/hooks/useWeeklyNFLGames";
 
 
@@ -330,7 +330,7 @@ const taggedHighlights: CombinedItem[] = highlights.map((item) => ({
   expectedCount={nflGames.length}
 />
 
-            {onlySummerLeagueToday ? (
+            {/* {onlySummerLeagueToday ? (
               <SummerGamesList
                 games={filteredSummer}
                 loading={summerLoading}
@@ -348,7 +348,7 @@ const taggedHighlights: CombinedItem[] = highlights.map((item) => ({
                 onRefresh={handleRefresh}
                 day={"todayTomorrow"}
               />
-            )}
+            )} */}
           </>
         ) : (
           <>
